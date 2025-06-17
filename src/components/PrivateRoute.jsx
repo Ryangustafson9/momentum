@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { normalizeRole } from '@/utils/roleUtils';
+import { normalizeRole, canAccessRoute } from '@/utils/roleUtils';
 import { getGeneralSettings } from '@/utils/settingsUtils'; // Import the settings function
-import { canAccessRoute } from '@/utils/roleUtils';
+import { validateRouteAccess } from '@/utils/routeUtils';
 
 /**
  * PrivateRoute component - Protects routes that require authentication
