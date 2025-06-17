@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext.jsx';
 import { Toaster } from '@/components/ui/toaster.jsx';
 import { NotificationProvider } from '@/contexts/NotificationContext.jsx';
 
 // ⭐ ADD: Missing import for normalizeRole
-import { normalizeRole } from '@/utils/roleUtils';
+import { normalizeRole } from '@/utils/roleUtils.js';
 
 // UPDATED: Import renamed layouts and components
 import StaffDashboardLayout from '@/layouts/StaffDashboardLayout.jsx';
@@ -44,7 +44,7 @@ import Dashboard from '@/pages/Dashboard.jsx';
 // import { getDefaultRoute } from '@/utils/routeUtils';
 
 // ⭐ NEW: Importing getDefaultRoute from roleUtils
-import { getDefaultRoute } from '@/utils/roleUtils';
+import { getDefaultRoute } from '@/utils/roleUtils.js';
 
 function App() {
   const { user, loading, authReady } = useAuth();
