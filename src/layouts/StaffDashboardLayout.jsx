@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, useLocation, useNavigate, Routes, Route } from 'react-router-dom'; // ⭐ ADD Routes import
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import AdminSidebar from '@/components/admin/AdminSidebar.jsx';
-import AdminHeader from '@/components/admin/AdminHeader.jsx';
+import TopNavbar from '@/components/admin/TopNavbar.jsx';
 import { getMembers } from '@/services/dataService';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext.jsx';
+import { useAuthQuery as useAuth } from '@/hooks/useAuthQuery';
+import { useAuthContext } from '@/providers/AuthProvider';
 import { useToast } from "@/hooks/use-toast.js";
 
 const pageTitles = {
@@ -27,8 +28,9 @@ const getPageTitle = (pathname) => {
   return pageTitles[pathname] || 'GymPro Admin';
 };
 
-const AdminDashboardLayout = ({ onLogout }) => {
-  const { user, startRoleImpersonation: authStartImpersonation } = useAuth();
+const AdminDashboardLayout = ({ onLogout, children }) => {
+  const { user } = useAuth();
+  const { startRoleImpersonation: authStartImpersonation } = useAuthContext();
   const { toast } = useToast();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(() => {
     const storedSidebarState = localStorage.getItem('sidebarExpanded');
@@ -84,33 +86,32 @@ const AdminDashboardLayout = ({ onLogout }) => {
 
   return (
     <div className="flex h-screen bg-muted/40 dark:bg-slate-950 overflow-hidden">
-      <AdminSidebar 
-        onLogout={onLogout} 
-        user={user} 
-        isExpanded={isSidebarExpanded} 
+      <AdminSidebar
+        onLogout={onLogout}
+        isExpanded={isSidebarExpanded}
         toggleSidebar={toggleSidebar}
-        startRoleImpersonation={handleStartImpersonation}
       />
       <div className={cn(
         "flex flex-col flex-1 transition-all duration-300 ease-in-out",
         isSidebarExpanded ? "md:ml-64" : "md:ml-20" 
       )}>
-        <AdminHeader 
+        <TopNavbar
           toggleSidebar={toggleSidebar}
-          userRole={user.role}
-          currentPathTitle={currentPathTitle}
-          allMembers={allMembers}
+          userRole={user?.role}
+          user={user}
+          onLogout={onLogout}
+          startRoleImpersonation={handleStartImpersonation}
         />
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8 bg-background dark:bg-slate-900">
           <motion.div
-            key={location.pathname} 
+            key={location.pathname}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
-            className="w-full" 
+            className="w-full"
           >
-            <Outlet />
+            {children}
           </motion.div>
         </main>
       </div>

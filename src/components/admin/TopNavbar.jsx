@@ -1,17 +1,44 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
+import {
   Bell,
-  Search as SearchIcon
+  Search as SearchIcon,
+  UserCircle,
+  Settings,
+  Eye,
+  Sun,
+  Moon,
+  Laptop,
+  ArrowLeft,
+  ChevronDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem
+} from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
 import MemberSearch from '@/components/admin/topnav_parts/MemberSearch.jsx';
 import { dataService } from '@/services/dataService';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/hooks/useTheme.jsx';
 
 const pageTitles = {
   '/': 'Dashboard',
+  '/super-admin': 'Super Admin Dashboard',
+  '/dashboard': 'Admin Panel',
   '/members': 'Members Management',
   '/check-in': 'Member Check-In',
   '/memberships': 'Membership Plans',
@@ -32,9 +59,108 @@ const getPageTitle = (pathname) => {
 const NotificationsButton = () => (
   <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 relative">
     <Bell className="h-5 w-5" />
+    <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+      3
+    </span>
     <span className="sr-only">Notifications</span>
   </Button>
 );
+
+const UserProfileDropdown = ({ user, onLogout, startRoleImpersonation }) => {
+  const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
+
+  const initials = user?.name
+    ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+    : user?.first_name && user?.last_name
+    ? `${user.first_name[0]}${user.last_name[0]}`.toUpperCase()
+    : user?.email?.[0]?.toUpperCase() || 'U';
+
+  const displayName = user?.name ||
+    (user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : '') ||
+    user?.email?.split('@')[0] || 'Staff User';
+
+  const displayEmail = user?.email || 'staff@example.com';
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="flex items-center space-x-2 h-9 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+          <Avatar className="h-7 w-7">
+            <AvatarImage
+              src={user?.profile_picture_url || `https://avatar.vercel.sh/${displayEmail}.png?s=32`}
+              alt={displayName}
+            />
+            <AvatarFallback className="text-xs font-medium">{initials}</AvatarFallback>
+          </Avatar>
+          <div className="hidden md:flex flex-col items-start min-w-0">
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate max-w-[120px]">
+              {displayName}
+            </span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px]">
+              {user?.role === 'admin' ? 'Administrator' : 'Staff Member'}
+            </span>
+          </div>
+          <ChevronDown className="h-3 w-3 text-gray-500 hidden md:block" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">{displayName}</p>
+            <p className="text-xs leading-none text-muted-foreground">{displayEmail}</p>
+            <Badge variant="outline" className="w-fit mt-1">
+              {user?.role === 'admin' ? 'Administrator' : 'Staff Member'}
+            </Badge>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem onClick={() => navigate('/staff/settings')}>
+          <UserCircle className="mr-2 h-4 w-4" />
+          Profile Settings
+        </DropdownMenuItem>
+
+        {startRoleImpersonation && user?.role === 'admin' && (
+          <DropdownMenuItem onClick={() => startRoleImpersonation('member')}>
+            <Eye className="mr-2 h-4 w-4" />
+            View as Member
+          </DropdownMenuItem>
+        )}
+
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            {theme === 'light' && <Sun className="mr-2 h-4 w-4" />}
+            {theme === 'dark' && <Moon className="mr-2 h-4 w-4" />}
+            {theme === 'system' && <Laptop className="mr-2 h-4 w-4" />}
+            Theme
+          </DropdownMenuSubTrigger>
+          <DropdownMenuPortal>
+            <DropdownMenuSubContent>
+              <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
+                <DropdownMenuRadioItem value="light">
+                  <Sun className="mr-2 h-4 w-4" /> Light
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="dark">
+                  <Moon className="mr-2 h-4 w-4" /> Dark
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="system">
+                  <Laptop className="mr-2 h-4 w-4" /> System
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuSubContent>
+          </DropdownMenuPortal>
+        </DropdownMenuSub>
+
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={onLogout} className="text-red-600 dark:text-red-400">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Sign Out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
 
 const StaffSearch = ({ allMembers, navigate }) => (
   <div className="relative hidden sm:block">
@@ -47,7 +173,7 @@ const StaffSearch = ({ allMembers, navigate }) => (
   </div>
 );
 
-const TopNavbar = ({ userRole, toggleSidebar }) => {
+const TopNavbar = ({ userRole, toggleSidebar, user, onLogout, startRoleImpersonation }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [allMembers, setAllMembers] = useState([]);

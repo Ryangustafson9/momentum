@@ -31,18 +31,24 @@ const MembershipFormDialog = ({ isOpen, onClose, onSave, membershipData, existin
   const [isLoading, setIsLoading] = useState(false);
 
   const initialFormState = useMemo(() => ({
-    id: '', 
-    name: '', 
-    category: 'Member',
+    id: '',
+    name: '',
+    category: 'Member Plans',
     billing_type: 'Recurring',
-    price: '', 
-    features: '', 
-    color: '#3B82F6', 
+    price: '',
+    features: '',
+    color: '#3B82F6',
     available_for_sale: true,
+    available_online: false,
     duration_months: null,
-    billingCycleLength: '1', 
+    billingCycleLength: '1',
     billingCycleUnit: 'Months',
     signUpFee: '',
+    person_capacity: 1,
+    max_family_members: 1,
+    is_addon: false,
+    addon_billing_cycle: 'monthly',
+    requires_primary_membership: false
   }), []);
 
   const [formData, setFormData] = useState(initialFormState);
@@ -59,7 +65,7 @@ const MembershipFormDialog = ({ isOpen, onClose, onSave, membershipData, existin
           price: membershipData.price ? String(membershipData.price) : '0',
           signUpFee: membershipData.signUpFee ? String(membershipData.signUpFee) : '',
           duration_months: membershipData.duration_months || null,
-          category: membershipData.category || 'Member',
+          category: membershipData.category || 'Member Plans',
           billing_type: membershipData.billing_type || 'Recurring',
           billingCycleLength: (membershipData.billing_type === 'Paid in Full' && membershipData.duration_months) ? String(membershipData.duration_months) : '1',
           billingCycleUnit: (membershipData.billing_type === 'Paid in Full' && membershipData.duration_months) ? 'Months' : 'Months',
@@ -67,7 +73,12 @@ const MembershipFormDialog = ({ isOpen, onClose, onSave, membershipData, existin
         setIsNewCategory(false);
         setNewCategoryName('');
       } else {
-        setFormData(initialFormState);
+        // For new memberships, use the pre-populated category if provided
+        const newFormData = { ...initialFormState };
+        if (membershipData && membershipData.category) {
+          newFormData.category = membershipData.category;
+        }
+        setFormData(newFormData);
         setIsNewCategory(false);
         setNewCategoryName('');
       }
@@ -122,8 +133,14 @@ const MembershipFormDialog = ({ isOpen, onClose, onSave, membershipData, existin
         duration_months: formData.billing_type === 'Paid in Full' ? (parseInt(formData.billingCycleLength) || null) : (formData.duration_months ? parseInt(formData.duration_months) : null),
         features: Array.isArray(formData.features) ? formData.features : (formData.features || '').split(',').map(f => f.trim()).filter(f => f),
         available_for_sale: formData.available_for_sale,
+        available_online: formData.available_online && formData.available_for_sale, // Online requires for sale
         category: finalCategory,
         color: formData.color,
+        person_capacity: parseInt(formData.person_capacity) || 1,
+        max_family_members: parseInt(formData.max_family_members) || 1,
+        is_addon: formData.is_addon || false,
+        addon_billing_cycle: formData.addon_billing_cycle || 'monthly',
+        requires_primary_membership: formData.requires_primary_membership || false
     };
     
     if (dataToSubmit.billing_type === 'Recurring') {
@@ -140,7 +157,8 @@ const MembershipFormDialog = ({ isOpen, onClose, onSave, membershipData, existin
   }, [formData, isNewCategory, newCategoryName, membershipData, onSave, toast]);
 
   const allCategories = useMemo(() => {
-    const combined = new Set(['Member', 'Staff', 'Non-Member', ...existingCategories]);
+    const defaultCategories = ['Member Plans', 'Staff Plans', 'Add-ons', 'Guest Plans'];
+    const combined = new Set([...defaultCategories, ...existingCategories]);
     return Array.from(combined);
   }, [existingCategories]);
 
@@ -150,14 +168,22 @@ const MembershipFormDialog = ({ isOpen, onClose, onSave, membershipData, existin
     }}>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>{membershipData ? 'Edit Membership Plan' : 'Add New Membership Plan'}</DialogTitle>
+          <DialogTitle>
+            {membershipData && membershipData.id
+              ? 'Edit Membership Plan'
+              : `Add New ${formData.category.replace(' Plans', '')} Plan`
+            }
+          </DialogTitle>
           <DialogDescription>
-            {membershipData ? 'Update the details of this membership plan.' : 'Define a new membership plan.'}
+            {membershipData && membershipData.id
+              ? 'Update the details of this membership plan.'
+              : `Define a new ${formData.category.toLowerCase().replace(' plans', '')} plan with pricing, features, and availability settings.`
+            }
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmitForm} className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-3 py-3 max-h-[80vh] overflow-y-auto pr-2 text-sm">
+        <form onSubmit={handleSubmitForm} className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 py-4 max-h-[80vh] overflow-y-auto pr-2 text-sm">
           
-          <h3 className="md:col-span-3 font-semibold text-base mb-1 border-b pb-1">Membership Details</h3>
+          <h3 className="md:col-span-3 font-semibold text-base mb-2 pb-2 border-b border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">Membership Details</h3>
           <MembershipFormField label="Membership Name *" id="mship-name">
             <Input id="mship-name" name="name" value={formData.name} onChange={handleInputChange} placeholder="e.g., Standard Individual" required disabled={isLoading}/>
           </MembershipFormField>
@@ -165,7 +191,13 @@ const MembershipFormDialog = ({ isOpen, onClose, onSave, membershipData, existin
             <Select name="category" value={isNewCategory ? '__new__' : formData.category} onValueChange={(value) => handleSelectChange('category', value)} disabled={isLoading}>
               <SelectTrigger><SelectValue placeholder="Select plan category" /></SelectTrigger>
               <SelectContent>
-                {allCategories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+                <SelectItem value="Member Plans">Member Plans - Regular gym memberships</SelectItem>
+                <SelectItem value="Staff Plans">Staff Plans - Employee access & permissions</SelectItem>
+                <SelectItem value="Add-ons">Add-ons - Additional services & rentals</SelectItem>
+                <SelectItem value="Guest Plans">Guest Plans - Temporary access passes</SelectItem>
+                {allCategories.filter(cat => !['Member Plans', 'Staff Plans', 'Add-ons', 'Guest Plans'].includes(cat)).map(cat =>
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                )}
                 <SelectItem value="__new__">Create New Category...</SelectItem>
               </SelectContent>
             </Select>
@@ -186,7 +218,7 @@ const MembershipFormDialog = ({ isOpen, onClose, onSave, membershipData, existin
             <Input id="mship-color" name="color" type="color" value={formData.color} onChange={handleInputChange} className="h-10 w-full" disabled={isLoading}/>
           </MembershipFormField>
           
-          <h3 className="md:col-span-3 font-semibold text-base mt-3 mb-1 border-b pb-1">Billing Settings</h3>
+          <h3 className="md:col-span-3 font-semibold text-base mt-6 mb-2 pb-2 border-b border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">Billing Settings</h3>
           <MembershipFormField label="Billing Type" id="mship-billing_type">
             <Select name="billing_type" value={formData.billing_type} onValueChange={(value) => handleSelectChange('billing_type', value)} disabled={isLoading}>
               <SelectTrigger><SelectValue placeholder="Select billing type" /></SelectTrigger>
@@ -245,13 +277,150 @@ const MembershipFormDialog = ({ isOpen, onClose, onSave, membershipData, existin
             </MembershipFormField>
           )}
 
-          <h3 className="md:col-span-3 font-semibold text-base mt-3 mb-1 border-b pb-1">Restrictions & Availability</h3>
-          <div className="flex items-center space-x-2 pt-2 md:col-span-1">
-            <Checkbox id="mship-available_for_sale" name="available_for_sale" checked={formData.available_for_sale} onCheckedChange={(checked) => handleInputChange({ target: { name: 'available_for_sale', checked, type: 'checkbox' } })} disabled={isLoading}/>
-            <Label htmlFor="mship-available_for_sale">Available for Sale</Label>
+          <h3 className="md:col-span-3 font-semibold text-base mt-6 mb-2 pb-2 border-b border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">Restrictions & Availability</h3>
+          <div className="md:col-span-3 space-y-3 pt-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="mship-available_for_sale"
+                name="available_for_sale"
+                checked={formData.available_for_sale}
+                onCheckedChange={(checked) => {
+                  handleInputChange({ target: { name: 'available_for_sale', checked, type: 'checkbox' } });
+                  // If disabling for sale, also disable online
+                  if (!checked) {
+                    handleInputChange({ target: { name: 'available_online', checked: false, type: 'checkbox' } });
+                  }
+                }}
+                disabled={isLoading}
+              />
+              <Label htmlFor="mship-available_for_sale" className="text-sm font-medium">
+                Available for Sale
+              </Label>
+              <span className="text-xs text-muted-foreground ml-2">
+                Staff can sell this membership type
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="mship-available_online"
+                name="available_online"
+                checked={formData.available_online}
+                onCheckedChange={(checked) => handleInputChange({ target: { name: 'available_online', checked, type: 'checkbox' } })}
+                disabled={isLoading || !formData.available_for_sale}
+              />
+              <Label htmlFor="mship-available_online" className={`text-sm font-medium ${!formData.available_for_sale ? 'text-muted-foreground' : ''}`}>
+                Available Online
+              </Label>
+              <span className="text-xs text-muted-foreground ml-2">
+                Members can purchase this online {!formData.available_for_sale ? '(requires "Available for Sale")' : ''}
+              </span>
+            </div>
           </div>
           
-          <h3 className="md:col-span-3 font-semibold text-base mt-3 mb-1 border-b pb-1">Other Information</h3>
+          <h3 className="md:col-span-3 font-semibold text-base mt-6 mb-2 pb-2 border-b border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">Membership Capacity & Type</h3>
+
+          <div className="md:col-span-3 space-y-3 pt-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="mship-is_addon"
+                name="is_addon"
+                checked={formData.is_addon}
+                onCheckedChange={(checked) => {
+                  handleInputChange({ target: { name: 'is_addon', checked, type: 'checkbox' } });
+                  // If making it an add-on, set requires_primary_membership to true
+                  if (checked) {
+                    handleInputChange({ target: { name: 'requires_primary_membership', checked: true, type: 'checkbox' } });
+                    handleInputChange({ target: { name: 'person_capacity', value: 1, type: 'number' } });
+                    handleInputChange({ target: { name: 'max_family_members', value: 1, type: 'number' } });
+                  }
+                }}
+                disabled={isLoading}
+              />
+              <Label htmlFor="mship-is_addon" className="text-sm font-medium">
+                This is an Add-on Service
+              </Label>
+              <span className="text-xs text-muted-foreground ml-2">
+                Add-on services require a primary membership
+              </span>
+            </div>
+
+            {formData.is_addon && (
+              <div className="flex items-center space-x-2 ml-6">
+                <Checkbox
+                  id="mship-requires_primary_membership"
+                  name="requires_primary_membership"
+                  checked={formData.requires_primary_membership}
+                  onCheckedChange={(checked) => handleInputChange({ target: { name: 'requires_primary_membership', checked, type: 'checkbox' } })}
+                  disabled={isLoading}
+                />
+                <Label htmlFor="mship-requires_primary_membership" className="text-sm font-medium">
+                  Requires Primary Membership
+                </Label>
+              </div>
+            )}
+          </div>
+
+          {!formData.is_addon && (
+            <>
+              <MembershipFormField label="Person Capacity" id="mship-person_capacity">
+                <Select
+                  name="person_capacity"
+                  value={String(formData.person_capacity)}
+                  onValueChange={(value) => {
+                    const numValue = parseInt(value);
+                    handleSelectChange('person_capacity', numValue);
+                    // Update max_family_members to match person_capacity
+                    handleSelectChange('max_family_members', numValue);
+                  }}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Individual (1 person)</SelectItem>
+                    <SelectItem value="2">Couple (2 people)</SelectItem>
+                    <SelectItem value="3">Small Family (3 people)</SelectItem>
+                    <SelectItem value="4">Family (4 people)</SelectItem>
+                    <SelectItem value="5">Large Family (5 people)</SelectItem>
+                    <SelectItem value="6">Extended Family (6 people)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </MembershipFormField>
+
+              <MembershipFormField label="Max Family Members" id="mship-max_family_members">
+                <Input
+                  id="mship-max_family_members"
+                  name="max_family_members"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={formData.max_family_members}
+                  onChange={handleInputChange}
+                  disabled={isLoading}
+                />
+              </MembershipFormField>
+            </>
+          )}
+
+          {formData.is_addon && (
+            <MembershipFormField label="Add-on Billing Cycle" id="mship-addon_billing_cycle">
+              <Select
+                name="addon_billing_cycle"
+                value={formData.addon_billing_cycle}
+                onValueChange={(value) => handleSelectChange('addon_billing_cycle', value)}
+                disabled={isLoading}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="quarterly">Quarterly</SelectItem>
+                  <SelectItem value="yearly">Yearly</SelectItem>
+                  <SelectItem value="one-time">One-time</SelectItem>
+                </SelectContent>
+              </Select>
+            </MembershipFormField>
+          )}
+
+          <h3 className="md:col-span-3 font-semibold text-base mt-6 mb-2 pb-2 border-b border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">Other Information</h3>
           <MembershipFormField label="Features (comma-separated)" id="mship-features" className="md:col-span-3">
             <Textarea id="mship-features" name="features" value={formData.features} onChange={handleInputChange} placeholder="e.g., Gym Access, Group Classes" rows={2} disabled={isLoading}/>
           </MembershipFormField>

@@ -4,7 +4,7 @@ export const getMembershipTypes = async (supabase, isCacheValid, updateCache, ge
     const cachedData = getCache?.('membershipTypes');
     if (cachedData) return cachedData;
   }
-  const selectString = 'id, name, price, billing_type, duration_months, features, available_for_sale, category, color, created_at, updated_at, role_id';
+  const selectString = 'id, name, price, billing_type, duration_months, features, available_for_sale, available_online, category, color, created_at, updated_at, role_id';
   const { data, error } = await supabase.from('membership_types').select(selectString);
   if (error) { 
       console.error('Error fetching membership types:', error.message); 
@@ -24,6 +24,7 @@ export const addMembershipType = async (supabase, planData, isValidUUID, invalid
       duration_months: planData.duration_months,
       features: planData.features || [],
       available_for_sale: planData.available_for_sale !== undefined ? planData.available_for_sale : true,
+      available_online: planData.available_online !== undefined ? planData.available_online : true,
       category: planData.category,
       color: planData.color,
       role_id: planData.role_id || null,
@@ -50,7 +51,7 @@ export const updateMembershipType = async (supabase, id, updatedData, isValidUUI
   const dataToUpdate = { ...updatedData };
   dataToUpdate.updated_at = new Date().toISOString();
   
-  const validKeys = ['name', 'price', 'billing_type', 'duration_months', 'features', 'available_for_sale', 'category', 'color', 'updated_at', 'role_id'];
+  const validKeys = ['name', 'price', 'billing_type', 'duration_months', 'features', 'available_for_sale', 'available_online', 'category', 'color', 'updated_at', 'role_id'];
   const finalUpdateData = {};
   for (const key of validKeys) {
       if (dataToUpdate.hasOwnProperty(key)) {

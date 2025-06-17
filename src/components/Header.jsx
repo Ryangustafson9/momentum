@@ -1,48 +1,153 @@
 // src/components/Header.jsx
-import { useAuth } from '@/contexts/AuthContext';
-import { getNavigationForRole, getDefaultRoute } from '@/utils/routeUtils';
-import { normalizeRole } from '@/utils/roleUtils';
+import React, { useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useUnifiedAuth as useAuth } from '@/hooks/useUnifiedAuth';
+
+// ⭐ CORRECT: Import from existing accessControl.js
+import { 
+  getNavigationRoutes,
+  getDefaultRoute, 
+  normalizeRole,
+  hasAdminAccess,
+  hasStaffAccess 
+} from '@/utils/accessControl';
 
 const Header = () => {
   const { user, authReady, logout } = useAuth();
+  const navigate = useNavigate();
   
-  const userRole = normalizeRole(user?.role);
-  const navigationItems = getNavigationForRole(userRole);
-  const defaultRoute = getDefaultRoute(userRole);
+  // ⭐ MEMOIZED: Calculate role-based data only when user changes
+  const roleData = useMemo(() => {
+    if (!user) {
+      return {
+        userRole: null,
+        navigationItems: [],
+        defaultRoute: '/login',
+        isAdmin: false,
+        isStaff: false
+      };
+    }
+
+    const userRole = normalizeRole(user.role);
+    const navigationItems = getNavigationRoutes(userRole);
+    const defaultRoute = getDefaultRoute(userRole);
+    const isAdmin = hasAdminAccess(userRole);
+    const isStaff = hasStaffAccess(userRole);
+
+    return {
+      userRole,
+      navigationItems,
+      defaultRoute,
+      isAdmin,
+      isStaff
+    };
+  }, [user]);
+
+  // ⭐ MEMOIZED: User display data
+  const userDisplayData = useMemo(() => {
+    if (!user) return null;
+
+    return {
+      displayName: user.first_name || user.display_name || user.email?.split('@')[0] || 'User',
+      roleBadge: roleData.isAdmin ? 'Admin' : roleData.isStaff ? 'Staff' : null,
+      badgeColor: roleData.isAdmin ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
+    };
+  }, [user, roleData.isAdmin, roleData.isStaff]);
+
+  // ⭐ MEMOIZED: Handle logout
+  const handleLogout = useMemo(() => async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  }, [logout, navigate]);
 
   return (
     <header className="bg-white shadow-md border-b">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-indigo-600">Momentum Fitness</h1>
         
+        {/* ⭐ LOGO: Brand logo and name */}
+        <div className="flex items-center space-x-3">
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="h-8 w-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">M</span>
+            </div>
+            <h1 className="text-2xl font-bold text-indigo-600">Momentum Fitness</h1>
+          </Link>
+        </div>
+
+        {/* ⭐ NAVIGATION: Quick navigation items for logged-in users */}
+        {user && roleData.navigationItems.length > 0 && (
+          <nav className="hidden md:flex items-center space-x-6">
+            {roleData.navigationItems.slice(0, 4).map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className="text-gray-600 hover:text-indigo-600 transition-colors font-medium"
+                title={item.description}
+              >
+                {item.title}
+              </Link>
+            ))}
+          </nav>
+        )}
+        
+        {/* ⭐ USER: User menu and actions */}
         <div className="flex items-center space-x-4">
           {!authReady ? (
-            <div className="animate-pulse text-gray-500">Loading...</div>
-          ) : user ? (
+            <div className="flex items-center space-x-2">
+              <div className="animate-spin h-4 w-4 border-2 border-indigo-600 border-t-transparent rounded-full"></div>
+              <span className="text-gray-500">Loading...</span>
+            </div>
+          ) : user && userDisplayData ? (
             <>
-              <span className="text-gray-700">
-                Welcome, {user.first_name || user.display_name || 'User'}!
-              </span>
+              {/* ⭐ USER: Welcome message with role badge */}
+              <div className="flex items-center space-x-2">
+                <span className="text-gray-700 font-medium">
+                  Welcome, {userDisplayData.displayName}!
+                </span>
+                
+                {/* ⭐ ROLE: Role badge */}
+                {userDisplayData.roleBadge && (
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${userDisplayData.badgeColor}`}>
+                    {userDisplayData.roleBadge}
+                  </span>
+                )}
+              </div>
               
-              {/* SIMPLIFIED: Use default route from utils */}
-              <a href={defaultRoute} className="text-blue-600 hover:underline">
+              {/* ⭐ DASHBOARD: Link to user's dashboard */}
+              <Link 
+                to={roleData.defaultRoute} 
+                className="text-blue-600 hover:text-blue-800 hover:underline transition-colors font-medium"
+              >
                 Dashboard
-              </a>
+              </Link>
               
+              {/* ⭐ LOGOUT: Logout button */}
               <button 
-                onClick={logout} 
-                className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors"
+                onClick={handleLogout} 
+                className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors font-medium"
               >
                 Logout
               </button>
             </>
           ) : (
-            <a 
-              href="/login" 
-              className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition-colors"
-            >
-              Login
-            </a>
+            <div className="flex items-center space-x-3">
+              <Link 
+                to="/login" 
+                className="text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+              >
+                Login
+              </Link>
+              <Link 
+                to="/signup" 
+                className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition-colors font-medium"
+              >
+                Sign Up
+              </Link>
+            </div>
           )}
         </div>
       </div>
@@ -50,7 +155,8 @@ const Header = () => {
   );
 };
 
-export default Header;
+// ⭐ MEMOIZED: Prevent unnecessary re-renders
+export default React.memo(Header);
 
 
 

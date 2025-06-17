@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext.jsx';
+import { useAuthQuery as useAuth } from '@/hooks/useAuthQuery';
 import { getGeneralSettings } from '@/services/dataService';
 import { Phone, Mail, CreditCard, Users, ArrowRight, ArrowLeft } from 'lucide-react';
 

@@ -2,14 +2,16 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast.js';
-import { dataService } from '@/services/dataService.js';
+import { supabase } from '@/lib/supabaseClient';
+import * as membershipService from '@/lib/services/membershipTypeService';
 
 import MembersHeader from '@/components/admin/members/page_specific/MembersHeader.jsx';
 import MembersFilterControls from '@/components/admin/members/page_specific/MembersFilterControls.jsx';
 import MembersTable from '@/components/admin/members/page_specific/MembersTable.jsx';
 import MemberFormDialog from '@/components/admin/members/MemberFormDialog.jsx';
-import AssignMembershipDialog from '@/components/admin/members/AssignMembershipDialog.jsx'; 
-import LoadingSpinner from '@/components/LoadingSpinner.jsx';
+import AssignMembershipDialog from '@/components/admin/members/AssignMembershipDialog.jsx';
+import MemberStatsCards from '@/components/admin/members/MemberStatsCards.jsx';
+import { LoadingSpinner } from '@/shared/components/LoadingStates';
 import EmptyState from '@/components/EmptyState.jsx';
 import { Users } from 'lucide-react';
 import { Button } from '@/components/ui/button.jsx';
@@ -34,13 +36,52 @@ const MembersPage = () => {
   const fetchInitialData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [membersData, typesData] = await Promise.all([
-        dataService.getMembers(),
-        dataService.getMembershipTypes()
-      ]);
-      setMembers(Array.isArray(membersData) ? membersData : []);
+      // Fetch members with their current membership information
+      const { data: membersData, error: membersError } = await supabase
+        .from('profiles')
+        .select(`
+          *,
+          memberships!inner(
+            id,
+            status,
+            start_date,
+            end_date,
+            current_membership_type_id,
+            membership_types!inner(id, name, category, price)
+          )
+        `)
+        .eq('role', 'member')
+        .order('join_date', { ascending: false });
+
+      if (membersError) {
+        throw new Error(`Failed to fetch members: ${membersError.message}`);
+      }
+
+      // Fetch membership types
+      const typesData = await membershipService.getMembershipTypes(
+        supabase,
+        () => false, // Don't use cache
+        () => {}, // No cache update
+        () => null // No cache get
+      );
+
+      // Transform the data to match expected format
+      const transformedMembers = (membersData || []).map(member => ({
+        id: member.id,
+        name: member.full_name || member.email,
+        email: member.email,
+        status: member.memberships?.[0]?.status || 'inactive',
+        join_date: member.memberships?.[0]?.join_date,
+        profile_creation_date: member.created_at,
+        current_membership_type_id: member.memberships?.[0]?.current_membership_type_id,
+        membership_info: member.memberships?.[0]?.membership_types,
+        system_member_id: member.id.slice(-8) // Use last 8 chars of UUID as member ID
+      }));
+
+      setMembers(transformedMembers);
       setMembershipTypes(Array.isArray(typesData) ? typesData : []);
     } catch (error) {
+      console.error('Error fetching data:', error);
       toast({ title: "Error", description: `Failed to fetch data: ${error.message}`, variant: "destructive" });
       setMembers([]);
       setMembershipTypes([]);
@@ -125,12 +166,32 @@ const MembersPage = () => {
   const handleSaveMember = useCallback(async (memberData, currentEditingMember) => {
     try {
       if (currentEditingMember && currentEditingMember.id) {
-        await dataService.updateMember(currentEditingMember.id, memberData);
+        // Update existing member
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            full_name: memberData.name,
+            email: memberData.email,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', currentEditingMember.id);
+
+        if (error) {
+          throw new Error(`Failed to update member: ${error.message}`);
+        }
+
         toast({ title: "Success", description: "Member updated successfully." });
       } else {
-        await dataService.memberService.create(memberData);
-        toast({ title: "Success", description: "Member added successfully." });
+        // Create new member - this would typically be handled by the auth system
+        // For now, we'll show a message that this should be done through signup
+        toast({
+          title: "Info",
+          description: "New members should be created through the signup process. Use the member invitation system instead.",
+          variant: "default"
+        });
+        return;
       }
+
       fetchInitialData();
       setIsFormOpen(false);
       setSelectedMember(null);
@@ -150,10 +211,23 @@ const MembersPage = () => {
   
   const handleArchiveMember = useCallback(async (memberId) => {
     try {
-      await dataService.archiveMember(memberId);
+      // Update member status to archived in memberships table
+      const { error } = await supabase
+        .from('memberships')
+        .update({
+          status: 'cancelled',
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', memberId);
+
+      if (error) {
+        throw new Error(`Failed to archive member: ${error.message}`);
+      }
+
       toast({ title: "Success", description: "Member archived successfully." });
       fetchInitialData();
     } catch (error) {
+      console.error('Error archiving member:', error);
       toast({ title: "Error", description: `Failed to archive member: ${error.message}`, variant: "destructive" });
     }
   }, [toast, fetchInitialData]);
@@ -190,9 +264,11 @@ const MembersPage = () => {
       transition={{ duration: 0.5 }}
       className="container mx-auto py-8 px-4 md:px-6"
     >
-      <MembersHeader 
+      <MembersHeader
         onAddNewMember={handleCreateNewMember}
       />
+
+      <MemberStatsCards members={members} isLoading={isLoading} />
 
       <MembersFilterControls
         searchTerm={searchTerm}

@@ -1,6 +1,7 @@
 import path from 'node:path';
 import react from '@vitejs/plugin-react';
 import { createLogger, defineConfig } from 'vite';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 const configHorizonsViteErrorHandler = `
 const observer = new MutationObserver((mutations) => {
@@ -183,7 +184,17 @@ logger.error = (msg, options) => {
 
 export default defineConfig({
 	customLogger: logger,
-	plugins: [react(), addTransformIndexHtml],
+	plugins: [
+		react(),
+		addTransformIndexHtml,
+		// Bundle analyzer - generates stats.html in dist folder
+		visualizer({
+			filename: 'dist/stats.html',
+			open: false,
+			gzipSize: true,
+			brotliSize: true,
+		}),
+	],
 	server: {
 		cors: true,
 		headers: {
@@ -196,5 +207,34 @@ export default defineConfig({
 		alias: {
 			'@': path.resolve(__dirname, './src'),
 		},
+	},
+	build: {
+		// Optimize chunk splitting
+		rollupOptions: {
+			output: {
+				manualChunks: {
+					// Vendor chunks
+					'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+					'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
+					'query-vendor': ['@tanstack/react-query'],
+					'supabase-vendor': ['@supabase/supabase-js'],
+					'chart-vendor': ['recharts'],
+					'motion-vendor': ['framer-motion'],
+				},
+			},
+		},
+		// Increase chunk size warning limit
+		chunkSizeWarningLimit: 1000,
+	},
+	// Development optimizations
+	optimizeDeps: {
+		include: [
+			'react',
+			'react-dom',
+			'react-router-dom',
+			'@tanstack/react-query',
+			'@supabase/supabase-js',
+			'zustand',
+		],
 	},
 });

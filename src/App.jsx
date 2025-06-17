@@ -1,245 +1,283 @@
-import React, { useEffect, useState } from 'react';
+// 🚨 DO NOT MODIFY WITHOUT REVIEW - Login flow and layout is stable
+import { useEffect, useState, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { Toaster } from '@/components/ui/toaster.jsx';
 import { NotificationProvider } from '@/contexts/NotificationContext.jsx';
+import { getDefaultRoute } from '@/helpers/routingHelper';
+import { useAuthQuery as useAuth } from '@/hooks/useAuthQuery';
+import { PageErrorBoundary } from '@/shared/components/ErrorBoundary';
+import { PageLoading, SuspenseFallback } from '@/shared/components/LoadingStates';
+import { createLogger } from '@/lib/logger';
 
-// ⭐ ADD: Missing import for normalizeRole
-import { normalizeRole } from '@/utils/roleUtils';
+// ⭐ NEW: Mobile enhancements
+import MobileBottomNavigation from '@/components/mobile/MobileBottomNavigation';
+import PWAInstallPrompt from '@/components/mobile/PWAInstallPrompt';
 
-// UPDATED: Import renamed layouts and components
-import StaffDashboardLayout from '@/layouts/StaffDashboardLayout.jsx';
-import MemberDashboardLayout from '@/layouts/MemberDashboardLayout.jsx';
-import PrivateRoute from '@/components/PrivateRoute.jsx';
-import PublicRoute from '@/components/PublicRoute.jsx';
+// Create logger for App component
+const logger = createLogger('App');
 
-// ⭐ UPDATED: Import from pages/staff instead of pages/admin
-import StaffDashboard from '@/pages/staff/StaffDashboard.jsx';
-import Classes from '@/pages/staff/Classes.jsx';
-import SettingsPage from '@/pages/staff/Settings.jsx'; 
-import StaffMemberProfilePage from '@/pages/staff/StaffMemberProfile.jsx';
-import CheckInPage from '@/pages/staff/CheckIn.jsx';
-import ReportsPage from '@/pages/staff/Reports.jsx';
-import SchedulePage from '@/pages/staff/Schedule.jsx';
-import MembershipsPage from '@/pages/staff/Memberships.jsx';
-import TrainersPage from '@/pages/staff/Trainers.jsx'; 
-import MembersPage from '@/pages/staff/Members.jsx';
-import AdminPanelPage from '@/pages/staff/AdminPanelPage.jsx';
-import InstructorDashboardPage from '@/pages/staff/InstructorDashboardPage.jsx';
-
-// ⭐ UNCHANGED: Other imports remain the same
+// Import components directly for now (will convert to lazy loading later)
 import Login from '@/pages/Login.jsx';
 import Signup from '@/pages/Signup.jsx';
-import MemberDashboardPage from '@/pages/member/MemberDashboard.jsx';
-import MemberProfilePage from '@/pages/member/MemberProfilePage.jsx';
-import MemberClassesPage from '@/pages/member/MemberClasses.jsx';
-import MemberBillingPage from '@/pages/member/MemberBilling.jsx';
 import NotFound from '@/pages/NotFound.jsx';
-import Welcome from '@/pages/Welcome.jsx';
+
 import JoinOnline from '@/pages/joinOnline.jsx';
+import JoinOnlineCustomize from '@/pages/joinOnlineCustomize.jsx';
+import JoinOnlineCheckout from '@/pages/JoinOnlineCheckout.jsx';
+
+import Profile from '@/pages/Profile.jsx';
 import NonmemberPrompt from '@/pages/NonmemberPrompt.jsx';
 import Dashboard from '@/pages/Dashboard.jsx';
+import SettingsPage from '@/pages/staff/Settings.jsx';
+import StaffDashboardLayout from '@/layouts/StaffDashboardLayout';
+import MemberDashboardLayout from '@/layouts/MemberDashboardLayout';
 
-// ⭐ OLD: Importing getDefaultRoute from routeUtils
-// import { getDefaultRoute } from '@/utils/routeUtils';
+// Routes configuration
+import { staffRoutes, adminRoutes, memberRoutes } from '@/routes';
 
-// ⭐ NEW: Importing getDefaultRoute from roleUtils
-import { getDefaultRoute } from '@/utils/roleUtils';
+// Import the proper PublicRoute component
+import PublicRoute from '@/components/PublicRoute.jsx';
+
+const PrivateRoute = ({ children, allowedRoles = [] }) => {
+  const { user, loading, authReady } = useAuth();
+  const location = useLocation();
+  
+  if (loading || !authReady) {
+    return <SuspenseFallback message="Checking authentication..." />;
+  }
+  
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  
+  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+  
+  return children;
+};
 
 function App() {
-  const { user, loading, authReady } = useAuth();
+  const { user, loading, authReady, logout } = useAuth();
   const [emergencyLoadingTimeout, setEmergencyLoadingTimeout] = useState(false);
   const location = useLocation();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      logger.info('✅ Logout successful');
+    } catch (error) {
+      logger.error('❌ Logout error:', error);
+    }
+  };
 
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (loading && !authReady) {
-        console.warn('⚠️ App emergency timeout: Loading too long, showing content anyway');
+        logger.warn('⚠️ App emergency timeout: Loading too long, showing content anyway');
         setEmergencyLoadingTimeout(true);
       }
-    }, 10000); // Reduced from 20s to 10s
+    }, 5000); // Reduced from 10 seconds to 5 seconds
 
     return () => clearTimeout(timeout);
   }, [loading, authReady]);
 
-  console.log('🔍 App render state:', { 
-    loading, 
+  logger.debug('🔍 App render state:', {
+    loading,
     authReady,
-    user: user?.email || null, 
+    user: user?.email || null,
     userRole: user?.role || null,
     pathname: location.pathname,
-    emergencyTimeout: emergencyLoadingTimeout 
+    emergencyTimeout: emergencyLoadingTimeout
   });
 
-  // ⭐ IMPROVED: Show loading only when truly needed
+  // Show loading screen during auth initialization
   if ((loading || !authReady) && !emergencyLoadingTimeout) {
-    console.log('⏳ App showing loading screen...');
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading application...</p>
-          <p className="mt-2 text-xs text-gray-400">Connecting to authentication...</p>
-        </div>
-      </div>
-    );
+    logger.debug('⏳ App showing loading screen...');
+    return <PageLoading message="Initializing application..." />;
   }
 
-  // Add debug logging to see what's happening with routes
-  console.log('✅ App loading complete, rendering main app...');
-  console.log('🔍 Current user:', user?.email, 'Role:', user?.role);
+  // Show error if auth failed to initialize
+  if (!authReady && emergencyLoadingTimeout) {
+    return <PageLoading message="Authentication timeout. Please refresh the page." />;
+  }
+
+  logger.info('✅ App loading complete, rendering main app...');
 
   return (
-    <NotificationProvider>
-      <div className="min-h-screen bg-gray-50">
-        <Routes>
-          {/* Public Routes */}
-          <Route 
-            path="/login" 
-            element={
-              <PublicRoute>
-                <Login />
-              </PublicRoute>
-            } 
-          />
-          <Route 
-            path="/signup" 
-            element={
-              <PublicRoute>
-                <Signup />
-              </PublicRoute>
-            } 
-          />
-          <Route 
-            path="/join-online" 
-            element={<JoinOnline />}
-          />
-          <Route 
-            path="/welcome" 
-            element={
-              <PublicRoute>
-                <Welcome />
-              </PublicRoute>
-            } 
-          />
-          <Route 
-            path="/nonmember-prompt" 
-            element={<NonmemberPrompt />} 
-          />
+    <PageErrorBoundary>
+      <NotificationProvider>
+        <div className="min-h-screen bg-gray-50">
 
-          {/* General Dashboard for Nonmembers */}
-          <Route 
-            path="/dashboard" 
-            element={
-              <PrivateRoute>
-                <Dashboard />
-              </PrivateRoute>
-            }
-          />
+          <Suspense fallback={<SuspenseFallback />}>
+            <Routes>
+              {/* ===== PUBLIC ROUTES ===== */}
+              <Route 
+                path="/login" 
+                element={
+                  <PublicRoute>
+                    <Login />
+                  </PublicRoute>
+                } 
+              />
+              <Route 
+                path="/signup" 
+                element={
+                  <PublicRoute>
+                    <Signup />
+                  </PublicRoute>
+                } 
+              />
+              <Route
+                path="/join-online"
+                element={<JoinOnline />}
+              />
+              <Route
+                path="/join-online/customize"
+                element={<JoinOnlineCustomize />}
+              />
+              <Route
+                path="/join-online/checkout"
+                element={<JoinOnlineCheckout />}
+              />
+              <Route
+                path="/profile"
+                element={<Profile />}
+              />
 
-          {/* ⭐ STAFF ROUTES: Debug what's happening */}
-          <Route path="/staff/*" element={
-            <PrivateRoute allowedRoles={['staff', 'admin']}>
-              <StaffDashboardLayout>
-                <Routes>
-                  <Route path="staffdashboard" element={<StaffDashboard />} />
-                  <Route path="classes" element={<Classes />} />
-                  <Route path="members" element={<MembersPage />} />
-                  <Route path="reports" element={<ReportsPage />} />
-                  <Route path="schedule" element={<SchedulePage />} />
-                  <Route path="memberships" element={<MembershipsPage />} />
-                  <Route path="trainers" element={<TrainersPage />} />
-                  <Route path="checkin" element={<CheckInPage />} />
-                  <Route path="profile/:memberId" element={<StaffMemberProfilePage />} />
-                  <Route path="instructor-dashboard" element={<InstructorDashboardPage />} />
-                  <Route path="*" element={<Navigate to="/staff/staffdashboard" replace />} />
-                </Routes>
-              </StaffDashboardLayout>
-            </PrivateRoute>
-          } />
 
-          {/* Admin Routes */}
-          <Route path="/admin/*" element={
-            <PrivateRoute allowedRoles={['admin']}>
-              <StaffDashboardLayout>
-                <Routes>
-                  <Route path="dashboard" element={<AdminPanelPage />} />
-                  <Route path="settings" element={<SettingsPage />} />
-                  <Route path="staffdashboard" element={<StaffDashboard />} />
-                  <Route path="classes" element={<Classes />} />
-                  <Route path="members" element={<MembersPage />} />
-                  <Route path="reports" element={<ReportsPage />} />
-                  <Route path="schedule" element={<SchedulePage />} />
-                  <Route path="memberships" element={<MembershipsPage />} />
-                  <Route path="trainers" element={<TrainersPage />} />
-                  <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
-                </Routes>
-              </StaffDashboardLayout>
-            </PrivateRoute>
-          } />
+              <Route 
+                path="/nonmember-prompt" 
+                element={<NonmemberPrompt />} 
+              />
 
-          {/* Member Routes */}
-          <Route path="/member/*" element={
-            <PrivateRoute allowedRoles={['member', 'staff', 'admin']}>
-              <MemberDashboardLayout>
-                <Routes>
-                  <Route path="memberdashboard" element={<MemberDashboardPage />} />
-                  <Route path="profile" element={<MemberProfilePage />} />
-                  <Route path="classes" element={<MemberClassesPage />} />
-                  <Route path="billing" element={<MemberBillingPage />} />
-                  <Route path="*" element={<Navigate to="/member/memberdashboard" replace />} />
-                </Routes>
-              </MemberDashboardLayout>
-            </PrivateRoute>
-          } />
+              {/* ===== NONMEMBER DASHBOARD ===== */}
+              <Route
+                path="/dashboard"
+                element={
+                  <PrivateRoute allowedRoles={['nonmember']}>
+                    <Dashboard />
+                  </PrivateRoute>
+                }
+              />
 
-          {/* ⭐ ROOT ROUTE: Fixed with proper normalizeRole */}
-          <Route 
-            path="/" 
-            element={
-              user ? (
-                (() => {
-                  const role = normalizeRole(user.role || 'member');
-                  console.log('🎯 Root route - User role:', role);
-                  
-                  switch (role) {
-                    case 'staff':
-                    case 'admin':
-                      return <Navigate to="/staff/staffdashboard" replace />;
-                    case 'member':
-                      return <Navigate to="/member/memberdashboard" replace />;
-                    default:
-                      return <Navigate to="/dashboard" replace />;
-                  }
-                })()
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            } 
-          />
+              {/* ===== STAFF ROUTES ===== */}
+              <Route 
+                path="/staff/*" 
+                element={
+                  <PrivateRoute allowedRoles={['staff', 'admin']}>
+                    <StaffDashboardLayout onLogout={handleLogout}>
+                      <Routes>
+                        {staffRoutes.map((route, index) => (
+                          <Route
+                            key={index}
+                            path={route.path}
+                            element={route.element}
+                          />
+                        ))}
+                      </Routes>
+                    </StaffDashboardLayout>
+                  </PrivateRoute>
+                } 
+              />
 
-          {/* Settings Route Alias */}
-          <Route 
-            path="/settings" 
-            element={
-              <PrivateRoute allowedRoles={['staff', 'admin']}>
-                <StaffDashboardLayout>
-                  <SettingsPage />
-                </StaffDashboardLayout>
-              </PrivateRoute>
-            } 
-          />
+              {/* ===== ADMIN ROUTES ===== */}
+              <Route 
+                path="/admin/*" 
+                element={
+                  <PrivateRoute allowedRoles={['admin']}>
+                    <StaffDashboardLayout onLogout={handleLogout}>
+                      <Routes>
+                        {adminRoutes.map((route, index) => (
+                          <Route
+                            key={index}
+                            path={route.path}
+                            element={route.element}
+                          />
+                        ))}
+                      </Routes>
+                    </StaffDashboardLayout>
+                  </PrivateRoute>
+                } 
+              />
 
-          {/* 404 catch-all */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        
-        <Toaster />
-      </div>
-    </NotificationProvider>
+              {/* ===== MEMBER ROUTES ===== */}
+              <Route
+                path="/member-portal/*"
+                element={
+                  <PrivateRoute allowedRoles={['member', 'staff', 'admin']}>
+                    <MemberDashboardLayout>
+                      <Routes>
+                        {memberRoutes.map((route, index) => (
+                          <Route
+                            key={index}
+                            path={route.path}
+                            element={route.element}
+                          />
+                        ))}
+                      </Routes>
+                    </MemberDashboardLayout>
+                  </PrivateRoute>
+                }
+              />
+
+              {/* ===== TEST MEMBER ROUTE ===== */}
+              <Route
+                path="/member-portal/test"
+                element={
+                  <PrivateRoute allowedRoles={['member', 'staff', 'admin']}>
+                    <div className="p-8">
+                      <h1 className="text-2xl font-bold">Test Member Route</h1>
+                      <p>If you see this, member routing is working!</p>
+                      <p>User: {user?.email}</p>
+                      <p>Role: {user?.role}</p>
+                    </div>
+                  </PrivateRoute>
+                }
+              />
+
+              {/* ===== ROOT ROUTE ===== */}
+              <Route
+                path="/"
+                element={
+                  authReady ? (
+                    user ? (
+                      <Navigate to={getDefaultRoute(user)} replace />
+                    ) : (
+                      <Navigate to="/login" replace />
+                    )
+                  ) : (
+                    <SuspenseFallback message="Loading..." />
+                  )
+                }
+              />
+
+              {/* ===== SETTINGS ROUTE ALIAS ===== */}
+              <Route 
+                path="/settings" 
+                element={
+                  <PrivateRoute allowedRoles={['staff', 'admin']}>
+                    <StaffDashboardLayout onLogout={handleLogout}>
+                      <SettingsPage />
+                    </StaffDashboardLayout>
+                  </PrivateRoute>
+                } 
+              />
+
+              {/* ===== 404 CATCH-ALL ===== */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+
+          {/* ⭐ NEW: Mobile enhancements */}
+          <MobileBottomNavigation />
+          <PWAInstallPrompt />
+
+          <Toaster />
+        </div>
+      </NotificationProvider>
+    </PageErrorBoundary>
   );
 }
 
 export default App;
-
-

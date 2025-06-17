@@ -1,96 +1,64 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { normalizeRole } from '@/utils/roleUtils';
-import { getGeneralSettings } from '@/utils/settingsUtils'; // Import the settings function
-import { canAccessRoute } from '@/utils/roleUtils';
+import { useUnifiedAuth as useAuth } from '@/hooks/useUnifiedAuth';
+// ⭐ FIXED: Import from accessControl instead of roleUtils
+import { 
+  normalizeRole, 
+  canAccessRoute,
+  getUnauthorizedRedirect 
+} from '@/utils/accessControl';
+import { AuthLoader } from '@/components/FullPageLoader.jsx';
 
 /**
- * PrivateRoute component - Protects routes that require authentication
- * Supports hierarchical role system: admin > staff > member
- * Handles nonmember redirection based on settings
+ * PrivateRoute - Authentication and Authorization Guard
+ * ⭐ ENHANCED: Now passes location state for smart redirects
  */
 const PrivateRoute = ({ children, allowedRoles = [] }) => {
-  const { user, authReady } = useAuth(); // Remove loading state
+  const { user, authReady } = useAuth();
   const location = useLocation();
-  const [settings, setSettings] = useState({ NonmemberSignupPrompt: false });
-  const [settingsLoaded, setSettingsLoaded] = useState(false);
 
-  // Load settings for nonmember handling
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const generalSettings = await getGeneralSettings();
-        if (generalSettings) {
-          setSettings(generalSettings);
-        }
-      } catch (error) {
-        console.error('Error loading settings in PrivateRoute:', error);
-      } finally {
-        setSettingsLoaded(true);
-      }
-    };
+  console.log('🔐 PrivateRoute check:', {
+    user: user?.email || 'none',
+    userRole: user?.role || 'none',
+    allowedRoles,
+    pathname: location.pathname,
+    authReady
+  });
 
-    loadSettings();
-  }, []);
-
-  // Show loading spinner while authentication state is being determined
-  if (!authReady || !settingsLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">
-            {!authReady ? 'Authenticating...' : 'Loading settings...'}
-          </p>
-        </div>
-      </div>
-    );
+  // ⭐ WAIT: Auth not ready
+  if (!authReady) {
+    return <AuthLoader message="Verifying access..." />;
   }
 
-  // If user is not authenticated, redirect to login
+  // ⭐ REDIRECT: No user = login (with location state)
   if (!user) {
-    console.log('🔒 User not authenticated, redirecting to login');
+    console.log('🚫 No user, redirecting to login with return path:', location.pathname);
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  const normalizedRole = normalizeRole(user.role);
-  const routeValidation = validateRouteAccess(normalizedRole, location.pathname);
-
-  // Check route access using route utils
-  if (!routeValidation.hasAccess) {
-    console.log(`🚫 Access denied for ${normalizedRole} to ${location.pathname}`);
-    console.log(`🔄 Redirecting to: ${routeValidation.redirectTo}`);
-    return <Navigate to={routeValidation.redirectTo} replace />;
+  // ⭐ ALLOW: No role restrictions = any authenticated user
+  if (allowedRoles.length === 0) {
+    console.log('✅ No role restrictions, allowing access');
+    return children;
   }
 
-  // FIXED: Handle nonmember users BEFORE role checking
-  if (user && (user.role === 'nonmember' || user.role === 'inactive' || !user.role)) {
-    console.log(`👤 User role '${user.role || 'undefined'}' identified as nonmember`);
-    
-    // If we're already on the dashboard, don't redirect again
-    if (location.pathname === '/dashboard') {
-      console.log('✅ Already on dashboard, allowing access');
-      return children;
-    }
-    
-    if (settings.NonmemberSignupPrompt) {
-      console.log('🔄 Redirecting nonmember to signup prompt');
-      return <Navigate to="/nonmember-prompt" replace />;
-    } else {
-      console.log('🔄 Redirecting nonmember to dashboard');
-      return <Navigate to="/dashboard" replace />;
-    }
+  // ⭐ CHECK: Role-based access
+  const userRole = normalizeRole(user.role || 'member');
+  const hasPermission = allowedRoles.includes(userRole);
+
+  if (!hasPermission) {
+    const redirectTo = getUnauthorizedRedirect(location.pathname, userRole);
+    return <Navigate to={redirectTo} replace />;
   }
 
-  // If allowedRoles is specified, do additional check
-  if (allowedRoles.length > 0 && !allowedRoles.includes(normalizedRole)) {
-    console.log(`🚫 Role ${normalizedRole} not in allowed roles: ${allowedRoles}`);
-    return <Navigate to={routeValidation.redirectTo} replace />;
+  // ⭐ CHECK: Route-specific access
+  if (!canAccessRoute(location.pathname, user.role)) {
+    console.log('🚫 PrivateRoute: Cannot access route');
+    const redirectTo = getUnauthorizedRedirect(location.pathname, user.role);
+    return <Navigate to={redirectTo} replace />;
   }
 
-  // User is authenticated and has permission
-  console.log('✅ User authenticated and authorized:', normalizedRole);
+  console.log('✅ Access granted');
   return children;
 };
 

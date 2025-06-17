@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthQuery as useAuth } from '@/hooks/useAuthQuery';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,13 +12,14 @@ import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast.js';
 
 const JoinOnline = () => {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [onlineJoiningEnabled, setOnlineJoiningEnabled] = useState(null);
   const [membershipPlans, setMembershipPlans] = useState([]);
   const [isStaff, setIsStaff] = useState(false);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [contactInfo, setContactInfo] = useState({
     email: 'info@nordicfitness.com', // Default fallback
     phone: '(555) 123-4567'         // Default fallback
@@ -139,9 +140,13 @@ const JoinOnline = () => {
         
         // Load membership plans
         await fetchMembershipPlans();
-        
+
+        // Mark settings as loaded
+        setSettingsLoaded(true);
+
       } catch (error) {
         console.error('❌ Error loading settings:', error);
+        setSettingsLoaded(true); // Still mark as loaded to prevent infinite loading
       }
     };
 
@@ -150,7 +155,7 @@ const JoinOnline = () => {
 
   // Handle authentication status
   useEffect(() => {
-    if (!loading) {
+    if (!authLoading) {
       if (!user) {
         // Show a message or redirect to login with return URL
         console.log('🔄 User not authenticated, showing sign-in prompt...');
@@ -163,7 +168,7 @@ const JoinOnline = () => {
         console.log('✅ User authenticated:', user.display_name);
       }
     }
-  }, [user, loading, navigate]);
+  }, [user, authLoading, navigate]);
 
   const fetchMembershipPlans = async () => {
     try {
@@ -178,14 +183,12 @@ const JoinOnline = () => {
           billing_type,
           duration_months,
           features,
-          available_for_online_sale,
-          active,
-          description,
+          available_online,
           category,
           color
         `)
-        .eq('available_for_online_sale', true)
-        .eq('active', true)
+        .eq('available_online', true)
+        .eq('category', 'Member Plans')
         .order('price', { ascending: true });
 
       if (error) {
@@ -245,7 +248,7 @@ const JoinOnline = () => {
   };
 
   // Loading state
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
         <div className="text-center">
@@ -293,8 +296,20 @@ const JoinOnline = () => {
     );
   }
 
-  // If online joining is disabled
-  if (!onlineJoiningEnabled) {
+  // If settings haven't loaded yet (but auth is complete), show loading
+  if (!authLoading && !settingsLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
+          <p className="mt-4 text-white">Loading membership options...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If online joining is disabled (only check after settings are loaded)
+  if (settingsLoaded && onlineJoiningEnabled === false) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4 flex items-center justify-center">
         <motion.div
@@ -354,8 +369,11 @@ const JoinOnline = () => {
     );
   }
 
-  // If no plans available for online sale
-  if (membershipPlans.length === 0) {
+  // If no plans available for online sale - only show this when:
+  // 1. Settings have been loaded (settingsLoaded = true)
+  // 2. Online joining is enabled (onlineJoiningEnabled = true)
+  // 3. No membership plans were found (membershipPlans.length === 0)
+  if (settingsLoaded && onlineJoiningEnabled && membershipPlans.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4 flex items-center justify-center">
         <motion.div
@@ -532,7 +550,7 @@ const JoinOnline = () => {
             className="text-center mb-8"
           >
             <Button
-              onClick={() => navigate(`/join-online/checkout?plan=${selectedPlan}`)}
+              onClick={() => navigate(`/join-online/customize?plan=${selectedPlan}`)}
               className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-12 py-4 text-xl font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
               size="lg"
             >

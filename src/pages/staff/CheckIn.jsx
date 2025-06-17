@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast.js';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge.jsx';
 import { format } from 'date-fns';
-import LoadingSpinner from '@/components/LoadingSpinner';
+import { LoadingSpinner } from '@/shared/components/LoadingStates';
 import { supabase } from '@/lib/supabaseClient.js';
 
 const CheckInPage = () => {

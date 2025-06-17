@@ -2,7 +2,7 @@
 import React from 'react';
 import ClassCard from './ClassCard.jsx';
 import { Calendar, Search } from 'lucide-react';
-import LoadingSpinner from '@/components/LoadingSpinner.jsx';
+import { LoadingSpinner } from '@/shared/components/LoadingStates';
 
 const AllClassesTabContent = ({ filteredClasses, memberAttendance, onBook, onCancel, onDetails, searchTerm, isBookingOrCancelling }) => {
   const isClassBooked = (classId) => memberAttendance.some(att => att.class_id === classId && att.status !== 'Cancelled');

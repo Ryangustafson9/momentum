@@ -25,7 +25,7 @@ import { dataService } from '@/services/dataService';
 import { Badge } from '@/components/ui/badge';
 import { format, addMonths, addDays } from 'date-fns';
 import { Briefcase, Shield, DollarSign, CalendarDays, Info, CheckCircle, XCircle } from 'lucide-react';
-import LoadingSpinner from '@/components/LoadingSpinner';
+import { LoadingSpinner } from '@/shared/components/LoadingStates';
 
 const PlanDetailsDisplay = ({ plan, type }) => {
   if (!plan) return <p className="text-sm text-muted-foreground">Select a {type} to see details.</p>;

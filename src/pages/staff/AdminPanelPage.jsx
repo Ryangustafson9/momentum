@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast.js';
 import { dataService } from '@/services/dataService';
-import LoadingSpinner from '@/components/LoadingSpinner';
+import { LoadingSpinner } from '@/shared/components/LoadingStates';
 import RoleFormDialog from '@/components/admin/settings/RoleFormDialog';
 import UserRolesList from '@/components/admin/settings/UserRolesList';
 import UserRolesSettingsTabHeader from '@/components/admin/settings/UserRolesSettingsTabHeader';

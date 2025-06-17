@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext'; // ONLY change from v2.1.46
+import { useAuthQuery as useAuth } from '@/hooks/useAuthQuery';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -15,12 +15,12 @@ import { Bell, User, LogOut, Settings } from 'lucide-react';
 
 const MemberTopNavbar = () => {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth(); // FIXED: Use useAuth instead of getLoggedInUser
+  const { user, logout } = useAuth();
   const [notifications] = useState([]);
 
   const handleSignOut = async () => {
     try {
-      await signOut();
+      await logout();
       navigate('/login');
     } catch (error) {
       console.error('Sign out error:', error);

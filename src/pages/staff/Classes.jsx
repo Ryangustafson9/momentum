@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PlusCircle, Edit, Trash2, Search, ChevronDown, Calendar, Users, Clock, Filter, ListFilter, Eye, EyeOff, Briefcase, CheckSquare, XSquare } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Search, ChevronDown, Calendar, Users, Clock, Filter, ListFilter, Eye, EyeOff, Briefcase, CheckSquare, XSquare, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -14,7 +15,13 @@ import { format, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast.js';
 import { getClasses, getMembershipTypes, getInstructors, dataService } from '@/services/dataService';
 import { useDebounce } from '@/hooks/useDebounce.js';
-import LoadingSpinner from '@/components/LoadingSpinner.jsx';
+import {
+  useTrainers,
+  useRooms,
+  useCheckAvailability,
+  useCreateClassWithResources
+} from '@/hooks/useScheduling';
+import { LoadingSpinner } from '@/shared/components/LoadingStates';
 import EmptyState from '@/components/EmptyState.jsx';
 import {
   Table,
@@ -40,6 +47,8 @@ const initialClassData = {
   name: '',
   description: '',
   instructor_id: '',
+  trainer_id: '',
+  room_id: '',
   start_time: '',
   end_time: '',
   max_capacity: '',
@@ -51,7 +60,18 @@ const initialClassData = {
 const ClassFormDialog = ({ isOpen, onClose, onSave, classData, instructors }) => {
   const [formData, setFormData] = useState(initialClassData);
   const [isLoading, setIsLoading] = useState(false);
+  const [availabilityStatus, setAvailabilityStatus] = useState({
+    trainer: null,
+    room: null,
+    checking: false
+  });
   const { toast } = useToast();
+
+  // Fetch trainers and rooms for resource assignment
+  const { data: trainers = [] } = useTrainers();
+  const { data: rooms = [] } = useRooms();
+  const checkAvailabilityMutation = useCheckAvailability();
+  const createWithResourcesMutation = useCreateClassWithResources();
 
   useEffect(() => {
     if (classData) {
@@ -60,6 +80,8 @@ const ClassFormDialog = ({ isOpen, onClose, onSave, classData, instructors }) =>
         start_time: classData.start_time ? format(parseISO(classData.start_time), "yyyy-MM-dd'T'HH:mm") : '',
         end_time: classData.end_time ? format(parseISO(classData.end_time), "yyyy-MM-dd'T'HH:mm") : '',
         instructor_id: classData.instructor_id || '',
+        trainer_id: classData.trainer_id || '',
+        room_id: classData.room_id || '',
         max_capacity: classData.max_capacity !== null ? String(classData.max_capacity) : '',
       });
     } else {
@@ -74,6 +96,61 @@ const ClassFormDialog = ({ isOpen, onClose, onSave, classData, instructors }) =>
 
   const handleSelectChange = (name, value) => {
     setFormData(prev => ({ ...prev, [name]: value }));
+
+    // Check availability when trainer, room, or time changes
+    if (['trainer_id', 'room_id'].includes(name)) {
+      checkResourceAvailability({ ...formData, [name]: value });
+    }
+  };
+
+  // Check resource availability
+  const checkResourceAvailability = async (data) => {
+    if (!data.start_time || !data.end_time) return;
+
+    setAvailabilityStatus(prev => ({ ...prev, checking: true }));
+
+    try {
+      const promises = [];
+
+      // Check trainer availability
+      if (data.trainer_id) {
+        promises.push(
+          checkAvailabilityMutation.mutateAsync({
+            type: 'trainer',
+            resourceId: data.trainer_id,
+            startTime: data.start_time,
+            endTime: data.end_time,
+            excludeId: data.id
+          }).then(available => ({ type: 'trainer', available }))
+        );
+      }
+
+      // Check room availability
+      if (data.room_id) {
+        promises.push(
+          checkAvailabilityMutation.mutateAsync({
+            type: 'room',
+            resourceId: data.room_id,
+            startTime: data.start_time,
+            endTime: data.end_time,
+            excludeId: data.id
+          }).then(available => ({ type: 'room', available }))
+        );
+      }
+
+      const results = await Promise.all(promises);
+
+      const newStatus = { checking: false, trainer: null, room: null };
+      results.forEach(result => {
+        newStatus[result.type] = result.available;
+      });
+
+      setAvailabilityStatus(newStatus);
+
+    } catch (error) {
+      console.error('Error checking availability:', error);
+      setAvailabilityStatus(prev => ({ ...prev, checking: false }));
+    }
   };
 
   const handleDateChange = (name, date) => {
@@ -86,6 +163,9 @@ const ClassFormDialog = ({ isOpen, onClose, onSave, classData, instructors }) =>
     const existingDate = formData[name] ? formData[name].split('T')[0] : format(new Date(), 'yyyy-MM-dd');
     const newDateTime = `${existingDate}T${time}`;
     setFormData(prev => ({ ...prev, [name]: newDateTime }));
+
+    // Check availability when time changes
+    checkResourceAvailability({ ...formData, [name]: newDateTime });
   };
 
 
@@ -105,7 +185,50 @@ const ClassFormDialog = ({ isOpen, onClose, onSave, classData, instructors }) =>
         return;
       }
 
-      await onSave(submissionData);
+      // Check for conflicts before saving
+      if ((formData.trainer_id && availabilityStatus.trainer === false) ||
+          (formData.room_id && availabilityStatus.room === false)) {
+        toast({
+          title: "Scheduling Conflict",
+          description: "There are resource conflicts. Please resolve them before saving.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Use enhanced class creation if trainer or room is assigned
+      if (formData.trainer_id || formData.room_id) {
+        const classData = {
+          name: submissionData.name,
+          description: submissionData.description,
+          trainerId: submissionData.trainer_id || null,
+          roomId: submissionData.room_id || null,
+          startTime: submissionData.start_time,
+          endTime: submissionData.end_time,
+          capacity: submissionData.max_capacity,
+          difficulty: submissionData.difficulty,
+          category: 'fitness', // Default category
+          setupTime: 15, // Default setup time
+          cleanupTime: 15, // Default cleanup time
+          createdBy: 'staff-user' // This should come from auth context
+        };
+
+        if (formData.id) {
+          // For updates, use the traditional method for now
+          await onSave(submissionData);
+        } else {
+          // For new classes with resources, use enhanced creation
+          await createWithResourcesMutation.mutateAsync({
+            organizationId: 'default-org-id',
+            classData
+          });
+        }
+      } else {
+        // Use traditional class creation for classes without resource assignment
+        await onSave(submissionData);
+      }
+
       toast({ title: "Success", description: `Class ${formData.id ? 'updated' : 'created'} successfully.` });
       onClose();
     } catch (error) {
@@ -139,6 +262,73 @@ const ClassFormDialog = ({ isOpen, onClose, onSave, classData, instructors }) =>
                 <SelectContent>
                   {instructors.map(instructor => (
                     <SelectItem key={instructor.id} value={instructor.id}>{instructor.name || `${instructor.first_name} ${instructor.last_name}`}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Enhanced Resource Assignment Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="trainer_id" className="text-slate-700 dark:text-slate-300 flex items-center">
+                Assigned Trainer
+                {availabilityStatus.checking && (
+                  <div className="ml-2 animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                )}
+                {availabilityStatus.trainer === false && (
+                  <Badge variant="destructive" className="ml-2 text-xs">Conflict</Badge>
+                )}
+                {availabilityStatus.trainer === true && (
+                  <Badge className="ml-2 text-xs bg-green-100 text-green-800">Available</Badge>
+                )}
+              </Label>
+              <Select name="trainer_id" value={formData.trainer_id} onValueChange={(value) => handleSelectChange('trainer_id', value)}>
+                <SelectTrigger className="bg-slate-50 dark:bg-slate-800 border-slate-300 dark:border-slate-700">
+                  <SelectValue placeholder="Select Trainer" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No trainer assigned</SelectItem>
+                  {trainers.filter(t => t.is_active).map(trainer => (
+                    <SelectItem key={trainer.id} value={trainer.id}>
+                      {trainer.first_name} {trainer.last_name}
+                      {trainer.specialties && trainer.specialties.length > 0 && (
+                        <span className="text-xs text-gray-500 ml-2">
+                          ({trainer.specialties.slice(0, 2).join(', ')})
+                        </span>
+                      )}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="room_id" className="text-slate-700 dark:text-slate-300 flex items-center">
+                Assigned Room
+                {availabilityStatus.checking && (
+                  <div className="ml-2 animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                )}
+                {availabilityStatus.room === false && (
+                  <Badge variant="destructive" className="ml-2 text-xs">Conflict</Badge>
+                )}
+                {availabilityStatus.room === true && (
+                  <Badge className="ml-2 text-xs bg-green-100 text-green-800">Available</Badge>
+                )}
+              </Label>
+              <Select name="room_id" value={formData.room_id} onValueChange={(value) => handleSelectChange('room_id', value)}>
+                <SelectTrigger className="bg-slate-50 dark:bg-slate-800 border-slate-300 dark:border-slate-700">
+                  <SelectValue placeholder="Select Room" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No room assigned</SelectItem>
+                  {rooms.filter(r => r.is_active && r.is_bookable).map(room => (
+                    <SelectItem key={room.id} value={room.id}>
+                      {room.name}
+                      <span className="text-xs text-gray-500 ml-2">
+                        (Capacity: {room.capacity}, {room.room_type})
+                      </span>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -213,7 +403,27 @@ const ClassFormDialog = ({ isOpen, onClose, onSave, classData, instructors }) =>
               />
             </div>
           </div>
-          
+
+          {/* Conflict Warning */}
+          {((formData.trainer_id && availabilityStatus.trainer === false) ||
+            (formData.room_id && availabilityStatus.room === false)) && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+                <h4 className="font-medium text-red-800">Scheduling Conflicts Detected</h4>
+              </div>
+              <div className="mt-2 text-sm text-red-700">
+                {formData.trainer_id && availabilityStatus.trainer === false && (
+                  <div>• The selected trainer is not available at this time</div>
+                )}
+                {formData.room_id && availabilityStatus.room === false && (
+                  <div>• The selected room is not available at this time</div>
+                )}
+                <div className="mt-2 font-medium">Please select different resources or change the class time.</div>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="max_capacity" className="text-slate-700 dark:text-slate-300">Max Capacity</Label>

@@ -1,53 +1,75 @@
+// 🚨 DO NOT MODIFY WITHOUT REVIEW - Login flow and layout is stable
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthQuery as useAuth } from '@/hooks/useAuthQuery';
+import { getDefaultRoute, getLoginRedirect } from '@/utils/accessControl';
+import { AuthLoader } from '@/components/FullPageLoader.jsx';
 
 /**
- * PublicRoute component - Protects routes that should only be accessible to non-authenticated users
- * Redirects authenticated users to their appropriate dashboard
+ * Enhanced PublicRoute with intended route handling
+ * Redirects authenticated users away from login/signup pages
+ * Preserves intended destination for post-login redirect
  */
-const PublicRoute = ({ children }) => {
-  const { user, loading } = useAuth();
+const PublicRoute = ({ children, allowAuthenticatedUsers = false }) => {
+  const { user, authReady, loading } = useAuth();
   const location = useLocation();
 
-  // Show loading spinner while authentication state is being determined
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
+  console.log('🔍 PublicRoute render:', {
+    user: user?.email || null,
+    userId: user?.id || null,
+    userRole: user?.role || null,
+    authReady,
+    loading,
+    pathname: location.pathname,
+    allowAuthenticatedUsers,
+    timestamp: new Date().toISOString()
+  });
+
+  // ⭐ LOADING: Show loader while auth state is being determined
+  if (!authReady || loading) {
+    console.log('⏳ PublicRoute: Auth not ready, showing loader...');
+    return <AuthLoader message="Checking authentication..." />;
   }
 
-  // If user is authenticated, redirect to appropriate dashboard
+  // ⭐ SPECIAL: Some public routes might allow authenticated users
+  if (allowAuthenticatedUsers) {
+    console.log('✅ PublicRoute: Allowing authenticated users on this route');
+    return children;
+  }
+
+  // ⭐ REDIRECT: If user is logged in, redirect to appropriate dashboard
   if (user) {
-    console.log('👤 User is authenticated, redirecting to dashboard');
-    
-    // Get the intended destination from location state, or default to role-based dashboard
-    const from = location.state?.from?.pathname;
-    
-    if (from && from !== '/login' && from !== '/signup') {
-      return <Navigate to={from} replace />;
+    console.log('👤 PublicRoute: User authenticated, checking redirect logic...', {
+      pathname: location.pathname,
+      searchParams: location.search,
+      userRole: user.role
+    });
+
+    // ⭐ SPECIAL CASE: Allow users to stay on signup success page
+    if (location.pathname === '/signup' && location.search.includes('success=true')) {
+      console.log('✅ PublicRoute: Allowing user to stay on signup success page');
+      return children;
     }
 
-    // FUTURE-READY: Redirect based on hierarchical role system
-    switch (user.role) {
-      case 'admin':
-        return <Navigate to="/dashboard" replace />;
-      case 'staff':
-        return <Navigate to="/dashboard" replace />;
-      case 'member':
-        return <Navigate to="/member/dashboard" replace />;
-      default:
-        return <Navigate to="/dashboard" replace />;
+    // Check if there's an intended destination from location state
+    const intendedRoute = location.state?.from?.pathname;
+
+    let redirectTo;
+    if (intendedRoute && intendedRoute !== location.pathname) {
+      // Use smart redirect that considers intended route
+      redirectTo = getLoginRedirect(user, intendedRoute);
+      console.log('🎯 PublicRoute: Redirecting to intended route:', redirectTo);
+    } else {
+      // Use default role-based redirect
+      redirectTo = getDefaultRoute(user.role);
+      console.log('🎯 PublicRoute: Redirecting to default route:', redirectTo);
     }
+
+    return <Navigate to={redirectTo} replace />;
   }
 
-  // User is not authenticated, render the public route
-  console.log('🌐 User not authenticated, showing public route');
+  // ⭐ RENDER: User not logged in, show public page
+  console.log('🔓 PublicRoute: User not authenticated, showing public content');
   return children;
 };
 

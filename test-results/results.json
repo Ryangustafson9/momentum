@@ -1,0 +1,765 @@
+{
+  "numTotalTestSuites": 22,
+  "numPassedTestSuites": 22,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 52,
+  "numPassedTests": 34,
+  "numFailedTests": 18,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "startTime": 1750164041494,
+  "success": false,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "",
+            "Button Component",
+            "Rendering"
+          ],
+          "fullName": " Button Component Rendering renders button with text",
+          "status": "passed",
+          "title": "renders button with text",
+          "duration": 58,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "Button Component",
+            "Rendering"
+          ],
+          "fullName": " Button Component Rendering renders button with custom className",
+          "status": "passed",
+          "title": "renders button with custom className",
+          "duration": 7,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "Button Component",
+            "Rendering"
+          ],
+          "fullName": " Button Component Rendering renders disabled button",
+          "status": "passed",
+          "title": "renders disabled button",
+          "duration": 7,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "Button Component",
+            "Interactions"
+          ],
+          "fullName": " Button Component Interactions calls onClick when clicked",
+          "status": "passed",
+          "title": "calls onClick when clicked",
+          "duration": 33,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "Button Component",
+            "Interactions"
+          ],
+          "fullName": " Button Component Interactions does not call onClick when disabled",
+          "status": "passed",
+          "title": "does not call onClick when disabled",
+          "duration": 21,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "Button Component",
+            "Variants"
+          ],
+          "fullName": " Button Component Variants applies default variant classes",
+          "status": "passed",
+          "title": "applies default variant classes",
+          "duration": 3,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "Button Component",
+            "Variants"
+          ],
+          "fullName": " Button Component Variants applies secondary variant classes",
+          "status": "passed",
+          "title": "applies secondary variant classes",
+          "duration": 5,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "Button Component",
+            "Variants"
+          ],
+          "fullName": " Button Component Variants applies destructive variant classes",
+          "status": "passed",
+          "title": "applies destructive variant classes",
+          "duration": 3,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "Button Component",
+            "Sizes"
+          ],
+          "fullName": " Button Component Sizes applies default size classes",
+          "status": "passed",
+          "title": "applies default size classes",
+          "duration": 6,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "Button Component",
+            "Sizes"
+          ],
+          "fullName": " Button Component Sizes applies small size classes",
+          "status": "passed",
+          "title": "applies small size classes",
+          "duration": 5,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "Button Component",
+            "Sizes"
+          ],
+          "fullName": " Button Component Sizes applies large size classes",
+          "status": "passed",
+          "title": "applies large size classes",
+          "duration": 4,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "Button Component",
+            "Accessibility"
+          ],
+          "fullName": " Button Component Accessibility supports keyboard navigation",
+          "status": "passed",
+          "title": "supports keyboard navigation",
+          "duration": 27,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "Button Component",
+            "Accessibility"
+          ],
+          "fullName": " Button Component Accessibility has proper ARIA attributes when disabled",
+          "status": "passed",
+          "title": "has proper ARIA attributes when disabled",
+          "duration": 2,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "Button Component",
+            "Accessibility"
+          ],
+          "fullName": " Button Component Accessibility supports custom ARIA attributes",
+          "status": "passed",
+          "title": "supports custom ARIA attributes",
+          "duration": 3,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "Button Component",
+            "Form Integration"
+          ],
+          "fullName": " Button Component Form Integration supports form submission",
+          "status": "passed",
+          "title": "supports form submission",
+          "duration": 20,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "Button Component",
+            "Form Integration"
+          ],
+          "fullName": " Button Component Form Integration supports form reset",
+          "status": "passed",
+          "title": "supports form reset",
+          "duration": 75,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "Button Component",
+            "Loading State"
+          ],
+          "fullName": " Button Component Loading State renders normally without loading prop",
+          "status": "passed",
+          "title": "renders normally without loading prop",
+          "duration": 4,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "Button Component",
+            "Loading State"
+          ],
+          "fullName": " Button Component Loading State handles loading prop gracefully",
+          "status": "passed",
+          "title": "handles loading prop gracefully",
+          "duration": 10,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "Button Component",
+            "Icon Support"
+          ],
+          "fullName": " Button Component Icon Support renders with icon",
+          "status": "passed",
+          "title": "renders with icon",
+          "duration": 4,
+          "failureMessages": []
+        }
+      ],
+      "startTime": 1750164043789,
+      "endTime": 1750164044086,
+      "status": "passed",
+      "message": "",
+      "name": "C:/Users/Ryan_/Desktop/momentumappv1/src/tests/components/Button.test.jsx"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "LoadingSpinner"
+          ],
+          "fullName": " LoadingStates Components LoadingSpinner renders with default size",
+          "status": "failed",
+          "title": "renders with default size",
+          "duration": 42,
+          "failureMessages": [
+            "Unable to find an element with the role \"status\"\n\nThere are no available roles.\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<svg\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"animate-spin h-6 w-6 \"\u001b[39m\n      \u001b[33mfill\u001b[39m=\u001b[32m\"none\"\u001b[39m\n      \u001b[33mheight\u001b[39m=\u001b[32m\"24\"\u001b[39m\n      \u001b[33mstroke\u001b[39m=\u001b[32m\"currentColor\"\u001b[39m\n      \u001b[33mstroke-linecap\u001b[39m=\u001b[32m\"round\"\u001b[39m\n      \u001b[33mstroke-linejoin\u001b[39m=\u001b[32m\"round\"\u001b[39m\n      \u001b[33mstroke-width\u001b[39m=\u001b[32m\"2\"\u001b[39m\n      \u001b[33mviewBox\u001b[39m=\u001b[32m\"0 0 24 24\"\u001b[39m\n      \u001b[33mwidth\u001b[39m=\u001b[32m\"24\"\u001b[39m\n      \u001b[33mxmlns\u001b[39m=\u001b[32m\"http://www.w3.org/2000/svg\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<path\u001b[39m\n        \u001b[33md\u001b[39m=\u001b[32m\"M21 12a9 9 0 1 1-6.219-8.56\"\u001b[39m\n      \u001b[36m/>\u001b[39m\n    \u001b[36m</svg>\u001b[39m\n  \u001b[36m</div>\u001b[39m\n\u001b[36m</body>\u001b[39m"
+          ],
+          "location": {
+            "line": 37,
+            "column": 19
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "LoadingSpinner"
+          ],
+          "fullName": " LoadingStates Components LoadingSpinner renders with custom size",
+          "status": "failed",
+          "title": "renders with custom size",
+          "duration": 5,
+          "failureMessages": [
+            "Unable to find an element with the role \"status\"\n\nThere are no available roles.\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<svg\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"animate-spin h-8 w-8 \"\u001b[39m\n      \u001b[33mfill\u001b[39m=\u001b[32m\"none\"\u001b[39m\n      \u001b[33mheight\u001b[39m=\u001b[32m\"24\"\u001b[39m\n      \u001b[33mstroke\u001b[39m=\u001b[32m\"currentColor\"\u001b[39m\n      \u001b[33mstroke-linecap\u001b[39m=\u001b[32m\"round\"\u001b[39m\n      \u001b[33mstroke-linejoin\u001b[39m=\u001b[32m\"round\"\u001b[39m\n      \u001b[33mstroke-width\u001b[39m=\u001b[32m\"2\"\u001b[39m\n      \u001b[33mviewBox\u001b[39m=\u001b[32m\"0 0 24 24\"\u001b[39m\n      \u001b[33mwidth\u001b[39m=\u001b[32m\"24\"\u001b[39m\n      \u001b[33mxmlns\u001b[39m=\u001b[32m\"http://www.w3.org/2000/svg\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<path\u001b[39m\n        \u001b[33md\u001b[39m=\u001b[32m\"M21 12a9 9 0 1 1-6.219-8.56\"\u001b[39m\n      \u001b[36m/>\u001b[39m\n    \u001b[36m</svg>\u001b[39m\n  \u001b[36m</div>\u001b[39m\n\u001b[36m</body>\u001b[39m"
+          ],
+          "location": {
+            "line": 37,
+            "column": 19
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "LoadingSpinner"
+          ],
+          "fullName": " LoadingStates Components LoadingSpinner applies custom className",
+          "status": "failed",
+          "title": "applies custom className",
+          "duration": 3,
+          "failureMessages": [
+            "Unable to find an element with the role \"status\"\n\nThere are no available roles.\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<svg\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"animate-spin h-6 w-6 text-red-500\"\u001b[39m\n      \u001b[33mfill\u001b[39m=\u001b[32m\"none\"\u001b[39m\n      \u001b[33mheight\u001b[39m=\u001b[32m\"24\"\u001b[39m\n      \u001b[33mstroke\u001b[39m=\u001b[32m\"currentColor\"\u001b[39m\n      \u001b[33mstroke-linecap\u001b[39m=\u001b[32m\"round\"\u001b[39m\n      \u001b[33mstroke-linejoin\u001b[39m=\u001b[32m\"round\"\u001b[39m\n      \u001b[33mstroke-width\u001b[39m=\u001b[32m\"2\"\u001b[39m\n      \u001b[33mviewBox\u001b[39m=\u001b[32m\"0 0 24 24\"\u001b[39m\n      \u001b[33mwidth\u001b[39m=\u001b[32m\"24\"\u001b[39m\n      \u001b[33mxmlns\u001b[39m=\u001b[32m\"http://www.w3.org/2000/svg\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<path\u001b[39m\n        \u001b[33md\u001b[39m=\u001b[32m\"M21 12a9 9 0 1 1-6.219-8.56\"\u001b[39m\n      \u001b[36m/>\u001b[39m\n    \u001b[36m</svg>\u001b[39m\n  \u001b[36m</div>\u001b[39m\n\u001b[36m</body>\u001b[39m"
+          ],
+          "location": {
+            "line": 37,
+            "column": 19
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "LoadingSpinner"
+          ],
+          "fullName": " LoadingStates Components LoadingSpinner has proper accessibility attributes",
+          "status": "failed",
+          "title": "has proper accessibility attributes",
+          "duration": 3,
+          "failureMessages": [
+            "Unable to find an element with the role \"status\"\n\nThere are no available roles.\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<svg\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"animate-spin h-6 w-6 \"\u001b[39m\n      \u001b[33mfill\u001b[39m=\u001b[32m\"none\"\u001b[39m\n      \u001b[33mheight\u001b[39m=\u001b[32m\"24\"\u001b[39m\n      \u001b[33mstroke\u001b[39m=\u001b[32m\"currentColor\"\u001b[39m\n      \u001b[33mstroke-linecap\u001b[39m=\u001b[32m\"round\"\u001b[39m\n      \u001b[33mstroke-linejoin\u001b[39m=\u001b[32m\"round\"\u001b[39m\n      \u001b[33mstroke-width\u001b[39m=\u001b[32m\"2\"\u001b[39m\n      \u001b[33mviewBox\u001b[39m=\u001b[32m\"0 0 24 24\"\u001b[39m\n      \u001b[33mwidth\u001b[39m=\u001b[32m\"24\"\u001b[39m\n      \u001b[33mxmlns\u001b[39m=\u001b[32m\"http://www.w3.org/2000/svg\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<path\u001b[39m\n        \u001b[33md\u001b[39m=\u001b[32m\"M21 12a9 9 0 1 1-6.219-8.56\"\u001b[39m\n      \u001b[36m/>\u001b[39m\n    \u001b[36m</svg>\u001b[39m\n  \u001b[36m</div>\u001b[39m\n\u001b[36m</body>\u001b[39m"
+          ],
+          "location": {
+            "line": 37,
+            "column": 19
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "PageLoading"
+          ],
+          "fullName": " LoadingStates Components PageLoading renders with default message",
+          "status": "passed",
+          "title": "renders with default message",
+          "duration": 7,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "PageLoading"
+          ],
+          "fullName": " LoadingStates Components PageLoading renders with custom message",
+          "status": "passed",
+          "title": "renders with custom message",
+          "duration": 2,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "PageLoading"
+          ],
+          "fullName": " LoadingStates Components PageLoading has proper layout structure",
+          "status": "failed",
+          "title": "has proper layout structure",
+          "duration": 4,
+          "failureMessages": [
+            "expect(element).toHaveClass(\"min-h-screen flex flex-col items-center justify-center\")\n\nExpected the element to have class:\n  min-h-screen flex flex-col items-center justify-center\nReceived:\n  text-center"
+          ],
+          "location": {
+            "line": 70,
+            "column": 25
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "PageLoading"
+          ],
+          "fullName": " LoadingStates Components PageLoading includes loading spinner",
+          "status": "failed",
+          "title": "includes loading spinner",
+          "duration": 20,
+          "failureMessages": [
+            "Unable to find an element with the role \"status\"\n\nHere are the available roles:\n\n  heading:\n\n  Name \"Loading...\":\n  \u001b[36m<h2\u001b[39m\n    \u001b[33mclass\u001b[39m=\u001b[32m\"text-xl font-semibold text-gray-900 mb-2\"\u001b[39m\n  \u001b[36m/>\u001b[39m\n\n  --------------------------------------------------\n  paragraph:\n\n  Name \"\":\n  \u001b[36m<p\u001b[39m\n    \u001b[33mclass\u001b[39m=\u001b[32m\"text-gray-600\"\u001b[39m\n  \u001b[36m/>\u001b[39m\n\n  --------------------------------------------------\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"min-h-screen flex flex-col items-center justify-center bg-gray-50\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"text-center\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<svg\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-spin h-12 w-12 text-primary mb-4\"\u001b[39m\n          \u001b[33mfill\u001b[39m=\u001b[32m\"none\"\u001b[39m\n          \u001b[33mheight\u001b[39m=\u001b[32m\"24\"\u001b[39m\n          \u001b[33mstroke\u001b[39m=\u001b[32m\"currentColor\"\u001b[39m\n          \u001b[33mstroke-linecap\u001b[39m=\u001b[32m\"round\"\u001b[39m\n          \u001b[33mstroke-linejoin\u001b[39m=\u001b[32m\"round\"\u001b[39m\n          \u001b[33mstroke-width\u001b[39m=\u001b[32m\"2\"\u001b[39m\n          \u001b[33mviewBox\u001b[39m=\u001b[32m\"0 0 24 24\"\u001b[39m\n          \u001b[33mwidth\u001b[39m=\u001b[32m\"24\"\u001b[39m\n          \u001b[33mxmlns\u001b[39m=\u001b[32m\"http://www.w3.org/2000/svg\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[36m<path\u001b[39m\n            \u001b[33md\u001b[39m=\u001b[32m\"M21 12a9 9 0 1 1-6.219-8.56\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n        \u001b[36m</svg>\u001b[39m\n        \u001b[36m<h2\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"text-xl font-semibold text-gray-900 mb-2\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[0mLoading...\u001b[0m\n        \u001b[36m</h2>\u001b[39m\n        \u001b[36m<p\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"text-gray-600\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[0mPlease wait while we load your content\u001b[0m\n        \u001b[36m</p>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n    \u001b[36m</div>\u001b[39m\n  \u001b[36m</div>\u001b[39m\n\u001b[36m</body>\u001b[39m"
+          ],
+          "location": {
+            "line": 37,
+            "column": 19
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "InlineLoading"
+          ],
+          "fullName": " LoadingStates Components InlineLoading renders with default message",
+          "status": "passed",
+          "title": "renders with default message",
+          "duration": 4,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "InlineLoading"
+          ],
+          "fullName": " LoadingStates Components InlineLoading renders with custom message",
+          "status": "passed",
+          "title": "renders with custom message",
+          "duration": 3,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "InlineLoading"
+          ],
+          "fullName": " LoadingStates Components InlineLoading applies custom className",
+          "status": "passed",
+          "title": "applies custom className",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "InlineLoading"
+          ],
+          "fullName": " LoadingStates Components InlineLoading has proper inline layout",
+          "status": "passed",
+          "title": "has proper inline layout",
+          "duration": 2,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "ButtonLoading"
+          ],
+          "fullName": " LoadingStates Components ButtonLoading renders children when not loading",
+          "status": "passed",
+          "title": "renders children when not loading",
+          "duration": 2,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "ButtonLoading"
+          ],
+          "fullName": " LoadingStates Components ButtonLoading shows spinner when loading",
+          "status": "failed",
+          "title": "shows spinner when loading",
+          "duration": 9,
+          "failureMessages": [
+            "Unable to find an element with the role \"status\"\n\nHere are the available roles:\n\n  button:\n\n  Name \"Save Changes\":\n  \u001b[36m<button\u001b[39m\n    \u001b[33mdisabled\u001b[39m=\u001b[32m\"\"\u001b[39m\n  \u001b[36m/>\u001b[39m\n\n  --------------------------------------------------\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<button\u001b[39m\n      \u001b[33mdisabled\u001b[39m=\u001b[32m\"\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<svg\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"animate-spin h-4 w-4 mr-2\"\u001b[39m\n        \u001b[33mfill\u001b[39m=\u001b[32m\"none\"\u001b[39m\n        \u001b[33mheight\u001b[39m=\u001b[32m\"24\"\u001b[39m\n        \u001b[33mstroke\u001b[39m=\u001b[32m\"currentColor\"\u001b[39m\n        \u001b[33mstroke-linecap\u001b[39m=\u001b[32m\"round\"\u001b[39m\n        \u001b[33mstroke-linejoin\u001b[39m=\u001b[32m\"round\"\u001b[39m\n        \u001b[33mstroke-width\u001b[39m=\u001b[32m\"2\"\u001b[39m\n        \u001b[33mviewBox\u001b[39m=\u001b[32m\"0 0 24 24\"\u001b[39m\n        \u001b[33mwidth\u001b[39m=\u001b[32m\"24\"\u001b[39m\n        \u001b[33mxmlns\u001b[39m=\u001b[32m\"http://www.w3.org/2000/svg\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<path\u001b[39m\n          \u001b[33md\u001b[39m=\u001b[32m\"M21 12a9 9 0 1 1-6.219-8.56\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</svg>\u001b[39m\n      \u001b[0mSave Changes\u001b[0m\n    \u001b[36m</button>\u001b[39m\n  \u001b[36m</div>\u001b[39m\n\u001b[36m</body>\u001b[39m"
+          ],
+          "location": {
+            "line": 37,
+            "column": 19
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "ButtonLoading"
+          ],
+          "fullName": " LoadingStates Components ButtonLoading disables button when loading",
+          "status": "passed",
+          "title": "disables button when loading",
+          "duration": 4,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "ButtonLoading"
+          ],
+          "fullName": " LoadingStates Components ButtonLoading passes through button props",
+          "status": "passed",
+          "title": "passes through button props",
+          "duration": 6,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "TableLoading"
+          ],
+          "fullName": " LoadingStates Components TableLoading renders default number of rows and columns",
+          "status": "failed",
+          "title": "renders default number of rows and columns",
+          "duration": 7,
+          "failureMessages": [
+            "Unable to find an element by: [data-testid=\"/skeleton/i\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"space-y-3\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex space-x-4\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex space-x-4\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex space-x-4\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex space-x-4\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex space-x-4\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n    \u001b[36m</div>\u001b[39m\n  \u001b[36m</div>\u001b[39m\n\u001b[36m</body>\u001b[39m"
+          ],
+          "location": {
+            "line": 37,
+            "column": 19
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "TableLoading"
+          ],
+          "fullName": " LoadingStates Components TableLoading renders custom number of rows and columns",
+          "status": "failed",
+          "title": "renders custom number of rows and columns",
+          "duration": 2,
+          "failureMessages": [
+            "Unable to find an element by: [data-testid=\"/skeleton/i\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"space-y-3\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex space-x-4\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex space-x-4\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex space-x-4\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n    \u001b[36m</div>\u001b[39m\n  \u001b[36m</div>\u001b[39m\n\u001b[36m</body>\u001b[39m"
+          ],
+          "location": {
+            "line": 37,
+            "column": 19
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "TableLoading"
+          ],
+          "fullName": " LoadingStates Components TableLoading has proper table structure",
+          "status": "failed",
+          "title": "has proper table structure",
+          "duration": 3,
+          "failureMessages": [
+            "Unable to find an element by: [data-testid=\"/skeleton/i\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"space-y-3\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex space-x-4\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex space-x-4\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex space-x-4\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex space-x-4\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex space-x-4\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 flex-1\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n    \u001b[36m</div>\u001b[39m\n  \u001b[36m</div>\u001b[39m\n\u001b[36m</body>\u001b[39m"
+          ],
+          "location": {
+            "line": 37,
+            "column": 19
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "CardLoading"
+          ],
+          "fullName": " LoadingStates Components CardLoading renders card skeleton structure",
+          "status": "failed",
+          "title": "renders card skeleton structure",
+          "duration": 3,
+          "failureMessages": [
+            "Unable to find an element by: [data-testid=\"/skeleton/i\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"rounded-lg border bg-card text-card-foreground shadow-sm\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex flex-col space-y-1.5 p-6\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-6 w-1/3\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 w-1/2\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"p-6 pt-0 space-y-3\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 w-full\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 w-full\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 w-full\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n    \u001b[36m</div>\u001b[39m\n  \u001b[36m</div>\u001b[39m\n\u001b[36m</body>\u001b[39m"
+          ],
+          "location": {
+            "line": 37,
+            "column": 19
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "CardLoading"
+          ],
+          "fullName": " LoadingStates Components CardLoading has proper card layout",
+          "status": "failed",
+          "title": "has proper card layout",
+          "duration": 2,
+          "failureMessages": [
+            "Unable to find an element by: [data-testid=\"/card/i\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"rounded-lg border bg-card text-card-foreground shadow-sm\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex flex-col space-y-1.5 p-6\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-6 w-1/3\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 w-1/2\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"p-6 pt-0 space-y-3\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 w-full\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 w-full\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-4 w-full\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n    \u001b[36m</div>\u001b[39m\n  \u001b[36m</div>\u001b[39m\n\u001b[36m</body>\u001b[39m"
+          ],
+          "location": {
+            "line": 37,
+            "column": 19
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "ChartLoading"
+          ],
+          "fullName": " LoadingStates Components ChartLoading renders with default height",
+          "status": "failed",
+          "title": "renders with default height",
+          "duration": 3,
+          "failureMessages": [
+            "Unable to find an element by: [data-testid=\"/skeleton/i\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"rounded-lg border bg-card text-card-foreground shadow-sm\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex flex-col space-y-1.5 p-6\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-6 w-1/3\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"p-6 pt-0\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"flex items-end justify-between space-x-2\"\u001b[39m\n          \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 300px;\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted w-full\"\u001b[39m\n            \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 99.0804819798783%;\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted w-full\"\u001b[39m\n            \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 36.05142120052335%;\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted w-full\"\u001b[39m\n            \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 37.34379745372665%;\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted w-full\"\u001b[39m\n            \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 27.353602175905216%;\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted w-full\"\u001b[39m\n            \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 42.884143933585506%;\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted w-full\"\u001b[39m\n            \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 73.77261111978916%;\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted w-full\"\u001b[39m\n            \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 85.38241580376159%;\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n        \u001b[36m</div>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n    \u001b[36m</div>\u001b[39m\n  \u001b[36m</div>\u001b[39m\n\u001b[36m</body>\u001b[39m"
+          ],
+          "location": {
+            "line": 37,
+            "column": 19
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "ChartLoading"
+          ],
+          "fullName": " LoadingStates Components ChartLoading renders with custom height",
+          "status": "failed",
+          "title": "renders with custom height",
+          "duration": 2,
+          "failureMessages": [
+            "Unable to find an element by: [data-testid=\"/skeleton/i\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"rounded-lg border bg-card text-card-foreground shadow-sm\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex flex-col space-y-1.5 p-6\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-6 w-1/3\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"p-6 pt-0\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"flex items-end justify-between space-x-2\"\u001b[39m\n          \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 400px;\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted w-full\"\u001b[39m\n            \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 83.37138860983615%;\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted w-full\"\u001b[39m\n            \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 57.91289696973878%;\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted w-full\"\u001b[39m\n            \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 52.2969134434344%;\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted w-full\"\u001b[39m\n            \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 83.57641061685845%;\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted w-full\"\u001b[39m\n            \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 77.28701693845895%;\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted w-full\"\u001b[39m\n            \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 26.954397349832924%;\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted w-full\"\u001b[39m\n            \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 55.45153440459772%;\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n        \u001b[36m</div>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n    \u001b[36m</div>\u001b[39m\n  \u001b[36m</div>\u001b[39m\n\u001b[36m</body>\u001b[39m"
+          ],
+          "location": {
+            "line": 37,
+            "column": 19
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "ChartLoading"
+          ],
+          "fullName": " LoadingStates Components ChartLoading includes chart bars simulation",
+          "status": "failed",
+          "title": "includes chart bars simulation",
+          "duration": 4,
+          "failureMessages": [
+            "Unable to find an element by: [data-testid=\"/skeleton/i\"]\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"rounded-lg border bg-card text-card-foreground shadow-sm\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex flex-col space-y-1.5 p-6\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted h-6 w-1/3\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"p-6 pt-0\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"flex items-end justify-between space-x-2\"\u001b[39m\n          \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 300px;\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted w-full\"\u001b[39m\n            \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 29.500870456649864%;\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted w-full\"\u001b[39m\n            \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 98.69950848637811%;\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted w-full\"\u001b[39m\n            \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 26.559123445326147%;\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted w-full\"\u001b[39m\n            \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 25.794706256262216%;\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted w-full\"\u001b[39m\n            \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 38.09513328854641%;\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted w-full\"\u001b[39m\n            \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 81.47335946012497%;\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-pulse rounded-md bg-muted w-full\"\u001b[39m\n            \u001b[33mstyle\u001b[39m=\u001b[32m\"height: 62.138113808835996%;\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n        \u001b[36m</div>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n    \u001b[36m</div>\u001b[39m\n  \u001b[36m</div>\u001b[39m\n\u001b[36m</body>\u001b[39m"
+          ],
+          "location": {
+            "line": 37,
+            "column": 19
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "SuspenseFallback"
+          ],
+          "fullName": " LoadingStates Components SuspenseFallback renders with default message",
+          "status": "passed",
+          "title": "renders with default message",
+          "duration": 2,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "SuspenseFallback"
+          ],
+          "fullName": " LoadingStates Components SuspenseFallback renders with custom message",
+          "status": "passed",
+          "title": "renders with custom message",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "SuspenseFallback"
+          ],
+          "fullName": " LoadingStates Components SuspenseFallback has proper suspense layout",
+          "status": "failed",
+          "title": "has proper suspense layout",
+          "duration": 1,
+          "failureMessages": [
+            "expect(element).toHaveClass(\"flex items-center justify-center p-8\")\n\nExpected the element to have class:\n  flex items-center justify-center p-8\nReceived:\n  text-center"
+          ],
+          "location": {
+            "line": 239,
+            "column": 25
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "SuspenseFallback"
+          ],
+          "fullName": " LoadingStates Components SuspenseFallback includes loading spinner",
+          "status": "failed",
+          "title": "includes loading spinner",
+          "duration": 3,
+          "failureMessages": [
+            "Unable to find an element with the role \"status\"\n\nHere are the available roles:\n\n  paragraph:\n\n  Name \"\":\n  \u001b[36m<p\u001b[39m\n    \u001b[33mclass\u001b[39m=\u001b[32m\"text-gray-600\"\u001b[39m\n  \u001b[36m/>\u001b[39m\n\n  --------------------------------------------------\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33mclass\u001b[39m=\u001b[32m\"flex items-center justify-center p-8\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"text-center\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<svg\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-spin h-8 w-8 text-primary mb-4\"\u001b[39m\n          \u001b[33mfill\u001b[39m=\u001b[32m\"none\"\u001b[39m\n          \u001b[33mheight\u001b[39m=\u001b[32m\"24\"\u001b[39m\n          \u001b[33mstroke\u001b[39m=\u001b[32m\"currentColor\"\u001b[39m\n          \u001b[33mstroke-linecap\u001b[39m=\u001b[32m\"round\"\u001b[39m\n          \u001b[33mstroke-linejoin\u001b[39m=\u001b[32m\"round\"\u001b[39m\n          \u001b[33mstroke-width\u001b[39m=\u001b[32m\"2\"\u001b[39m\n          \u001b[33mviewBox\u001b[39m=\u001b[32m\"0 0 24 24\"\u001b[39m\n          \u001b[33mwidth\u001b[39m=\u001b[32m\"24\"\u001b[39m\n          \u001b[33mxmlns\u001b[39m=\u001b[32m\"http://www.w3.org/2000/svg\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[36m<path\u001b[39m\n            \u001b[33md\u001b[39m=\u001b[32m\"M21 12a9 9 0 1 1-6.219-8.56\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n        \u001b[36m</svg>\u001b[39m\n        \u001b[36m<p\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"text-gray-600\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[0mLoading component...\u001b[0m\n        \u001b[36m</p>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n    \u001b[36m</div>\u001b[39m\n  \u001b[36m</div>\u001b[39m\n\u001b[36m</body>\u001b[39m"
+          ],
+          "location": {
+            "line": 37,
+            "column": 19
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "ProgressLoading"
+          ],
+          "fullName": " LoadingStates Components ProgressLoading renders with stage information",
+          "status": "passed",
+          "title": "renders with stage information",
+          "duration": 3,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "ProgressLoading"
+          ],
+          "fullName": " LoadingStates Components ProgressLoading shows progress information",
+          "status": "passed",
+          "title": "shows progress information",
+          "duration": 1,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "ProgressLoading"
+          ],
+          "fullName": " LoadingStates Components ProgressLoading calculates correct progress percentage",
+          "status": "passed",
+          "title": "calculates correct progress percentage",
+          "duration": 2,
+          "failureMessages": []
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "Accessibility"
+          ],
+          "fullName": " LoadingStates Components Accessibility all loading components have proper ARIA attributes",
+          "status": "failed",
+          "title": "all loading components have proper ARIA attributes",
+          "duration": 5,
+          "failureMessages": [
+            "Unable to find an element with the role \"status\"\n\nHere are the available roles:\n\n  heading:\n\n  Name \"Loading...\":\n  \u001b[36m<h2\u001b[39m\n    \u001b[33mclass\u001b[39m=\u001b[32m\"text-xl font-semibold text-gray-900 mb-2\"\u001b[39m\n  \u001b[36m/>\u001b[39m\n\n  --------------------------------------------------\n  paragraph:\n\n  Name \"\":\n  \u001b[36m<p\u001b[39m\n    \u001b[33mclass\u001b[39m=\u001b[32m\"text-gray-600\"\u001b[39m\n  \u001b[36m/>\u001b[39m\n\n  --------------------------------------------------\n\nIgnored nodes: comments, script, style\n\u001b[36m<body>\u001b[39m\n  \u001b[36m<div>\u001b[39m\n    \u001b[36m<div>\u001b[39m\n      \u001b[36m<svg\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"animate-spin h-6 w-6 \"\u001b[39m\n        \u001b[33mfill\u001b[39m=\u001b[32m\"none\"\u001b[39m\n        \u001b[33mheight\u001b[39m=\u001b[32m\"24\"\u001b[39m\n        \u001b[33mstroke\u001b[39m=\u001b[32m\"currentColor\"\u001b[39m\n        \u001b[33mstroke-linecap\u001b[39m=\u001b[32m\"round\"\u001b[39m\n        \u001b[33mstroke-linejoin\u001b[39m=\u001b[32m\"round\"\u001b[39m\n        \u001b[33mstroke-width\u001b[39m=\u001b[32m\"2\"\u001b[39m\n        \u001b[33mviewBox\u001b[39m=\u001b[32m\"0 0 24 24\"\u001b[39m\n        \u001b[33mwidth\u001b[39m=\u001b[32m\"24\"\u001b[39m\n        \u001b[33mxmlns\u001b[39m=\u001b[32m\"http://www.w3.org/2000/svg\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<path\u001b[39m\n          \u001b[33md\u001b[39m=\u001b[32m\"M21 12a9 9 0 1 1-6.219-8.56\"\u001b[39m\n        \u001b[36m/>\u001b[39m\n      \u001b[36m</svg>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"min-h-screen flex flex-col items-center justify-center bg-gray-50\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"text-center\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[36m<svg\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"animate-spin h-12 w-12 text-primary mb-4\"\u001b[39m\n            \u001b[33mfill\u001b[39m=\u001b[32m\"none\"\u001b[39m\n            \u001b[33mheight\u001b[39m=\u001b[32m\"24\"\u001b[39m\n            \u001b[33mstroke\u001b[39m=\u001b[32m\"currentColor\"\u001b[39m\n            \u001b[33mstroke-linecap\u001b[39m=\u001b[32m\"round\"\u001b[39m\n            \u001b[33mstroke-linejoin\u001b[39m=\u001b[32m\"round\"\u001b[39m\n            \u001b[33mstroke-width\u001b[39m=\u001b[32m\"2\"\u001b[39m\n            \u001b[33mviewBox\u001b[39m=\u001b[32m\"0 0 24 24\"\u001b[39m\n            \u001b[33mwidth\u001b[39m=\u001b[32m\"24\"\u001b[39m\n            \u001b[33mxmlns\u001b[39m=\u001b[32m\"http://www.w3.org/2000/svg\"\u001b[39m\n          \u001b[36m>\u001b[39m\n            \u001b[36m<path\u001b[39m\n              \u001b[33md\u001b[39m=\u001b[32m\"M21 12a9 9 0 1 1-6.219-8.56\"\u001b[39m\n            \u001b[36m/>\u001b[39m\n          \u001b[36m</svg>\u001b[39m\n          \u001b[36m<h2\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"text-xl font-semibold text-gray-900 mb-2\"\u001b[39m\n          \u001b[36m>\u001b[39m\n            \u001b[0mLoading...\u001b[0m\n          \u001b[36m</h2>\u001b[39m\n          \u001b[36m<p\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"text-gray-600\"\u001b[39m\n          \u001b[36m>\u001b[39m\n            \u001b[0mPlease wait while we load your content\u001b[0m\n          \u001b[36m</p>\u001b[39m\n        \u001b[36m</div>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex items-center justify-center p-4 \"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<svg\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"animate-spin h-6 w-6 mr-2\"\u001b[39m\n          \u001b[33mfill\u001b[39m=\u001b[32m\"none\"\u001b[39m\n          \u001b[33mheight\u001b[39m=\u001b[32m\"24\"\u001b[39m\n          \u001b[33mstroke\u001b[39m=\u001b[32m\"currentColor\"\u001b[39m\n          \u001b[33mstroke-linecap\u001b[39m=\u001b[32m\"round\"\u001b[39m\n          \u001b[33mstroke-linejoin\u001b[39m=\u001b[32m\"round\"\u001b[39m\n          \u001b[33mstroke-width\u001b[39m=\u001b[32m\"2\"\u001b[39m\n          \u001b[33mviewBox\u001b[39m=\u001b[32m\"0 0 24 24\"\u001b[39m\n          \u001b[33mwidth\u001b[39m=\u001b[32m\"24\"\u001b[39m\n          \u001b[33mxmlns\u001b[39m=\u001b[32m\"http://www.w3.org/2000/svg\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[36m<path\u001b[39m\n            \u001b[33md\u001b[39m=\u001b[32m\"M21 12a9 9 0 1 1-6.219-8.56\"\u001b[39m\n          \u001b[36m/>\u001b[39m\n        \u001b[36m</svg>\u001b[39m\n        \u001b[36m<span\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"text-gray-600\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[0mLoading...\u001b[0m\n        \u001b[36m</span>\u001b[39m\n      \u001b[36m</div>\u001b[39m\n    \u001b[36m</div>\u001b[39m\n  \u001b[36m</div>\u001b[39m\n\u001b[36m</body>\u001b[39m"
+          ],
+          "location": {
+            "line": 37,
+            "column": 19
+          }
+        },
+        {
+          "ancestorTitles": [
+            "",
+            "LoadingStates Components",
+            "Accessibility"
+          ],
+          "fullName": " LoadingStates Components Accessibility loading text is accessible to screen readers",
+          "status": "passed",
+          "title": "loading text is accessible to screen readers",
+          "duration": 2,
+          "failureMessages": []
+        }
+      ],
+      "startTime": 1750164043844,
+      "endTime": 1750164044008,
+      "status": "failed",
+      "message": "",
+      "name": "C:/Users/Ryan_/Desktop/momentumappv1/src/tests/components/LoadingStates.test.jsx"
+    }
+  ]
+}

@@ -19,7 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { format, isValid, formatDistanceToNow } from 'date-fns';
-import LoadingSpinner from '@/components/LoadingSpinner';
+import { LoadingSpinner } from '@/shared/components/LoadingStates';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import AssignMembershipDialog from '@/components/admin/members/AssignMembershipDialog';
@@ -219,7 +219,12 @@ const StaffNotesSection = ({ memberId, staffId }) => {
             )}
           </div>
         </div>
-        {isLoadingNotes && <LoadingSpinner text="Loading notes..." />}
+        {isLoadingNotes && (
+          <div className="flex items-center justify-center p-4">
+            <LoadingSpinner className="mr-2" />
+            <span className="text-gray-600">Loading notes...</span>
+          </div>
+        )}
         {!isLoadingNotes && notes.length === 0 && (
           <p className="text-muted-foreground text-center py-4">No staff notes for this member yet.</p>
         )}
@@ -368,7 +373,14 @@ const StaffMemberProfilePage = () => {
   };
 
   if (isLoading || !memberData || !loggedInStaff) {
-    return <LoadingSpinner text="Loading member profile..." className="mt-20 h-screen" />;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <LoadingSpinner size="lg" className="mb-4" />
+          <p className="text-gray-600">Loading member profile...</p>
+        </div>
+      </div>
+    );
   }
   
   const currentMembership = membershipTypes.find(mt => mt.id === memberData.current_membership_type_id);

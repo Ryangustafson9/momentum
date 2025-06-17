@@ -2,7 +2,7 @@
 import React from 'react';
 import ClassCard from './ClassCard.jsx';
 import { CalendarCheck, Loader2 } from 'lucide-react';
-import LoadingSpinner from '@/components/LoadingSpinner.jsx';
+import { LoadingSpinner } from '@/shared/components/LoadingStates';
 
 const MyBookingsTab = ({ memberAttendance, allClasses, onCancel, onDetails, isCancelling }) => {
   

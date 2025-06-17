@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthQuery as useAuth } from '@/hooks/useAuthQuery';
 import { useToast } from '@/hooks/use-toast.js';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,10 +31,30 @@ const Signup = () => {
   const [momentumLogoError, setMomentumLogoError] = useState(false);
   const [passwordsMatch, setPasswordsMatch] = useState(null);
   const [duplicateEmailError, setDuplicateEmailError] = useState(false);
-  
+  const [passwordStrength, setPasswordStrength] = useState({ score: 0, requirements: {} });
+
   // Get loading state and user from useAuth hook
-  const { register, loading, user } = useAuth(); // Add user here
+  const { signup, loading, user } = useAuth(); // Use signup instead of register
   const { toast } = useToast();
+
+  // Password strength calculation function
+  const calculatePasswordStrength = (password) => {
+    const requirements = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    };
+
+    const metRequirements = Object.values(requirements).filter(Boolean).length;
+    const score = (metRequirements / 4) * 100;
+
+    return {
+      score,
+      requirements,
+      strength: score === 100 ? 'Strong' : score >= 75 ? 'Good' : score >= 50 ? 'Fair' : 'Weak'
+    };
+  };
 
   // Check if passwords match
   const checkPasswordsMatch = (password, confirmPassword) => {
@@ -61,7 +81,7 @@ const Signup = () => {
     if (e.target.name === 'password') {
       const strength = calculatePasswordStrength(value);
       setPasswordStrength(strength);
-      
+
       // Check if passwords still match
       if (newFormData.confirmPassword) {
         setPasswordsMatch(checkPasswordsMatch(value, newFormData.confirmPassword));
@@ -220,8 +240,8 @@ const Signup = () => {
       }
 
       console.log('✅ Email is unique, proceeding with registration...');
-      
-      const result = await register(formData.email, formData.password, {
+
+      const result = await signup(formData.email, formData.password, {
         firstName: formData.firstName,
         lastName: formData.lastName
       });
@@ -268,18 +288,36 @@ const Signup = () => {
 
   // Add this useEffect to handle authenticated users
   useEffect(() => {
-    // If user is authenticated and we're not showing success, redirect
-    if (user && !showSuccess) {
-      console.log('🔄 User is authenticated, redirecting...');
-      
-      // Determine redirect based on user role
-      if (user.role === 'staff') {
-        navigate('/staff/dashboard');
-      } else {
-        navigate('/member/dashboard'); 
-      }
+    // Only redirect if user is authenticated, we're not showing success,
+    // and we're not in the middle of a signup flow
+    if (user && !showSuccess && !searchParams.get('success')) {
+      console.log('🔄 User is authenticated and not in signup flow, redirecting...', {
+        userRole: user.role,
+        showSuccess,
+        hasSuccessParam: !!searchParams.get('success')
+      });
+
+      // Add a small delay to ensure success state has time to be set
+      const redirectTimer = setTimeout(() => {
+        // Double-check we're still not showing success
+        if (!searchParams.get('success')) {
+          // Determine redirect based on user role
+          if (user.role === 'admin' || user.role === 'staff') {
+            console.log('🎯 Redirecting admin/staff to staff dashboard');
+            navigate('/staff/dashboard');
+          } else if (user.role === 'member') {
+            console.log('🎯 Redirecting member to member dashboard');
+            navigate('/member-portal/memberdashboard');
+          } else {
+            // Non-members should not be auto-redirected to dashboards
+            console.log('🎯 Non-member user, staying on current page');
+          }
+        }
+      }, 100); // Small delay to allow success state to be processed
+
+      return () => clearTimeout(redirectTimer);
     }
-  }, [user, showSuccess, navigate]);
+  }, [user, showSuccess, navigate, searchParams]);
 
   const gymColors = getGymColors();
 
@@ -293,11 +331,7 @@ const Signup = () => {
       strength.score === 100 && // All password requirements met
       formData.password === formData.confirmPassword
     );
-  }, [formData, passwordStrength]);
-
-  const passwordStrength = useMemo(() => {
-    return calculatePasswordStrength(formData.password);
-  }, [formData.password]);
+  }, [formData]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4">
@@ -380,24 +414,31 @@ const Signup = () => {
                 Yes, Sign Up for Membership
               </Button>
               
-              <Button 
+              <Button
                 variant="outline"
                 onClick={() => {
-                  console.log('🔍 Dashboard button clicked');
-                  
+                  console.log('🔍 Dashboard button clicked', { userRole: user?.role });
+
                   // Clear success state when going to dashboard
                   setSearchParams({});
-                  
-                  if (user?.role === 'staff') {
+
+                  if (user?.role === 'admin' || user?.role === 'staff') {
+                    console.log('🎯 Navigating to staff dashboard');
                     navigate('/staff/dashboard');
+                  } else if (user?.role === 'member') {
+                    console.log('🎯 Navigating to member dashboard');
+                    navigate('/member-portal/memberdashboard');
                   } else {
-                    navigate('/member/dashboard');
+                    // Non-members should go to a welcome page or profile
+                    console.log('🎯 Non-member user, redirecting to profile or welcome');
+                    navigate('/profile'); // or wherever non-members should go
                   }
                 }}
                 className="w-full py-3 text-lg"
                 size="lg"
               >
-                Go to Dashboard
+                {user?.role === 'admin' || user?.role === 'staff' ? 'Go to Staff Dashboard' :
+                 user?.role === 'member' ? 'Go to Member Dashboard' : 'Go to Profile'}
               </Button>
             </div>
           </div>

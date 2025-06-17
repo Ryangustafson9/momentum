@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { 
   Users, 
   MapPin, 
@@ -8,13 +9,18 @@ import {
   Clock, 
   CreditCard,
   Star,
-  ArrowRight
+  ArrowRight,
+  LogIn,
+  LogOut,
+  User
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { useAuthQuery as useAuth } from '@/hooks/useAuthQuery';
 
 const Dashboard = () => {
-  const { user, authReady } = useAuth();
+  const { user, authReady, logout } = useAuth();
+  const navigate = useNavigate();
   const [clubInfo, setClubInfo] = useState(null);
 
   // Simulate loading club info
@@ -49,6 +55,29 @@ const Dashboard = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  const handleSignOut = async () => {
+    try {
+      await logout();
+      // User will be redirected automatically by your auth system
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
+  const handleSignIn = () => {
+    navigate('/login');
+  };
+
+  const handleDashboardAccess = () => {
+    if (user?.role === 'member') {
+      navigate('/member/dashboard');
+    } else if (user?.role === 'admin') {
+      navigate('/admin/dashboard');
+    } else if (user?.role === 'staff') {
+      navigate('/staff/dashboard');
+    }
+  };
+
   if (!authReady) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -59,6 +88,74 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header with Auth Controls */}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">M</span>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">Momentum</h2>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              {user ? (
+                <>
+                  {/* User Info */}
+                  <div className="hidden sm:flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center">
+                      <span className="text-white font-medium text-xs">
+                        {(user.first_name || user.display_name || 'U').charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="text-sm">
+                      <p className="font-medium text-gray-900">
+                        {user.first_name || user.display_name || 'User'}
+                      </p>
+                      <p className="text-gray-500 capitalize">{user.role || 'member'}</p>
+                    </div>
+                  </div>
+
+                  {/* My Profile Button */}
+                  <Button
+                    onClick={() => navigate('/profile')}
+                    variant="outline"
+                    size="sm"
+                    className="hidden sm:flex items-center space-x-2"
+                  >
+                    <User className="h-4 w-4" />
+                    <span>My Profile</span>
+                  </Button>
+
+                  {/* Sign Out Button */}
+                  <Button
+                    onClick={handleSignOut}
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-600 hover:text-red-600 hover:bg-red-50"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Sign Out</span>
+                  </Button>
+                </>
+              ) : (
+                /* Sign In Button */
+                <Button
+                  onClick={handleSignIn}
+                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+                  size="sm"
+                >
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Sign In
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -69,9 +166,13 @@ const Dashboard = () => {
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Welcome to {clubInfo?.name || "Our Fitness Center"}
           </h1>
-          {user && (
+          {user ? (
             <p className="text-xl text-gray-600 mb-6">
-              Hello {user.first_name || 'there'}! Ready to start your fitness journey?
+              Hello {user.first_name || user.display_name || 'there'}! Ready to continue your fitness journey?
+            </p>
+          ) : (
+            <p className="text-xl text-gray-600 mb-6">
+              Your fitness journey starts here. Sign in to access your personalized dashboard.
             </p>
           )}
         </motion.div>
@@ -138,7 +239,7 @@ const Dashboard = () => {
               </Card>
             </motion.div>
 
-            {/* Membership CTA */}
+            {/* Membership CTA / User Actions */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -149,17 +250,55 @@ const Dashboard = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Star className="h-5 w-5" />
-                    Join Today!
+                    {user ? (
+                      user.role === 'nonmember' ? 'Sign Up for Membership' : 'Your Account'
+                    ) : 'Join Today!'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="mb-4 text-blue-100">
-                    Start your fitness journey with us. Choose from flexible membership options.
-                  </p>
-                  <button className="w-full bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center justify-center gap-2">
-                    Get Started
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
+                  {user ? (
+                    user.role === 'nonmember' ? (
+                      <>
+                        <p className="mb-4 text-blue-100">
+                          Ready to take your fitness to the next level? Choose from our flexible membership plans and start your journey today!
+                        </p>
+                        <Button
+                          onClick={() => navigate('/join-online')}
+                          className="w-full bg-white text-blue-600 hover:bg-blue-50 font-semibold flex items-center justify-center gap-2"
+                        >
+                          <CreditCard className="h-4 w-4" />
+                          View Membership Plans
+                          <ArrowRight className="h-4 w-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <p className="mb-4 text-blue-100">
+                          Access your personalized dashboard to track your progress and manage your membership.
+                        </p>
+                        <Button
+                          onClick={handleDashboardAccess}
+                          className="w-full bg-white text-blue-600 hover:bg-blue-50 font-semibold flex items-center justify-center gap-2"
+                        >
+                          Go to Dashboard
+                          <ArrowRight className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )
+                  ) : (
+                    <>
+                      <p className="mb-4 text-blue-100">
+                        Start your fitness journey with us. Choose from flexible membership options.
+                      </p>
+                      <Button
+                        onClick={handleSignIn}
+                        className="w-full bg-white text-blue-600 hover:bg-blue-50 font-semibold flex items-center justify-center gap-2"
+                      >
+                        Get Started
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
