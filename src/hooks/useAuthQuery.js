@@ -120,7 +120,7 @@ export const useAuthQuery = () => {
     queryFn: () => authService.getUserProfile(session?.user?.id),
     enabled: !!session?.user?.id,
     staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    gcTime: 10 * 60 * 1000, // formerly cacheTime
     retry: 1,
   });
 

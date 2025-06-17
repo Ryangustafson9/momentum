@@ -32,6 +32,12 @@ import { useMemberPresence } from '@/hooks/useRealtimePresence';
 import RealtimeIndicator from '@/components/realtime/RealtimeIndicator';
 import { useNotifications } from '@/contexts/NotificationContext';
 
+// ⭐ PERFORMANCE: Performance optimization imports (temporarily disabled)
+// import { useOptimizedQuery, useDebouncedState, useStableCallback } from '@/hooks/usePerformanceOptimization';
+// import { optimizedQueries } from '@/lib/databaseOptimization';
+// import { cacheManager } from '@/lib/advancedCaching';
+// import OptimizedImage from '@/components/optimization/OptimizedImage';
+
 // ==================== ENHANCED COMPONENTS ====================
 
 const CollapsibleSidebar = ({ sidebarOpen, setSidebarOpen, sidebarCollapsed, setSidebarCollapsed, firstName, user, handleLogout, navigate }) => {
@@ -383,7 +389,8 @@ const MemberDashboard = () => {
   });
 
   // ==================== DATA FETCHING ====================
-  
+
+  // ⭐ PERFORMANCE: Optimized data fetching with caching (temporarily disabled)
   const fetchDashboardData = async (showRefreshing = false) => {
     if (!user?.id) {
       setState(prev => ({ ...prev, error: 'User not authenticated', loading: false }));

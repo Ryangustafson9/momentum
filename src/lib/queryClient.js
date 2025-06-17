@@ -1,36 +1,150 @@
-// 🚀 REACT QUERY CONFIGURATION
-// Centralized data management with caching, error handling, and background refetching
-import { QueryClient } from '@tanstack/react-query';
+// ⚡ ADVANCED REACT QUERY CONFIGURATION
+// High-performance data management with intelligent caching and optimization
+import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
+import { logger } from '@/lib/logger';
 
-// Create a query client with optimized defaults
+// ⭐ PERFORMANCE: Advanced cache configuration
+const CACHE_CONFIG = {
+  // Static data (rarely changes)
+  STATIC: {
+    staleTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 60 * 60 * 1000, // 1 hour (formerly cacheTime)
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  },
+  // Dynamic data (changes frequently)
+  DYNAMIC: {
+    staleTime: 1 * 60 * 1000, // 1 minute
+    gcTime: 5 * 60 * 1000, // 5 minutes (formerly cacheTime)
+    refetchOnWindowFocus: true,
+    refetchOnMount: 'always',
+  },
+  // Real-time data (changes constantly)
+  REALTIME: {
+    staleTime: 0, // Always stale
+    gcTime: 2 * 60 * 1000, // 2 minutes (formerly cacheTime)
+    refetchOnWindowFocus: true,
+    refetchOnMount: 'always',
+    refetchInterval: 30 * 1000, // 30 seconds
+  },
+  // User-specific data
+  USER: {
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+  },
+};
+
+// ⭐ PERFORMANCE: Intelligent retry logic
+const getRetryConfig = (error) => {
+  // Don't retry on client errors (4xx)
+  if (error?.status >= 400 && error?.status < 500) {
+    return false;
+  }
+  // Don't retry on authentication errors
+  if (error?.message?.includes('auth') || error?.status === 401) {
+    return false;
+  }
+  // Retry on network errors and server errors
+  return true;
+};
+
+// Create a query client with advanced performance optimizations
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Cache data for 5 minutes
-      staleTime: 5 * 60 * 1000,
-      // Keep data in cache for 10 minutes
-      cacheTime: 10 * 60 * 1000,
-      // Retry failed requests 2 times
-      retry: 2,
-      // Retry with exponential backoff
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-      // Refetch on window focus for real-time data
+      // ⭐ PERFORMANCE: Moderate caching by default
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+
+      // ⭐ PERFORMANCE: Intelligent retry strategy
+      retry: (failureCount, error) => {
+        if (!getRetryConfig(error)) return false;
+        return failureCount < 3;
+      },
+
+      // ⭐ PERFORMANCE: Exponential backoff with jitter
+      retryDelay: (attemptIndex) => {
+        const baseDelay = Math.min(1000 * 2 ** attemptIndex, 30000);
+        const jitter = Math.random() * 0.1 * baseDelay;
+        return baseDelay + jitter;
+      },
+
+      // ⭐ PERFORMANCE: Smart refetch behavior
       refetchOnWindowFocus: true,
-      // Refetch when coming back online
       refetchOnReconnect: true,
-      // Don't refetch on mount if data is fresh
       refetchOnMount: 'always',
+
+      // ⭐ PERFORMANCE: Network mode optimization
+      networkMode: 'online',
+
+      // ⭐ PERFORMANCE: Error handling
+      onError: (error) => {
+        logger.error('Query error:', error);
+
+        // Track performance metrics
+        if (typeof window !== 'undefined' && window.performance) {
+          performance.mark('query-error');
+        }
+      },
+
+      // ⭐ PERFORMANCE: Success tracking
+      onSuccess: (data) => {
+        if (typeof window !== 'undefined' && window.performance) {
+          performance.mark('query-success');
+        }
+      },
     },
     mutations: {
-      // Retry mutations once
-      retry: 1,
-      // Show error notifications by default
+      // ⭐ PERFORMANCE: Conservative mutation retry
+      retry: (failureCount, error) => {
+        if (!getRetryConfig(error)) return false;
+        return failureCount < 2;
+      },
+
+      // ⭐ PERFORMANCE: Mutation error handling
       onError: (error) => {
-        console.error('Mutation error:', error);
+        logger.error('Mutation error:', error);
+
+        // Track mutation failures
+        if (typeof window !== 'undefined' && window.performance) {
+          performance.mark('mutation-error');
+        }
+      },
+
+      // ⭐ PERFORMANCE: Mutation success tracking
+      onSuccess: (data) => {
+        if (typeof window !== 'undefined' && window.performance) {
+          performance.mark('mutation-success');
+        }
       },
     },
   },
+
+  // ⭐ PERFORMANCE: Advanced query cache configuration
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      logger.error(`Query cache error for ${query.queryKey}:`, error);
+    },
+    onSuccess: (data, query) => {
+      // Log successful cache hits for monitoring
+      if (process.env.NODE_ENV === 'development') {
+        logger.debug(`Cache hit for ${query.queryKey}`);
+      }
+    },
+  }),
+
+  // ⭐ PERFORMANCE: Mutation cache configuration
+  mutationCache: new MutationCache({
+    onError: (error, variables, context, mutation) => {
+      logger.error(`Mutation cache error:`, error);
+    },
+  }),
 });
+
+// ⭐ PERFORMANCE: Export cache configurations for specific use cases
+export { CACHE_CONFIG };
 
 // Query keys for consistent cache management
 export const queryKeys = {

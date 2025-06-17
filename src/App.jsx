@@ -13,6 +13,11 @@ import { createLogger } from '@/lib/logger';
 import MobileBottomNavigation from '@/components/mobile/MobileBottomNavigation';
 import PWAInstallPrompt from '@/components/mobile/PWAInstallPrompt';
 
+// ⭐ PERFORMANCE: Performance monitoring (temporarily disabled)
+// import PerformanceMonitor from '@/components/optimization/PerformanceMonitor';
+// import { initializePerformanceTracking, initializeCacheCleanup } from '@/lib/performance';
+// import { monitorQueryPerformance } from '@/lib/databaseOptimization';
+
 // Create logger for App component
 const logger = createLogger('App');
 
@@ -61,6 +66,13 @@ function App() {
   const { user, loading, authReady, logout } = useAuth();
   const [emergencyLoadingTimeout, setEmergencyLoadingTimeout] = useState(false);
   const location = useLocation();
+
+  // ⭐ PERFORMANCE: Initialize performance tracking (temporarily disabled)
+  // useEffect(() => {
+  //   initializePerformanceTracking();
+  //   initializeCacheCleanup();
+  //   monitorQueryPerformance();
+  // }, []);
 
   const handleLogout = async () => {
     try {
@@ -272,6 +284,9 @@ function App() {
           {/* ⭐ NEW: Mobile enhancements */}
           <MobileBottomNavigation />
           <PWAInstallPrompt />
+
+          {/* ⭐ PERFORMANCE: Performance monitoring (dev only) - temporarily disabled */}
+          {/* <PerformanceMonitor /> */}
 
           <Toaster />
         </div>

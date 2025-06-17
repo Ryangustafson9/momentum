@@ -47,7 +47,7 @@ export const useRooms = (organizationId = DEFAULT_ORG_ID, filters = {}) => {
     queryKey: [...queryKeys.rooms, organizationId, filters],
     queryFn: () => schedulingService.getRooms(organizationId, filters),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 15 * 60 * 1000, // 15 minutes cache
+    gcTime: 15 * 60 * 1000, // 15 minutes cache (formerly cacheTime)
   });
 };
 
@@ -69,7 +69,7 @@ export const useEquipment = (organizationId = DEFAULT_ORG_ID, filters = {}) => {
     queryKey: [...queryKeys.equipment, organizationId, filters],
     queryFn: () => schedulingService.getEquipment(organizationId, filters),
     staleTime: 10 * 60 * 1000, // 10 minutes
-    cacheTime: 30 * 60 * 1000, // 30 minutes cache
+    gcTime: 30 * 60 * 1000, // 30 minutes cache (formerly cacheTime)
   });
 };
 
@@ -81,7 +81,7 @@ export const useClassSchedule = (organizationId = DEFAULT_ORG_ID, filters = {}) 
     queryKey: [...queryKeys.classSchedule, organizationId, filters],
     queryFn: () => schedulingService.getClassSchedule(organizationId, filters),
     staleTime: 30 * 1000, // 30 seconds for live schedule
-    cacheTime: 2 * 60 * 1000, // 2 minutes cache
+    gcTime: 2 * 60 * 1000, // 2 minutes cache (formerly cacheTime)
   });
 };
 

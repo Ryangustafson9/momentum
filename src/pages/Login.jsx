@@ -4,8 +4,7 @@ import { useAuthQuery as useAuth } from '@/hooks/useAuthQuery';
 import { getGymName } from '@/helpers/gymBranding';
 
 const Login = () => {
-  const { login } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const { login, isLoggingIn, loginError } = useAuth();
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [clubLogoError, setClubLogoError] = useState(false);
@@ -19,7 +18,6 @@ const Login = () => {
     e.preventDefault();
     console.log('🔄 Login form submitted with:', { email: formData.email, hasPassword: !!formData.password });
 
-    setLoading(true);
     setError('');
 
     try {
@@ -27,30 +25,14 @@ const Login = () => {
       const result = await login(formData.email, formData.password);
       console.log('🔄 Login function returned:', result);
 
-      if (!result || !result.user) {
-        throw new Error('Login failed: No user returned');
-      }
-
-      const { user } = result;
-      console.log('✅ Login successful:', {
-        email: user.email,
-        role: user.role,
-        id: user.id,
-        timestamp: new Date().toISOString()
-      });
-
-      // Let PublicRoute handle the redirect automatically
+      // The login mutation will handle the success case
       // The auth state change will trigger a re-render and PublicRoute will redirect
-      console.log('🎯 Login complete - waiting for auth state change and PublicRoute redirect...');
-
-      // Don't navigate manually - let the auth state change trigger the redirect
+      console.log('✅ Login successful - waiting for auth state change and PublicRoute redirect...');
 
     } catch (error) {
       console.error('❌ Login error:', error);
       setError(error.message || 'Login failed. Please try again.');
-      setLoading(false); // Set loading false immediately on error
     }
-    // Don't set loading false in finally - let the navigation handle it
   };
 
   const handleInputChange = (e) => {
@@ -91,9 +73,9 @@ const Login = () => {
 
           {/* Login Form */}
           <form className="space-y-6" onSubmit={handleLogin}>
-            {error && (
+            {(error || loginError) && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                {error}
+                {error || loginError?.message || 'Login failed. Please try again.'}
               </div>
             )}
 
@@ -133,10 +115,10 @@ const Login = () => {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={isLoggingIn}
               className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
             >
-              {loading ? (
+              {isLoggingIn ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   Signing in...

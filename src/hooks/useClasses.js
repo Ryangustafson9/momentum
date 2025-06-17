@@ -258,7 +258,7 @@ export const useClasses = (filters = {}) => {
     queryKey: [...queryKeys.classes, filters],
     queryFn: () => classService.getClasses(filters),
     staleTime: 2 * 60 * 1000, // 2 minutes
-    cacheTime: 5 * 60 * 1000, // 5 minutes cache
+    gcTime: 5 * 60 * 1000, // 5 minutes cache (formerly cacheTime)
   });
 };
 

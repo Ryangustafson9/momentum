@@ -228,25 +228,25 @@ export const cacheConfig = {
   // Very stable data (rarely changes)
   STABLE: {
     staleTime: 30 * 60 * 1000, // 30 minutes
-    cacheTime: 60 * 60 * 1000, // 1 hour
+    gcTime: 60 * 60 * 1000, // 1 hour (formerly cacheTime)
   },
-  
+
   // Moderately stable data
   MODERATE: {
     staleTime: 5 * 60 * 1000,  // 5 minutes
-    cacheTime: 15 * 60 * 1000, // 15 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes (formerly cacheTime)
   },
-  
+
   // Frequently changing data
   DYNAMIC: {
     staleTime: 1 * 60 * 1000,  // 1 minute
-    cacheTime: 5 * 60 * 1000,  // 5 minutes
+    gcTime: 5 * 60 * 1000,  // 5 minutes (formerly cacheTime)
   },
-  
+
   // Real-time data (always fresh)
   REALTIME: {
     staleTime: 0,              // Always stale
-    cacheTime: 1 * 60 * 1000,  // 1 minute cache
+    gcTime: 1 * 60 * 1000,  // 1 minute cache (formerly cacheTime)
   },
 };
 

@@ -14,7 +14,7 @@ export const useBillingConfig = (organizationId = DEFAULT_ORG_ID) => {
     queryKey: [...queryKeys.billing, 'config', organizationId],
     queryFn: () => billingConfigService.getBillingConfig(organizationId),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes cache
+    gcTime: 10 * 60 * 1000, // 10 minutes cache (formerly cacheTime)
   });
 };
 
@@ -24,7 +24,7 @@ export const useHouseCharges = (organizationId = DEFAULT_ORG_ID) => {
     queryKey: [...queryKeys.billing, 'houseCharges', organizationId],
     queryFn: () => billingConfigService.getHouseCharges(organizationId),
     staleTime: 3 * 60 * 1000, // 3 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes cache
+    gcTime: 10 * 60 * 1000, // 10 minutes cache (formerly cacheTime)
   });
 };
 
@@ -44,7 +44,7 @@ export const useBillingSchedules = (organizationId = DEFAULT_ORG_ID, filters = {
     queryKey: [...queryKeys.billing, 'schedules', organizationId, filters],
     queryFn: () => billingConfigService.getBillingSchedules(organizationId, filters),
     staleTime: 1 * 60 * 1000, // 1 minute for schedules
-    cacheTime: 5 * 60 * 1000, // 5 minutes cache
+    gcTime: 5 * 60 * 1000, // 5 minutes cache (formerly cacheTime)
   });
 };
 
