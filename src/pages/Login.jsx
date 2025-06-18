@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Label } from '@/components/ui/label.jsx';
-import { getGymName, getGymLogo, getGymColors } from '@/helpers/gymBranding.js';
+import { getGymName, getGymLogo } from '@/helpers/gymBranding.js';
 
 // ⭐ NEW: Use centralized utilities
 import { getDefaultRoute } from '@/utils/roleUtils.js';
@@ -13,7 +13,7 @@ import { normalizeRole } from '@/utils/roleUtils.js';
 import { validateForm, validationRules } from '@/utils/validation.js';
 import { showToast } from '@/utils/toastUtils.js';
 import { useLoading } from '@/hooks/useLoading.js';
-import { useErrorHandler } from '@/hooks/useErrorHandler.js';
+import PasswordResetModal from '@/components/PasswordResetModal';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -21,85 +21,74 @@ const Login = () => {
   const [gymLogoError, setGymLogoError] = useState(false);
   const [momentumLogoError, setMomentumLogoError] = useState(false);
   const [formErrors, setFormErrors] = useState({});
-  
+  const [loginError, setLoginError] = useState(''); // Add state for login error message
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
+
   const { login } = useAuth();
   const navigate = useNavigate();
-  
+
   // ⭐ NEW: Use centralized hooks
   const { withLoading, isLoading } = useLoading();
-  const { handleAsyncOperation } = useErrorHandler();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Clear previous errors
+    setFormErrors({});
+    setLoginError('');
+
     // Validation
     const formData = { email, password };
     const validation = validateForm(formData, validationRules.auth);
-    
+
     if (!validation.isValid) {
       setFormErrors(validation.errors);
-      showToast.validationError('Please check your input');
       return;
     }
 
-    setFormErrors({});
-
     await withLoading(async () => {
-      await handleAsyncOperation(async () => {
+      try {
         console.log('🔑 Starting login process...');
         const { user } = await login(email, password);
 
         if (!user) {
-          showToast.error(
-            "Account not found",
-            "Please check your credentials or create an account."
-          );
+          setLoginError("Account not found. Please check your credentials or create an account.");
           return;
         }
 
         console.log('🎯 Login successful, user ID:', user.id);
-        console.log('🔍 DEBUG: Login response user:', user);
         console.log('🔍 DEBUG: User role (raw):', user?.role);
-        console.log('🔍 DEBUG: User status:', user?.status);
-        
-        // ⭐ VALIDATE: Check the user object thoroughly
-        if (!user.role) {
-          console.warn('⚠️ User has no role! Defaulting to staff');
-          user.role = 'staff';
-        }
-        
-        const normalizedRole = normalizeRole(user.role);
-        console.log('🔍 DEBUG: Normalized role:', normalizedRole);
-        
-        const defaultRoute = getDefaultRoute(normalizedRole);
-        console.log('🔍 DEBUG: Default route:', defaultRoute);
-        
-        // ⭐ WAIT: Give AuthContext time to update
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        showToast.success(
-          "Welcome back!",
-          "Successfully logged in!"
-        );
 
-        // ⭐ FORCE: Navigate to staff dashboard for now
+        const normalizedRole = normalizeRole(user.role || 'staff');
+        console.log('🔍 DEBUG: Normalized role:', normalizedRole);
+
+        const defaultRoute = getDefaultRoute(normalizedRole);
+        console.log('🔍 DEBUG: Default route for role:', defaultRoute);
+
+        showToast.success("Welcome back!", "Successfully logged in!");
+
+        // ⭐ FIXED: Use the getDefaultRoute() function properly
         console.log(`🎯 Navigating ${normalizedRole} user to: ${defaultRoute}`);
-        
-        if (normalizedRole === 'staff' || normalizedRole === 'admin') {
-          navigate('/staff/staffdashboard');
-        } else if (normalizedRole === 'member') {
-          navigate('/member/memberdashboard');
+        navigate(defaultRoute);
+
+      } catch (error) {
+        console.error('Login error:', error);
+
+        // Set in-card error message based on error type
+        if (error.message.includes('Invalid login credentials')) {
+          setLoginError('Invalid email or password. Please check your credentials and try again.');
+        } else if (error.message.includes('Email not confirmed')) {
+          setLoginError('Please check your email and verify your account before logging in.');
+        } else if (error.message.includes('Too many requests')) {
+          setLoginError('Too many login attempts. Please wait a few minutes before trying again.');
         } else {
-          console.warn('⚠️ Unknown role, redirecting to staff dashboard anyway');
-          navigate('/staff/staffdashboard');
+          setLoginError('Login failed. Please try again or contact support if the problem persists.');
         }
-        
-      }, 'login');
+      }
     });
   };
 
-  // ⭐ MOVED: Get gym branding data at component level
-  const gymColors = getGymColors();
+  // Get gym branding data
   const gymLogo = getGymLogo();
   const gymName = getGymName();
 
@@ -130,12 +119,19 @@ const Login = () => {
           )}
         </div>
 
-        {/* Welcome Message - ⭐ FIXED: Use dynamic gym name */}
+        {/* Welcome Message */}
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Welcome to {gymName}</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 flex-grow">
+          {/* Display login error message */}
+          {loginError && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-3">
+              <p className="text-sm text-red-600">{loginError}</p>
+            </div>
+          )}
+
           <div>
             <Label htmlFor="email">Email</Label>
             <Input
@@ -144,47 +140,51 @@ const Login = () => {
               required
               autoComplete="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                // Clear login error when user starts typing
+                if (loginError) setLoginError('');
+              }}
               placeholder="you@example.com"
               className={formErrors.email ? 'border-red-500' : ''}
             />
-            {/* ⭐ ADDED: Error display */}
             {formErrors.email && (
               <p className="text-sm text-red-500 mt-1">{formErrors.email}</p>
             )}
           </div>
 
           <div>
-            <div className="flex justify-between items-center">
-              <Label htmlFor="password">Password</Label>
-              <button
-                type="button"
-                className="text-sm text-primary hover:underline"
-                onClick={() => showToast.info(
-                  "Not implemented",
-                  "Password recovery will be added soon."
-                )}
-              >
-                Forgot password?
-              </button>
-            </div>
+            <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               type="password"
               required
               autoComplete="current-password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                // Clear login error when user starts typing
+                if (loginError) setLoginError('');
+              }}
               placeholder="Your password"
               className={formErrors.password ? 'border-red-500' : ''}
             />
-            {/* ⭐ ADDED: Error display */}
             {formErrors.password && (
               <p className="text-sm text-red-500 mt-1">{formErrors.password}</p>
             )}
+
+            {/* Moved forgot password link below password field */}
+            <div className="mt-2 text-right">
+              <button
+                type="button"
+                className="text-sm text-primary hover:underline"
+                onClick={() => setShowPasswordReset(true)}
+              >
+                Forgot password?
+              </button>
+            </div>
           </div>
 
-          {/* ⭐ FIXED: Use isLoading() function instead of loading variable */}
           <Button type="submit" className="w-full" disabled={isLoading()}>
             {isLoading() ? 'Signing in...' : 'Sign In'}
           </Button>
@@ -224,37 +224,14 @@ const Login = () => {
         </div>
 
       </motion.div>
+
+      {/* Password Reset Modal */}
+      <PasswordResetModal
+        isOpen={showPasswordReset}
+        onClose={() => setShowPasswordReset(false)}
+      />
     </div>
   );
 };
 
 export default Login;
-
-/*
-// Future multi-tenant version:
-const getGymLogo = (subdomain) => {
-          ) : (
-            <div className="h-8 w-16 bg-gradient-to-r from-indigo-600 to-purple-600 rounded flex items-center justify-center">
-              <span className="text-white text-sm font-bold">M</span>
-            </div>
-          )}
-        </div>
-
-      </motion.div>
-    </div>
-  );
-};
-
-export default Login;
-
-/*
-// Future multi-tenant version:
-const getGymLogo = (subdomain) => {
-  const gymConfigs = {
-    'viking': 'VikingGymLight.png',
-    'powerhouse': 'PowerhouseGym.png',
-    // etc...
-  };
-  return `${import.meta.env.BASE_URL}assets/${gymConfigs[subdomain]}`;
-};
-*/

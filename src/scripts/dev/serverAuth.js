@@ -1,5 +1,30 @@
-import "dotenv/config"; // Load environment variables from .env
+/**
+ * Development Script: Server Authentication Demo
+ *
+ * This script demonstrates server-side authentication patterns including:
+ * - Login with credentials
+ * - Token storage and management
+ * - Automatic token refresh
+ *
+ * Usage:
+ *   1. Set environment variables: TEST_EMAIL and TEST_PASSWORD
+ *   2. Run: node src/scripts/dev/serverAuth.js
+ *
+ * Security Note: Never commit credentials to version control.
+ */
+
+import "dotenv/config";
 import { createClient } from "@supabase/supabase-js";
+
+// Validate required environment variables
+const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'TEST_EMAIL', 'TEST_PASSWORD'];
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingVars.length > 0) {
+  console.error('❌ Missing required environment variables:', missingVars.join(', '));
+  console.error('💡 Please set these in your .env file or environment');
+  process.exit(1);
+}
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -7,119 +32,178 @@ const supabase = createClient(
   process.env.SUPABASE_ANON_KEY
 );
 
-// Log Supabase URL and Anon Key (for debugging purposes)
-console.log("Supabase URL:", process.env.SUPABASE_URL);
-console.log("Supabase Anon Key:", process.env.SUPABASE_ANON_KEY);
-
-// In-memory token storage
+// In-memory token storage (for demonstration only)
 let tokens = {
   access_token: null,
   refresh_token: null,
-  expiry_time: null, // Store the expiry time of the access token
+  expiry_time: null,
 };
 
+/**
+ * Login and store authentication tokens
+ */
 const loginAndStoreTokens = async (email, password) => {
-  // Debug log: Print the email and password being used for login
-  console.log("Attempting login with email:", email);
-  console.log("Using password:", password);
+  try {
+    console.log('🔐 Attempting login...');
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-  if (error) {
-    // Debug log: Print the error message if login fails
-    console.error("Login failed:", error.message);
-    return;
+    if (error) {
+      throw error;
+    }
+
+    console.log('✅ Login successful');
+
+    // Store tokens in memory
+    tokens.access_token = data.session.access_token;
+    tokens.refresh_token = data.session.refresh_token;
+
+    // Decode JWT to get expiry time
+    const payload = JSON.parse(
+      Buffer.from(tokens.access_token.split(".")[1], "base64").toString()
+    );
+    tokens.expiry_time = payload.exp * 1000; // Convert to milliseconds
+
+    console.log('💾 Tokens stored in memory');
+    console.log('⏰ Token expires at:', new Date(tokens.expiry_time).toISOString());
+
+    // Set up automatic token refresh
+    setupAutoRefresh();
+
+    return tokens;
+
+  } catch (error) {
+    console.error('❌ Login failed:', error.message);
+    throw error;
   }
-
-  // Debug log: Print the successful login data
-  console.log("Login successful:", data);
-
-  // Store tokens in memory
-  tokens.access_token = data.session.access_token;
-  tokens.refresh_token = data.session.refresh_token;
-
-  // Decode the JWT to get the expiry time
-  const payload = JSON.parse(
-    Buffer.from(tokens.access_token.split(".")[1], "base64").toString()
-  );
-  tokens.expiry_time = payload.exp * 1000; // Convert to milliseconds
-
-  // Debug log: Print the stored tokens
-  console.log("Tokens stored in memory:", tokens);
-
-  // Set up automatic token refresh
-  setupAutoRefresh();
 };
 
+/**
+ * Refresh the access token using the refresh token
+ */
 const refreshAccessToken = async () => {
-  if (!tokens.refresh_token) {
-    console.error("No refresh token found.");
-    return;
+  try {
+    if (!tokens.refresh_token) {
+      throw new Error('No refresh token available');
+    }
+
+    console.log('🔄 Refreshing access token...');
+
+    const { data, error } = await supabase.auth.refreshSession({
+      refresh_token: tokens.refresh_token,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    console.log('✅ Session refreshed successfully');
+
+    // Update tokens in memory
+    tokens.access_token = data.session.access_token;
+    tokens.refresh_token = data.session.refresh_token;
+
+    // Decode JWT to get new expiry time
+    const payload = JSON.parse(
+      Buffer.from(tokens.access_token.split(".")[1], "base64").toString()
+    );
+    tokens.expiry_time = payload.exp * 1000; // Convert to milliseconds
+
+    console.log('💾 Tokens updated in memory');
+    console.log('⏰ New token expires at:', new Date(tokens.expiry_time).toISOString());
+
+    // Reset the auto-refresh timer
+    setupAutoRefresh();
+
+    return tokens;
+
+  } catch (error) {
+    console.error('❌ Error refreshing session:', error.message);
+    throw error;
   }
-
-  const { data, error } = await supabase.auth.refreshSession({
-    refresh_token: tokens.refresh_token,
-  });
-
-  if (error) {
-    console.error("Error refreshing session:", error.message);
-    return;
-  }
-
-  console.log("Session refreshed:", data);
-
-  // Update tokens in memory
-  tokens.access_token = data.session.access_token;
-  tokens.refresh_token = data.session.refresh_token;
-
-  // Decode the JWT to get the new expiry time
-  const payload = JSON.parse(
-    Buffer.from(tokens.access_token.split(".")[1], "base64").toString()
-  );
-  tokens.expiry_time = payload.exp * 1000; // Convert to milliseconds
-
-  console.log("Tokens updated in memory:", tokens);
-
-  // Reset the auto-refresh timer
-  setupAutoRefresh();
 };
 
+/**
+ * Set up automatic token refresh
+ */
 const setupAutoRefresh = () => {
-  if (!tokens.expiry_time) {
-    console.error("No expiry time found for the access token.");
-    return;
+  try {
+    if (!tokens.expiry_time) {
+      throw new Error('No expiry time found for access token');
+    }
+
+    const currentTime = Date.now();
+    const timeUntilExpiry = tokens.expiry_time - currentTime;
+    const refreshTime = Math.max(timeUntilExpiry - 60000, 5000); // Refresh 1 min before expiry, minimum 5 seconds
+
+    console.log(`⏱️  Token expires in ${Math.round(timeUntilExpiry / 1000)} seconds`);
+    console.log(`🔄 Auto-refresh scheduled in ${Math.round(refreshTime / 1000)} seconds`);
+
+    // Set timer to refresh token before expiry
+    setTimeout(() => {
+      refreshAccessToken().catch(error => {
+        console.error('❌ Auto-refresh failed:', error.message);
+      });
+    }, refreshTime);
+
+  } catch (error) {
+    console.error('❌ Error setting up auto-refresh:', error.message);
   }
-
-  const currentTime = Date.now();
-  const timeUntilExpiry = tokens.expiry_time - currentTime;
-
-  console.log(`Access token will expire in ${timeUntilExpiry / 1000} seconds.`);
-
-  // Set a timer to refresh the token 1 minute before it expires
-  setTimeout(() => {
-    refreshAccessToken();
-  }, timeUntilExpiry - 60000); // Refresh 1 minute before expiry
 };
 
-// Example usage
+/**
+ * Test authenticated API request
+ */
+const testAuthenticatedRequest = async () => {
+  try {
+    console.log('📊 Testing authenticated API request...');
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, email, role, created_at")
+      .limit(3);
+
+    if (error) {
+      throw error;
+    }
+
+    console.log('✅ API request successful');
+    console.log('📋 Profile count:', data.length);
+    return data;
+
+  } catch (error) {
+    console.error('❌ API request failed:', error.message);
+    throw error;
+  }
+};
+
+/**
+ * Main demonstration function
+ */
 const main = async () => {
-  await loginAndStoreTokens("premiumuser@example.com", "Password");
+  try {
+    console.log('🚀 Starting server authentication demo...\n');
 
-  // Example of using the access token for an authenticated API request
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("email", "premiumuser@example.com");
+    // Step 1: Login and store tokens
+    await loginAndStoreTokens(process.env.TEST_EMAIL, process.env.TEST_PASSWORD);
 
-  if (error) {
-    console.error("Error fetching data:", error.message);
-  } else {
-    console.log("Fetched data:", data);
+    // Step 2: Test authenticated request
+    await testAuthenticatedRequest();
+
+    console.log('\n✨ Demo completed successfully');
+    console.log('💡 Token will auto-refresh before expiry');
+
+  } catch (error) {
+    console.error('\n💥 Demo failed:', error.message);
+    process.exit(1);
   }
 };
 
-main();
+// Run the demo if this script is executed directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}
 

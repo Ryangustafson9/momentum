@@ -3,7 +3,7 @@ import { Outlet, useLocation, useNavigate, Routes, Route } from 'react-router-do
 import { motion } from 'framer-motion';
 import AdminSidebar from '@/components/admin/AdminSidebar.jsx';
 import AdminHeader from '@/components/admin/AdminHeader.jsx';
-import { getMembers } from '@/services/dataService';
+import { apiService } from '@/services/apiService';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext.jsx';
 import { useToast } from "@/hooks/use-toast.js";
@@ -27,8 +27,8 @@ const getPageTitle = (pathname) => {
   return pageTitles[pathname] || 'GymPro Admin';
 };
 
-const AdminDashboardLayout = ({ onLogout }) => {
-  const { user, startRoleImpersonation: authStartImpersonation } = useAuth();
+const AdminDashboardLayout = ({ children }) => {
+  const { user, logout, startRoleImpersonation: authStartImpersonation } = useAuth();
   const { toast } = useToast();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(() => {
     const storedSidebarState = localStorage.getItem('sidebarExpanded');
@@ -53,7 +53,7 @@ const AdminDashboardLayout = ({ onLogout }) => {
     const fetchMembers = async () => {
       if (user?.role === 'staff') {
         try {
-          const membersData = await getMembers();
+          const membersData = await apiService.getMembers();
           if (isMounted && membersData) {
             setAllMembers(membersData);
           }
@@ -84,10 +84,10 @@ const AdminDashboardLayout = ({ onLogout }) => {
 
   return (
     <div className="flex h-screen bg-muted/40 dark:bg-slate-950 overflow-hidden">
-      <AdminSidebar 
-        onLogout={onLogout} 
-        user={user} 
-        isExpanded={isSidebarExpanded} 
+      <AdminSidebar
+        onLogout={logout}
+        user={user}
+        isExpanded={isSidebarExpanded}
         toggleSidebar={toggleSidebar}
         startRoleImpersonation={handleStartImpersonation}
       />
@@ -110,7 +110,7 @@ const AdminDashboardLayout = ({ onLogout }) => {
             transition={{ duration: 0.3 }}
             className="w-full" 
           >
-            <Outlet />
+            {children}
           </motion.div>
         </main>
       </div>

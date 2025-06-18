@@ -21,7 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast.js';
-import { dataService } from '@/services/dataService';
+import { dataService } from '@/services/apiService';
 import { Badge } from '@/components/ui/badge';
 import { format, addMonths, addDays } from 'date-fns';
 import { Briefcase, Shield, DollarSign, CalendarDays, Info, CheckCircle, XCircle } from 'lucide-react';

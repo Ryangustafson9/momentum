@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, CalendarDays, CheckCircle, AlertTriangle, Clock, MessageSquare, BellDot, Activity, BarChart2 } from 'lucide-react';
+import { Users, CalendarDays, CheckCircle, AlertTriangle, Clock, MessageSquare, BellDot, Activity, BarChart2, DollarSign } from 'lucide-react';
 
 export const ALL_AVAILABLE_CARDS_CONFIG = [
 	{
@@ -10,6 +10,8 @@ export const ALL_AVAILABLE_CARDS_CONFIG = [
 		trendKey: 'totalMembersTrend',
 		defaultVisible: true,
 		description: 'All registered members',
+		navigateTo: '/staff/members',
+		icon: Users,
 	},
 	{
 		id: 'activeClasses',
@@ -19,6 +21,8 @@ export const ALL_AVAILABLE_CARDS_CONFIG = [
 		trendKey: 'upcomingClassesTrend',
 		defaultVisible: true,
 		description: 'Currently scheduled classes',
+		navigateTo: '/staff/classes',
+		icon: CalendarDays,
 	},
 	{
 		id: 'checkInsToday',
@@ -27,6 +31,18 @@ export const ALL_AVAILABLE_CARDS_CONFIG = [
 		dataKey: 'checkInsToday',
 		defaultVisible: true,
 		description: 'Members checked in today',
+		navigateTo: '/staff/checkin',
+		icon: CheckCircle,
+	},
+	{
+		id: 'monthlyRevenue',
+		title: 'Monthly Revenue',
+		dataType: 'stat',
+		dataKey: 'monthlyRevenue',
+		defaultVisible: true,
+		description: 'Revenue for current month',
+		navigateTo: '/staff/reports',
+		icon: DollarSign,
 	},
 	{
 		id: 'recentActivity',

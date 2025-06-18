@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast.js';
-import { dataService } from '@/services/dataService.js';
+import { dataService } from '@/services/apiService';
 import { ArrowLeft, UserCog, Settings, Shield, DollarSign } from 'lucide-react';
 
 const SettingItem = ({ label, children }) => (

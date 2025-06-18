@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext.jsx';
-import { getGeneralSettings } from '@/services/dataService';
+import { dataService } from '@/services/apiService';
 import { Phone, Mail, CreditCard, Users, ArrowRight, ArrowLeft } from 'lucide-react';
 
 const NonmemberPrompt = () => {
@@ -20,7 +20,7 @@ const NonmemberPrompt = () => {
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const generalSettings = await getGeneralSettings();
+        const generalSettings = await dataService.getGeneralSettings();
         if (generalSettings) {
           setSettings(prev => ({ ...prev, ...generalSettings }));
         }

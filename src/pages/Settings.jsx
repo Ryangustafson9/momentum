@@ -24,7 +24,7 @@ import { useToast } from '@/hooks/use-toast.js';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { dataService } from '@/services/dataService.js';
+import { dataService } from '@/services/apiService';
 
 const SettingsSectionCard = ({ title, description, children, onSave, isSaving, saveButtonText, SaveIcon = Save }) => (
   <Card>

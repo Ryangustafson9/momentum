@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast.js';
-import { dataService } from '@/services/dataService.js';
+import { dataService } from '@/services/apiService';
 import { PlusCircle, Edit, Trash2, ShieldCheck, Users } from 'lucide-react';
 import RoleFormDialog from '@/components/admin/settings/RoleFormDialog.jsx';
 import {

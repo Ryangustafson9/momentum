@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Users, ShieldCheck, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast.js';
-import { dataService } from '@/services/dataService';
+import { dataService } from '@/services/apiService';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import RoleFormDialog from './RoleFormDialog';
 import UserRolesList from './UserRolesList';

@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext.jsx';
-import { normalizeRole, canAccessRoute } from '@/utils/roleUtils.js';
+import { normalizeRole, canAccessRoute, VALID_ROLES, getDefaultRoute, getAccessibleRoutes } from '@/utils/roleUtils.js';
 import { getGeneralSettings } from '@/utils/settingsUtils.js'; // Import the settings function
-import { validateRouteAccess } from '@/utils/routeUtils.js';
 
 /**
  * PrivateRoute component - Protects routes that require authentication
@@ -55,18 +54,21 @@ const PrivateRoute = ({ children, allowedRoles = [] }) => {
   }
 
   const normalizedRole = normalizeRole(user.role);
-  const routeValidation = validateRouteAccess(normalizedRole, location.pathname);
+  const hasAccess = canAccessRoute(location.pathname, normalizedRole);
 
-  // Check route access using route utils
-  if (!routeValidation.hasAccess) {
+
+
+  // Check route access using role utils
+  if (!hasAccess) {
     console.log(`🚫 Access denied for ${normalizedRole} to ${location.pathname}`);
-    console.log(`🔄 Redirecting to: ${routeValidation.redirectTo}`);
-    return <Navigate to={routeValidation.redirectTo} replace />;
+    const defaultRoute = getDefaultRoute(normalizedRole);
+    console.log(`🔄 Redirecting to: ${defaultRoute}`);
+    return <Navigate to={defaultRoute} replace />;
   }
 
-  // FIXED: Handle nonmember users BEFORE role checking
-  if (user && (user.role === 'nonmember' || user.role === 'inactive' || !user.role)) {
-    console.log(`👤 User role '${user.role || 'undefined'}' identified as nonmember`);
+  // ⭐ FIXED: Use role constants instead of hardcoded strings
+  if (user && (normalizedRole === VALID_ROLES.NONMEMBER || normalizedRole === VALID_ROLES.INACTIVE)) {
+    console.log(`👤 User role '${user.role || 'undefined'}' identified as nonmember/inactive`);
     
     // If we're already on the dashboard, don't redirect again
     if (location.pathname === '/dashboard') {
@@ -84,9 +86,11 @@ const PrivateRoute = ({ children, allowedRoles = [] }) => {
   }
 
   // If allowedRoles is specified, do additional check
+
   if (allowedRoles.length > 0 && !allowedRoles.includes(normalizedRole)) {
     console.log(`🚫 Role ${normalizedRole} not in allowed roles: ${allowedRoles}`);
-    return <Navigate to={routeValidation.redirectTo} replace />;
+    const defaultRoute = getDefaultRoute(normalizedRole);
+    return <Navigate to={defaultRoute} replace />;
   }
 
   // User is authenticated and has permission

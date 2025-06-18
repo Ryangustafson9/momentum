@@ -1,4 +1,4 @@
-import { toast } from '@/hooks/use-toast';
+// import { toast } from '@/hooks/use-toast';
 
 /**
  * Centralized toast notification utilities
@@ -6,19 +6,21 @@ import { toast } from '@/hooks/use-toast';
 
 export const showToast = {
   success: (message, description = null) => {
-    toast({
-      title: message,
-      description,
-      variant: "default",
-    });
+    console.log('Toast Success:', message, description);
+    // toast({
+    //   title: message,
+    //   description,
+    //   variant: "default",
+    // });
   },
 
   error: (message, description = null) => {
-    toast({
-      title: message,
-      description,
-      variant: "destructive",
-    });
+    console.log('Toast Error:', message, description);
+    // toast({
+    //   title: message,
+    //   description,
+    //   variant: "destructive",
+    // });
   },
 
   info: (message, description = null) => {

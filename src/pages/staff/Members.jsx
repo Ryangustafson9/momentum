@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast.js';
-import { dataService } from '@/services/dataService.js';
+import { dataService } from '@/services/apiService';
 
 import MembersHeader from '@/components/admin/members/page_specific/MembersHeader.jsx';
 import MembersFilterControls from '@/components/admin/members/page_specific/MembersFilterControls.jsx';

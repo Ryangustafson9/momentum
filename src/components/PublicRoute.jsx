@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { normalizeRole, getDefaultRoute } from '@/utils/roleUtils.js';
 
 /**
  * PublicRoute component - Protects routes that should only be accessible to non-authenticated users
@@ -24,26 +25,37 @@ const PublicRoute = ({ children }) => {
 
   // If user is authenticated, redirect to appropriate dashboard
   if (user) {
-    console.log('👤 User is authenticated, redirecting to dashboard');
-    
+    console.log('👤 User is authenticated, checking if should redirect...');
+
+    // ⭐ SPECIAL CASE: Allow authenticated users to stay on signup page if showing success
+    if (location.pathname === '/signup') {
+      const urlParams = new URLSearchParams(location.search);
+      const showingSuccess = urlParams.get('success') === 'true';
+
+      if (showingSuccess) {
+        console.log('🎉 User on signup page with success=true, allowing them to stay');
+        return children; // Let them see the success message
+      }
+    }
+
     // Get the intended destination from location state, or default to role-based dashboard
     const from = location.state?.from?.pathname;
-    
+
     if (from && from !== '/login' && from !== '/signup') {
       return <Navigate to={from} replace />;
     }
 
-    // FUTURE-READY: Redirect based on hierarchical role system
-    switch (user.role) {
-      case 'admin':
-        return <Navigate to="/dashboard" replace />;
-      case 'staff':
-        return <Navigate to="/dashboard" replace />;
-      case 'member':
-        return <Navigate to="/member/dashboard" replace />;
-      default:
-        return <Navigate to="/dashboard" replace />;
-    }
+    // ⭐ FIXED: Use proper role-based routing from roleUtils
+    const normalizedRole = normalizeRole(user.role);
+    const defaultRoute = getDefaultRoute(normalizedRole);
+
+    console.log('🔄 PublicRoute redirecting authenticated user:', {
+      rawRole: user.role,
+      normalizedRole,
+      defaultRoute
+    });
+
+    return <Navigate to={defaultRoute} replace />;
   }
 
   // User is not authenticated, render the public route

@@ -124,9 +124,11 @@ export default defineConfig({
 *   `src/contexts/`: React context providers (e.g., `AuthContext.jsx`).
 *   `src/hooks/`: Custom React hooks.
 *   `src/layouts/`: Layout components for different parts of the app.
-*   `src/lib/`: Core logic, utilities, and services.
-    *   `src/lib/services/`: Service modules for data interaction (e.g., `memberService.js`).
+*   `src/lib/`: Core logic, utilities, and initial data.
     *   `src/lib/utils/`: Utility functions.
+    *   `src/lib/initialData/`: Initial data for development and testing.
+*   `src/services/`: API service layer.
+    *   `src/services/apiService.js`: Centralized API service for all database operations.
 *   `src/pages/`: Page components mapped to routes.
-*   `src/scripts/seedData/`: Initial data for development and testing.
+*   `src/lib/initialData/`: Initial data for development and testing.
 *   `src/test/`: Test files and setup.

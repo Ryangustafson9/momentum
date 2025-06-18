@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast.js';
-import { dataService } from '@/services/dataService.js';
+import { dataService } from '@/services/apiService';
 import { supabase } from '@/lib/supabaseClient.js';
 
 export const useMemberClassesData = () => {

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
+import { checkDatabaseHealth } from '@/lib/healthUtils';
 
 // Central logging system for consistent formatting and production control
 function log(message, ...args) {
@@ -135,6 +136,10 @@ const realtimeConfig = {
   })
 };
 
+// ⚡ REQUEST TIMEOUT FIX: Add timeout configuration for API calls
+const REQUEST_TIMEOUT = 30000; // 30 seconds
+const UPLOAD_TIMEOUT = 120000; // 2 minutes for file uploads
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
@@ -146,6 +151,25 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     headers: {
       'x-application-name': 'momentum-gym-app',
       'x-environment': isLocalDevelopment ? 'development' : 'production'
+    },
+    // Add request timeout configuration
+    fetch: (url, options = {}) => {
+      // Create timeout promise
+      const timeoutPromise = new Promise((_, reject) => {
+        const timeout = options.timeout || REQUEST_TIMEOUT;
+        setTimeout(() => {
+          reject(new Error(`Request timeout after ${timeout}ms`));
+        }, timeout);
+      });
+
+      // Create fetch promise with timeout
+      const fetchPromise = fetch(url, {
+        ...options,
+        signal: options.signal || AbortSignal.timeout?.(options.timeout || REQUEST_TIMEOUT)
+      });
+
+      // Race between fetch and timeout
+      return Promise.race([fetchPromise, timeoutPromise]);
     }
   }
 });
@@ -363,38 +387,8 @@ export async function testConnection() {
   }
 }
 
-// ENHANCED: Database health check utility
-export async function checkDatabaseHealth() {
-  try {
-    const results = await Promise.allSettled([
-      // Test critical tables
-      supabase.from('general_settings').select('count').limit(1),
-      supabase.from('profiles').select('count').limit(1)
-    ]);
-    
-    const healthReport = {
-      settings: results[0].status === 'fulfilled' && !results[0].value.error,
-      profiles: results[1].status === 'fulfilled' && !results[1].value.error,
-      overall: results.every(r => r.status === 'fulfilled' && !r.value.error),
-      realtime: getRealtimeStatus(),
-      realtimeRetries: monitoringRetries
-    };
-    
-    log('🏥 Database health check:', healthReport);
-    return healthReport;
-    
-  } catch (error) {
-    logError('Database health check failed:', error);
-    return {
-      settings: false,
-      profiles: false,
-      overall: false,
-      realtime: 'ERROR',
-      realtimeRetries: monitoringRetries,
-      error: error.message
-    };
-  }
-}
+// ⚠️ DUPLICATE FUNCTION REMOVED: Use checkDatabaseHealth from healthUtils.js instead
+// This prevents code duplication and ensures consistent health checking behavior
 
 export function getSupabaseLoadingState() {
   return {
@@ -421,7 +415,12 @@ export function getSupabaseLoadingState() {
       
       // Run health check after successful connection
       setTimeout(async () => {
-        await checkDatabaseHealth();
+        try {
+          await checkDatabaseHealth();
+        } catch (error) {
+          logWarn('Background health check failed:', error);
+          // Don't throw - this is a background operation
+        }
       }, 5000);
     } else {
       logWarn('Database connection issues detected - some features may not work');

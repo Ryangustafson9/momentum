@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast.js';
-import { getClasses, getMembershipTypes, getInstructors, dataService } from '@/services/dataService';
+import { apiService } from '@/services/apiService';
 import { useDebounce } from '@/hooks/useDebounce.js';
 import LoadingSpinner from '@/components/LoadingSpinner.jsx';
 import EmptyState from '@/components/EmptyState.jsx';

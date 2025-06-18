@@ -90,32 +90,8 @@ export const DEFAULT_ROUTES = {
  * Helper functions
  */
 
-/**
- * Get the default route for a user based on their role
- * @param {string} role - User role
- * @returns {string} Default route path
- */
-export const getDefaultRoute = (role) => {
-  const normalizedRole = normalizeRole(role);
-  
-  console.log('🎯 getDefaultRoute called with role:', role, '-> normalized:', normalizedRole);
-  
-  switch (normalizedRole) {
-    case 'admin':
-      return '/admin/dashboard';
-      
-    case 'staff':
-      return '/staff/staffdashboard';
-      
-    case 'member':
-      return '/member/memberdashboard';
-      
-    case 'nonmember':
-    case 'inactive':
-    default:
-      return '/dashboard';
-  }
-};
+// ⭐ REMOVED: getDefaultRoute() moved to roleUtils.js to avoid conflicts
+// Use import { getDefaultRoute } from '@/utils/roleUtils.js' instead
 
 /**
  * Get all accessible routes for a user role
@@ -187,7 +163,6 @@ export const validateRouteAccess = (route, user) => {
 };
 
 export default {
-  getDefaultRoute,
   getAccessibleRoutes,
   canAccessRoute,
   validateRouteAccess

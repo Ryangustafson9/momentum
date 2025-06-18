@@ -1,7 +1,7 @@
 // src/components/Header.jsx
 import { useAuth } from '@/contexts/AuthContext';
-import { getNavigationForRole, getDefaultRoute } from '@/utils/routeUtils';
-import { normalizeRole } from '@/utils/roleUtils';
+import { getNavigationForRole } from '@/utils/routeUtils';
+import { normalizeRole, getDefaultRoute } from '@/utils/roleUtils';
 
 const Header = () => {
   const { user, authReady, logout } = useAuth();

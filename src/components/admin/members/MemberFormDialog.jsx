@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { dataService } from '@/services/dataService.js'; 
+import { dataService } from '@/services/apiService'; 
 import { useToast } from '@/hooks/use-toast.js';
 
 const MemberFormField = React.memo(({ label, name, type = "text", value, onChange, isRequiredByAdmin = false, children, min }) => {

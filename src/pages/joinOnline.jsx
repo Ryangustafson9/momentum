@@ -178,14 +178,12 @@ const JoinOnline = () => {
           billing_type,
           duration_months,
           features,
-          available_for_online_sale,
-          active,
-          description,
+          available_online,
           category,
           color
         `)
-        .eq('available_for_online_sale', true)
-        .eq('active', true)
+        .eq('available_online', true)
+        .eq('category', 'Membership')
         .order('price', { ascending: true });
 
       if (error) {
@@ -201,7 +199,13 @@ const JoinOnline = () => {
       console.log('✅ Fetched plans:', plans);
 
       if (!plans || plans.length === 0) {
-        console.log('⚠️ No membership plans found');
+        console.log('⚠️ No membership plans found with available_online=true and active=true');
+        console.log('💡 To fix this, you need to:');
+        console.log('   1. Go to /staff/memberships');
+        console.log('   2. Create or edit membership plans');
+        console.log('   3. Set "Available for Sale" = true');
+        console.log('   4. Set "Available Online" = true');
+        console.log('   5. Set "Active" = true');
         setMembershipPlans([]);
         return;
       }
@@ -326,7 +330,7 @@ const JoinOnline = () => {
           <div className="space-y-3">
             {isStaff && (
               <Button
-                onClick={() => navigate('/admin/settings')}
+                onClick={() => navigate('/staff/settings')}
                 className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white mb-2"
               >
                 <Settings className="w-4 h-4 mr-2" />
@@ -374,7 +378,7 @@ const JoinOnline = () => {
           
           {isStaff && (
             <Button
-              onClick={() => navigate('/admin/memberships')}
+              onClick={() => navigate('/staff/memberships')}
               className="w-full mb-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white"
             >
               <Settings className="w-4 h-4 mr-2" />
@@ -431,7 +435,7 @@ const JoinOnline = () => {
             <div className="mt-4">
               <Button
                 variant="outline"
-                onClick={() => navigate('/admin/settings')}
+                onClick={() => navigate('/staff/settings')}
                 className="bg-white/20 text-white border-white/30 hover:bg-white/30"
               >
                 <Settings className="w-4 h-4 mr-2" />

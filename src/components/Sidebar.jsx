@@ -1,6 +1,5 @@
 import React from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
+import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, 
@@ -24,7 +23,7 @@ const navItems = [
 ];
 
 const Sidebar = ({ onLogout, mobile = false, closeSidebar }) => {
-  const router = useRouter();
+  const location = useLocation();
 
   return (
     <div className="flex h-full flex-col border-r border-gray-200 bg-white">
@@ -51,16 +50,16 @@ const Sidebar = ({ onLogout, mobile = false, closeSidebar }) => {
           {navItems.map((item) => (
             <Link
               key={item.path}
-              href={item.path}
+              to={item.path}
               className={`${
-                router.pathname === item.path
+                location.pathname === item.path
                   ? 'bg-primary text-white'
                   : 'text-gray-600 hover:bg-gray-100'
               } group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-200`}
             >
               <item.icon
                 className={`${
-                  router.pathname === item.path ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'
+                  location.pathname === item.path ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'
                 } mr-3 h-5 w-5 flex-shrink-0`}
               />
               {item.label}

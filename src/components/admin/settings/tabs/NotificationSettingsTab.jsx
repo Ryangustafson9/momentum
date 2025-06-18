@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast.js';
-import { dataService } from '@/services/dataService.js';
+import { dataService } from '@/services/apiService';
 import SettingsCardItem from '@/components/admin/settings/SettingsCardItem.jsx';
 
 const NotificationSettingsTabContent = () => {

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { CalendarDays, Clock, Users, User, MapPin, BarChart, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast.js';
-import { dataService } from '@/services/dataService';
+import { dataService } from '@/services/apiService';
 
 const ClassDetailsDialog = ({ classInfo, isOpen, onClose, onBook, onCancelBooking, onJoinWaitlist, memberBookings, memberId }) => {
   const { toast } = useToast();

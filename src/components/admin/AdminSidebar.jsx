@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from '@/hooks/useTheme.jsx';
 import { navLinks } from '@/config/adminNavLinks.js';
+import { hasStaffAccess } from '@/utils/roleUtils.js';
 
 const SidebarNavLink = ({ to, label, icon: Icon, currentPath, isExpanded }) => {
   const isActive = currentPath === to || (to !== "/" && currentPath.startsWith(to));
@@ -56,7 +57,7 @@ const AdminSidebar = ({ onLogout, user, isExpanded, toggleSidebar, startRoleImpe
   const initials = user?.name ? user.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : 'AD';
   
   const handleSettingsNavigation = () => {
-    navigate('/settings');
+    navigate('/staff/settings');
   };
 
   const UserCardContent = () => (
@@ -74,11 +75,11 @@ const AdminSidebar = ({ onLogout, user, isExpanded, toggleSidebar, startRoleImpe
 
   const UserDropdownContent = () => (
     <>
-      <DropdownMenuItem onClick={() => navigate('/settings')}>
+      <DropdownMenuItem onClick={() => navigate('/staff/settings')}>
         <UserCircle className="mr-2 h-4 w-4" />
         Profile
       </DropdownMenuItem>
-      {startRoleImpersonation && user?.role === 'staff' && (
+      {startRoleImpersonation && hasStaffAccess(user?.role) && (
         <DropdownMenuItem onClick={() => startRoleImpersonation('member')}>
           <Eye className="mr-2 h-4 w-4" />
           Impersonate Member

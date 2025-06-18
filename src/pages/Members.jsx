@@ -13,7 +13,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast.js';
-import { dataService } from '@/services/dataService';
+import { apiService, dataService } from '@/services/apiService';
 import MemberFormDialog from '@/components/admin/members/MemberFormDialog.jsx';
 import {
   AlertDialog,

@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import MemberSearch from '@/components/admin/topnav_parts/MemberSearch.jsx';
-import { dataService } from '@/services/dataService';
+import { apiService } from '@/services/apiService';
 import { cn } from '@/lib/utils';
 
 const pageTitles = {

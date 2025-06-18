@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast.js';
-import { dataService } from '@/services/dataService';
+import { apiService, dataService } from '@/services/apiService';
 import MembershipFormDialog from '@/components/admin/memberships/MembershipFormDialog';
 import MembershipTable from '@/components/admin/memberships/MembershipTable';
 import ColumnVisibilityDropdown from '@/components/admin/memberships/ColumnVisibilityDropdown';

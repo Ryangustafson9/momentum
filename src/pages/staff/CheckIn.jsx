@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CheckSquare, Search, UserPlus, CalendarClock, UserCircle, Star } from 'lucide-react';
-import { dataService } from '@/services/dataService.js';
+import { dataService } from '@/services/apiService';
 import { useToast } from '@/hooks/use-toast.js';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge.jsx';

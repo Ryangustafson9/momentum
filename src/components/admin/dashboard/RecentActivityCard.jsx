@@ -1,8 +1,9 @@
 import React from 'react';
+import { Activity, Clock, User, Calendar } from 'lucide-react';
 
 const RecentActivityCard = ({ activities, isEditMode, onRemoveCard }) => {
   return (
-    <div className="bg-white shadow rounded-lg relative">
+    <div className="bg-card border border-border shadow-sm rounded-xl relative transition-all duration-200">
       {isEditMode && (
         <button
           onClick={() => onRemoveCard('recentActivity')}

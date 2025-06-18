@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 import { getGymLogo, getGymName, getGymColors } from '@/helpers/gymBranding';
 import { supabase } from '@/lib/supabaseClient';
-import { capitalizeName } from '@/utils/formHelpers.js';
+import { capitalizeName, calculatePasswordStrength } from '@/utils/formHelpers.js';
+import { normalizeRole, getDefaultRoute } from '@/utils/roleUtils.js';
 
 const Signup = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -33,7 +34,7 @@ const Signup = () => {
   const [duplicateEmailError, setDuplicateEmailError] = useState(false);
   
   // Get loading state and user from useAuth hook
-  const { register, loading, user } = useAuth(); // Add user here
+  const { signup, loading, user } = useAuth(); // ⭐ FIXED: Use 'signup' not 'register'
   const { toast } = useToast();
 
   // Check if passwords match
@@ -57,11 +58,8 @@ const Signup = () => {
     
     setFormData(newFormData);
 
-    // Update password strength when password changes
+    // Check if passwords match when password changes
     if (e.target.name === 'password') {
-      const strength = calculatePasswordStrength(value);
-      setPasswordStrength(strength);
-      
       // Check if passwords still match
       if (newFormData.confirmPassword) {
         setPasswordsMatch(checkPasswordsMatch(value, newFormData.confirmPassword));
@@ -82,29 +80,29 @@ const Signup = () => {
   const checkEmailExists = async (email) => {
     console.log('🔍 checkEmailExists called with:', email);
     try {
-      const { data, error } = await supabase
+      // Check profiles table for existing email
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('email')
-        .eq('email', email)
-        .single();
-      
-      console.log('🔍 Supabase query result:', { data, error });
-      
-      if (error) {
-        console.log('🔍 Supabase error code:', error.code);
-        console.log('🔍 Supabase error message:', error.message);
-      }
-      
-      const emailExists = !!data;
-      console.log('🔍 Email exists result:', emailExists);
-      return emailExists;
-    } catch (error) {
-      console.log('🔍 Caught error in checkEmailExists:', error);
-      if (error.code === 'PGRST116') {
-        console.log('🔍 PGRST116 - No rows found, email doesn\'t exist');
+        .eq('email', email.toLowerCase()) // Case-insensitive check
+        .maybeSingle();
+
+      console.log('🔍 Profile check result:', { data: profileData, error: profileError });
+
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error('🔍 Error checking profiles:', profileError);
+        // If there's an error checking, assume email doesn't exist to allow signup attempt
         return false;
       }
-      throw error;
+
+      const emailExists = !!profileData;
+      console.log('🔍 Email exists result:', emailExists);
+      return emailExists;
+
+    } catch (error) {
+      console.log('🔍 Caught error in checkEmailExists:', error);
+      // If we can't check, assume email doesn't exist to allow signup attempt
+      return false;
     }
   };
 
@@ -221,7 +219,7 @@ const Signup = () => {
 
       console.log('✅ Email is unique, proceeding with registration...');
       
-      const result = await register(formData.email, formData.password, {
+      const result = await signup(formData.email, formData.password, {
         firstName: formData.firstName,
         lastName: formData.lastName
       });
@@ -242,8 +240,19 @@ const Signup = () => {
 
     } catch (error) {
       console.error('❌ Registration error caught:', error);
-      
-      if (error.message.includes('already exists') || error.message.includes('already registered')) {
+
+      // Check for various duplicate email error messages from Supabase
+      const errorMessage = error.message?.toLowerCase() || '';
+      const isDuplicateEmail =
+        errorMessage.includes('already exists') ||
+        errorMessage.includes('already registered') ||
+        errorMessage.includes('user already registered') ||
+        errorMessage.includes('email already taken') ||
+        errorMessage.includes('duplicate') ||
+        error.code === 'user_already_exists';
+
+      if (isDuplicateEmail) {
+        console.log('❌ Duplicate email detected from auth error');
         setDuplicateEmailError(true);
       } else {
         toast({
@@ -255,49 +264,28 @@ const Signup = () => {
     }
   };
 
-  // Auto-clear URL params after 30 seconds
-  useEffect(() => {
-    if (showSuccess) {
-      const timeout = setTimeout(() => {
-        setSearchParams({});
-      }, 30000);
-      
-      return () => clearTimeout(timeout);
-    }
-  }, [showSuccess, setSearchParams]);
+  // ⭐ REMOVED: Auto-clear URL params - let user control when to leave success page
 
-  // Add this useEffect to handle authenticated users
-  useEffect(() => {
-    // If user is authenticated and we're not showing success, redirect
-    if (user && !showSuccess) {
-      console.log('🔄 User is authenticated, redirecting...');
-      
-      // Determine redirect based on user role
-      if (user.role === 'staff') {
-        navigate('/staff/dashboard');
-      } else {
-        navigate('/member/dashboard'); 
-      }
-    }
-  }, [user, showSuccess, navigate]);
+  // ⭐ REMOVED: Auto-redirect logic - let users choose their path after signup
+  // Users will manually click "Go to Dashboard" or "Sign Up for Membership"
 
   const gymColors = getGymColors();
 
+  // ⭐ FIXED: Define passwordStrength first
+  const passwordStrength = useMemo(() => {
+    return calculatePasswordStrength(formData.password);
+  }, [formData.password]);
+
   // Calculate if form is valid
   const isFormValid = useMemo(() => {
-    const strength = calculatePasswordStrength(formData.password);
     return (
       formData.firstName.trim() &&
       formData.lastName.trim() &&
       formData.email.trim() &&
-      strength.score === 100 && // All password requirements met
+      passwordStrength.score === 100 && // All password requirements met
       formData.password === formData.confirmPassword
     );
   }, [formData, passwordStrength]);
-
-  const passwordStrength = useMemo(() => {
-    return calculatePasswordStrength(formData.password);
-  }, [formData.password]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4">
@@ -380,19 +368,20 @@ const Signup = () => {
                 Yes, Sign Up for Membership
               </Button>
               
-              <Button 
+              <Button
                 variant="outline"
                 onClick={() => {
                   console.log('🔍 Dashboard button clicked');
-                  
+
                   // Clear success state when going to dashboard
                   setSearchParams({});
-                  
-                  if (user?.role === 'staff') {
-                    navigate('/staff/dashboard');
-                  } else {
-                    navigate('/member/dashboard');
-                  }
+
+                  // ⭐ FIXED: Use centralized routing logic
+                  const role = normalizeRole(user?.role);
+                  const defaultRoute = getDefaultRoute(role);
+                  console.log('🎯 Dashboard button - Role:', role, '-> Route:', defaultRoute);
+
+                  navigate(defaultRoute);
                 }}
                 className="w-full py-3 text-lg"
                 size="lg"

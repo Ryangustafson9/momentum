@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabaseClient';
+import { executeNormal, executeFast, getUserFriendlyErrorMessage } from '@/utils/requestUtils';
 
 /**
  * Centralized API service for all database operations
@@ -153,20 +154,22 @@ class ApiService {
   async getMember(memberId) {
     try {
       console.log('🔍 ApiService: Getting member:', memberId);
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', memberId)
-        .single();
-      
-      if (error) throw error;
-      
-      console.log('✅ ApiService: Member retrieved:', data?.email);
-      return data;
-      
+
+      // ⚡ TIMEOUT FIX: Use fast execution for single record lookup
+      const result = await executeFast(
+        () => supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', memberId)
+          .single(),
+        'Get member by ID'
+      );
+
+      console.log('✅ ApiService: Member retrieved:', result.data?.email);
+      return result.data;
+
     } catch (error) {
-      console.error('❌ ApiService: getMember failed:', error);
+      console.error('❌ ApiService: getMember failed:', getUserFriendlyErrorMessage(error));
       throw error;
     }
   }
@@ -237,8 +240,186 @@ class ApiService {
     }
   }
 
+  // ===== MEMBERSHIP TYPES =====
+
+  /**
+   * Get all membership types
+   * @returns {Promise<Array>} Array of membership types
+   */
+  async getMembershipTypes() {
+    try {
+      console.log('🔍 ApiService: Getting membership types...');
+
+      const { data, error } = await supabase
+        .from('membership_types')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+
+      console.log('✅ ApiService: Membership types retrieved:', data?.length || 0);
+      return data || [];
+    } catch (error) {
+      console.error('❌ ApiService: getMembershipTypes failed:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get membership type by ID
+   * @param {string} id - Membership type ID
+   * @returns {Promise<Object|null>} Membership type or null
+   */
+  async getMembershipTypeById(id) {
+    try {
+      const { data, error } = await supabase
+        .from('membership_types')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('❌ ApiService: getMembershipTypeById failed:', error);
+      return null;
+    }
+  }
+
+  // ===== CLASSES =====
+
+  /**
+   * Get all classes
+   * @param {Object} filters - Optional filters
+   * @returns {Promise<Array>} Array of classes
+   */
+  async getClasses(filters = {}) {
+    try {
+      console.log('🔍 ApiService: Getting classes with filters:', filters);
+
+      let query = supabase
+        .from('classes')
+        .select('*')
+        .order('start_time', { ascending: true });
+
+      // Apply filters if provided
+      if (filters.instructor_id) {
+        query = query.eq('instructor_id', filters.instructor_id);
+      }
+
+      if (filters.date) {
+        const startOfDay = new Date(filters.date);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(filters.date);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        query = query
+          .gte('start_time', startOfDay.toISOString())
+          .lte('start_time', endOfDay.toISOString());
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      console.log('✅ ApiService: Classes retrieved:', data?.length || 0);
+      return data || [];
+    } catch (error) {
+      console.error('❌ ApiService: getClasses failed:', error);
+      return [];
+    }
+  }
+
+  // ===== STAFF ROLES =====
+
+  /**
+   * Get all staff roles
+   * @returns {Promise<Array>} Array of staff roles
+   */
+  async getStaffRoles() {
+    try {
+      console.log('🔍 ApiService: Getting staff roles...');
+
+      const { data, error } = await supabase
+        .from('staff_roles')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+
+      console.log('✅ ApiService: Staff roles retrieved:', data?.length || 0);
+      return data || [];
+    } catch (error) {
+      console.error('❌ ApiService: getStaffRoles failed:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get all permissions (mock data for now)
+   * @returns {Array} Array of permissions
+   */
+  getAllPermissions() {
+    // TODO: Replace with actual permissions from database
+    return [
+      'manage_members',
+      'manage_classes',
+      'manage_billing',
+      'view_reports',
+      'manage_settings',
+      'manage_staff'
+    ];
+  }
+
+  // ===== INSTRUCTORS =====
+
+  /**
+   * Get all instructors
+   * @returns {Promise<Array>} Array of instructors
+   */
+  async getInstructors() {
+    try {
+      console.log('🔍 ApiService: Getting instructors...');
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email, phone')
+        .in('role', ['staff', 'admin', 'instructor'])
+        .order('first_name', { ascending: true });
+
+      if (error) throw error;
+
+      console.log('✅ ApiService: Instructors retrieved:', data?.length || 0);
+      return data || [];
+    } catch (error) {
+      console.error('❌ ApiService: getInstructors failed:', error);
+      return [];
+    }
+  }
+
+  // ===== SETTINGS =====
+
+  /**
+   * Get general settings
+   * @returns {Promise<Object>} Settings object
+   */
+  async getSettings() {
+    try {
+      const { data, error } = await supabase
+        .from('general_settings')
+        .select('*')
+        .single();
+
+      if (error) throw error;
+      return data || {};
+    } catch (error) {
+      console.error('❌ ApiService: getSettings failed:', error);
+      return {};
+    }
+  }
+
   // ===== DASHBOARD QUICK METHODS =====
-  
+
   /**
    * Get quick member count for dashboard
    * @returns {Promise<number>} Total member count
@@ -250,7 +431,7 @@ class ApiService {
         .select('*', { count: 'exact', head: true })
         .eq('role', 'member')
         .eq('status', 'active');
-      
+
       if (error) throw error;
       return count || 0;
     } catch (error) {
@@ -262,4 +443,30 @@ class ApiService {
 
 // Export singleton instance
 export const apiService = new ApiService();
+
+// ⚠️ TEMPORARY: Compatibility layer for legacy dataService calls
+// TODO: Remove after migrating all components to React Query
+export const dataService = {
+  // Member methods
+  getMembers: () => apiService.getMembers(),
+  getMemberById: (id) => apiService.getMemberById(id),
+
+  // Membership type methods
+  getMembershipTypes: () => apiService.getMembershipTypes(),
+  getMembershipTypeById: (id) => apiService.getMembershipTypeById(id),
+
+  // Class methods
+  getClasses: () => apiService.getClasses(),
+
+  // Staff role methods
+  getStaffRoles: () => apiService.getStaffRoles(),
+  getAllPermissions: () => apiService.getAllPermissions(),
+
+  // Instructor methods
+  getInstructors: () => apiService.getInstructors(),
+
+  // Settings methods
+  getSettings: () => apiService.getSettings(),
+};
+
 export default apiService;

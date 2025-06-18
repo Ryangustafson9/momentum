@@ -6,7 +6,7 @@ import SettingsCardItem from '@/components/admin/settings/SettingsCardItem.jsx';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast.js';
-import { dataService } from '@/services/dataService.js';
+import { dataService } from '@/services/apiService';
 import { useTheme } from '@/hooks/useTheme.jsx';
 
 

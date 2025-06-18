@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast.js';
-import { dataService } from '@/services/dataService';
+import { apiService, dataService } from '@/services/apiService';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import RoleFormDialog from '@/components/admin/settings/RoleFormDialog';
 import UserRolesList from '@/components/admin/settings/UserRolesList';

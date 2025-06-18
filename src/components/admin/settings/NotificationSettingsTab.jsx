@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast.js';
-import { dataService } from '@/services/dataService.js';
+import { dataService } from '@/services/apiService';
 
 const SettingItem = ({ label, children }) => (
   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 border-b last:border-b-0">
