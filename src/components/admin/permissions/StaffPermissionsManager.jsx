@@ -226,9 +226,8 @@ const StaffPermissionsManager = () => {
                     Create Sample Staff Plans
                   </>
                 )}
-              </Button>
-              <Button
-                onClick={() => window.open('/staff/memberships', '_blank')}
+              </Button>              <Button
+                onClick={() => window.open('/staff-portal/memberships', '_blank')}
                 variant="outline"
                 className="w-full text-sm"
               >

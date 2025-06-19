@@ -6,7 +6,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
-+import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { realtimeCapability } from '@/lib/realtimeCapability';
 
 /**
@@ -152,7 +152,10 @@ export const useRealtimePresence = (room = 'general', userMetadata = {}, enabled
     } catch (error) {
       logger.error(`❌ Failed to broadcast in ${room}:`, error);
     }
-  }, [room, user]);  useEffect(() => {
+  }, [room, user]);
+
+  // Set up presence channel
+  useEffect(() => {
     if (!enabled || !user || !supabase || !realtimeEnabled) {
       if (!realtimeEnabled) {
         logger.info(`📤 Presence disabled for ${room}, working in non-realtime mode`);

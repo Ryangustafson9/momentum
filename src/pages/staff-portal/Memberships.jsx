@@ -37,7 +37,7 @@ const initialColumnVisibility = {
   actions: true,
 };
 
-const DESIRED_TAB_ORDER = ['All Plans', 'Member Plans', 'Staff Plans', 'Add-ons', 'Guest Plans'];
+const DESIRED_TAB_ORDER = ['All', 'Membership', 'Add-on', 'Guest', 'Staff'];
 
 // Membership Service Functions
 const membershipService = {
@@ -136,18 +136,17 @@ const MembershipsFilterControlsAndTabs = React.memo(({
   activeTabCategory,
   setActiveTabCategory,
   onAddNewPlan
-}) => {
-  const getAddButtonText = (category) => {
-    if (category === 'All Plans') return 'Add New Plan';
-    return `Add ${category.replace(' Plans', '')} Plan`;
+}) => {  const getAddButtonText = (category) => {
+    if (category === 'All') return 'Add New Plan';
+    return `Add ${category} Plan`;
   };
 
   const getAddButtonIcon = (category) => {
     switch (category) {
-      case 'Member Plans': return <Users className="mr-2 h-4 w-4" />;
-      case 'Staff Plans': return <Shield className="mr-2 h-4 w-4" />;
-      case 'Add-ons': return <Package className="mr-2 h-4 w-4" />;
-      case 'Guest Plans': return <Ticket className="mr-2 h-4 w-4" />;
+      case 'Membership': return <Users className="mr-2 h-4 w-4" />;
+      case 'Staff': return <Shield className="mr-2 h-4 w-4" />;
+      case 'Add-on': return <Package className="mr-2 h-4 w-4" />;
+      case 'Guest': return <Ticket className="mr-2 h-4 w-4" />;
       default: return <PlusCircle className="mr-2 h-4 w-4" />;
     }
   };
@@ -343,30 +342,30 @@ const MembershipStatsCards = React.memo(({ membershipTypes, isLoading }) => {
 MembershipStatsCards.displayName = 'MembershipStatsCards';
 
 const getUniqueCategoriesForTabs = (types) => {
-  const categories = new Set();
-  types.forEach(type => {
-    if (type.category) {
-      categories.add(type.category);
-    }
-  });
+  // Always show all standard tabs, regardless of whether data exists
+  const tabItems = [
+    { value: 'All', label: 'All' },
+    { value: 'Membership', label: 'Membership' },
+    { value: 'Staff', label: 'Staff' },
+    { value: 'Add-on', label: 'Add-on' },
+    { value: 'Guest', label: 'Guest' }
+  ];
 
-  const tabItems = [{ value: 'All Plans', label: 'All Plans' }];
+  // If there are types, we can add any additional custom categories that aren't in the standard list
+  if (types && types.length > 0) {
+    const existingCategories = new Set(tabItems.map(tab => tab.value));
+    const customCategories = new Set();
+    
+    types.forEach(type => {
+      if (type.category && !existingCategories.has(type.category)) {
+        customCategories.add(type.category);
+      }
+    });
 
-  // Add tabs for each category that exists in the data
-  if (categories.has('Member Plans')) {
-    tabItems.push({ value: 'Member Plans', label: 'Member Plans' });
-  }
-
-  if (categories.has('Staff Plans')) {
-    tabItems.push({ value: 'Staff Plans', label: 'Staff Plans' });
-  }
-
-  if (categories.has('Add-ons')) {
-    tabItems.push({ value: 'Add-ons', label: 'Add-ons' });
-  }
-
-  if (categories.has('Guest Plans')) {
-    tabItems.push({ value: 'Guest Plans', label: 'Guest Plans' });
+    // Add any custom categories at the end
+    customCategories.forEach(category => {
+      tabItems.push({ value: category, label: category });
+    });
   }
 
   return tabItems.sort((a, b) => {
@@ -387,7 +386,7 @@ const MembershipsPage = () => {
   const [selectedMembership, setSelectedMembership] = useState(null);
   const [membershipToDelete, setMembershipToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTabCategory, setActiveTabCategory] = useState('All Plans');
+  const [activeTabCategory, setActiveTabCategory] = useState('All');
   const [sortConfig, setSortConfig] = useState({ key: 'category', direction: 'asc' });
   const [columnVisibility, setColumnVisibility] = useState(() => {
     const saved = localStorage.getItem('membershipTypesColumnVisibility');
@@ -396,13 +395,13 @@ const MembershipsPage = () => {
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const { toast } = useToast();
-
   const fetchMembershipTypes = useCallback(async () => {
     setIsLoading(true);
     try {
       console.log('🔄 Fetching membership types from database...');
       const data = await membershipService.getMembershipTypes();
       console.log('✅ Membership types fetched:', data);
+      console.log('✅ Number of membership types:', data?.length || 0);
       setMembershipTypes(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('❌ Failed to fetch membership types:', error);
@@ -419,10 +418,15 @@ const MembershipsPage = () => {
 
   useEffect(() => {
     localStorage.setItem('membershipTypesColumnVisibility', JSON.stringify(columnVisibility));
-  }, [columnVisibility]);
-
-  const handleCreateNew = useCallback((category = null) => {
-    const defaultCategory = category && category !== 'All Plans' ? category : 'Member Plans';
+  }, [columnVisibility]);  const handleCreateNew = useCallback((category = null) => {
+    // Map tab categories to database categories
+    const categoryMap = {
+      'Membership': 'Membership',
+      'Add-on': 'Add-ons',
+      'Guest': 'Guest Plans',
+      'Staff': 'Staff'
+    };
+    const defaultCategory = category && category !== 'All' ? (categoryMap[category] || category) : 'Membership';
     setSelectedMembership({ category: defaultCategory });
     setIsFormOpen(true);
   }, []);
@@ -503,9 +507,7 @@ const MembershipsPage = () => {
     }
   }, [toast, fetchMembershipTypes]);
   
-  const uniqueCategoriesForTabs = useMemo(() => getUniqueCategoriesForTabs(membershipTypes), [membershipTypes]);
-
-  const filteredMembershipTypes = useMemo(() => {
+  const uniqueCategoriesForTabs = useMemo(() => getUniqueCategoriesForTabs(membershipTypes), [membershipTypes]);  const filteredMembershipTypes = useMemo(() => {
     // First filter the data
     const filtered = membershipTypes.filter(type => {
       const nameMatch = type.name?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ?? false;
@@ -516,14 +518,18 @@ const MembershipsPage = () => {
       const matchesSearch = nameMatch || categorySearchMatch || featuresMatch;
 
       let matchesCategory;
-      if (activeTabCategory === 'All Plans') {
+      if (activeTabCategory === 'All') {
         matchesCategory = true;
-      } else {
-        // Direct category match for the new 4-category system
-        matchesCategory = type.category === activeTabCategory;
-      }
-
-      return matchesSearch && matchesCategory;
+      } else {        // Map the tab categories to database categories
+        const categoryMap = {
+          'Membership': 'Membership',
+          'Add-on': 'Add-ons',
+          'Guest': 'Guest Plans',
+          'Staff': 'Staff'
+        };        const dbCategory = categoryMap[activeTabCategory] || activeTabCategory;
+        matchesCategory = type.category === dbCategory;
+      }      const result = matchesSearch && matchesCategory;
+      return result;
     });
 
     // Then sort the filtered data
@@ -586,12 +592,11 @@ const MembershipsPage = () => {
                <div className="text-center py-12">
                  <div className="mx-auto w-24 h-24 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
                    <ListFilter className="h-12 w-12 text-slate-400 dark:text-slate-500" />
-                 </div>
-                 <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
-                   {searchTerm || activeTabCategory !== 'All Plans' ? 'No Plans Match Your Criteria' : 'No Membership Plans Found'}
+                 </div>                 <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                   {searchTerm || activeTabCategory !== 'All' ? 'No Plans Match Your Criteria' : 'No Membership Plans Found'}
                  </h3>
                  <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-md mx-auto">
-                   {searchTerm || activeTabCategory !== 'All Plans'
+                   {searchTerm || activeTabCategory !== 'All'
                      ? "Try adjusting your search terms or filters to find the plans you're looking for."
                      : "Get started by creating your first membership plan. You can set up member plans, staff plans, add-ons, and guest options."
                    }
@@ -599,14 +604,14 @@ const MembershipsPage = () => {
                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
                    <Button onClick={() => handleCreateNew(activeTabCategory)} className="bg-primary hover:bg-primary/90">
                      <PlusCircle className="mr-2 h-4 w-4" />
-                     {searchTerm || activeTabCategory !== 'All Plans' ? 'Create New Plan' : 'Create First Plan'}
+                     {searchTerm || activeTabCategory !== 'All' ? 'Create New Plan' : 'Create First Plan'}
                    </Button>
-                   {(searchTerm || activeTabCategory !== 'All Plans') && (
+                   {(searchTerm || activeTabCategory !== 'All') && (
                      <Button
                        variant="outline"
                        onClick={() => {
                          setSearchTerm('');
-                         setActiveTabCategory('All Plans');
+                         setActiveTabCategory('All');
                        }}
                      >
                        Clear Filters
@@ -634,7 +639,7 @@ const MembershipsPage = () => {
         onClose={() => setIsFormOpen(false)}
         onSave={handleSaveMembershipType}
         membershipData={selectedMembership}
-        existingCategories={uniqueCategoriesForTabs.filter(cat => cat.value !== 'All Plans').map(c => c.label)}
+        existingCategories={uniqueCategoriesForTabs.filter(cat => cat.value !== 'All').map(c => c.label)}
       />
 
       <DeleteMembershipDialog

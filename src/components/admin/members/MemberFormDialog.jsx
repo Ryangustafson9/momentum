@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -41,22 +41,35 @@ const useAdminSettings = () => {
     require_phone: false,
     require_dob: false,
     require_address: false,
-  });
-
-  useEffect(() => {
+  });  useEffect(() => {
     let isMounted = true;
     const fetchSettings = async () => {
       try {
         const { data: settings, error } = await supabase
           .from('general_settings')
           .select('*')
-          .single();
+          .maybeSingle(); // Use maybeSingle() to handle empty table gracefully
 
-        if (error) throw error;
+        if (error && error.code !== 'PGRST116') {
+          // PGRST116 is "no rows found" - this is expected for empty table
+          throw error;
+        }
 
         if (isMounted && settings) {
-          setAdminSettings(prevSettings => ({ ...prevSettings, ...settings }));
+          // Merge fetched settings with defaults, ensuring all required fields exist
+          setAdminSettings(prevSettings => ({ 
+            ...prevSettings, 
+            ...settings,
+            // Ensure form validation fields are always available
+            require_first_name: settings.require_first_name ?? prevSettings.require_first_name,
+            require_last_name: settings.require_last_name ?? prevSettings.require_last_name,
+            require_email: settings.require_email ?? prevSettings.require_email,
+            require_phone: settings.require_phone ?? prevSettings.require_phone,
+            require_dob: settings.require_dob ?? prevSettings.require_dob,
+            require_address: settings.require_address ?? prevSettings.require_address,
+          }));
         }
+        // If no settings found (empty table), keep default settings
       } catch (error) {
         console.error("Failed to fetch admin panel settings", error);
         // Use default settings if fetch fails
@@ -71,8 +84,13 @@ const useAdminSettings = () => {
 const useMemberFormInitialization = (editingMember, prefillName, isOpen, initialFormData) => {
   const [formData, setFormData] = useState(initialFormData);
 
+  // Use useRef to track if we've already initialized for this dialog opening
+  const initializedRef = useRef(false);
+
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !initializedRef.current) {
+      initializedRef.current = true;
+      
       if (prefillName && !editingMember) {
         const nameParts = prefillName.split(' ');
         setFormData({ ...initialFormData, first_name: nameParts[0] || '', last_name: nameParts.slice(1).join(' ') || '' });
@@ -89,17 +107,23 @@ const useMemberFormInitialization = (editingMember, prefillName, isOpen, initial
       } else {
         setFormData({ ...initialFormData, first_name: '', last_name: '' });
       }
+    } else if (!isOpen) {
+      // Reset the flag when dialog closes
+      initializedRef.current = false;
     }
-  }, [editingMember, prefillName, isOpen, initialFormData]);
+  }, [editingMember, prefillName, isOpen]); // Remove initialFormData from dependencies
   
   return { formData, setFormData };
 };
 
-const useAvailableMemberships = (membershipTypesList, editingMember, isOpen, currentFormData, setFormDataCallback) => {
+const useAvailableMemberships = (membershipTypesList, editingMember, isOpen) => {
     const [availableMemberships, setAvailableMemberships] = useState([]);
-     useEffect(() => {
+    const [defaultMembershipId, setDefaultMembershipId] = useState('');
+    
+    useEffect(() => {
         if (!isOpen || !Array.isArray(membershipTypesList)) {
             setAvailableMemberships([]);
+            setDefaultMembershipId('');
             return;
         }
 
@@ -119,24 +143,12 @@ const useAvailableMemberships = (membershipTypesList, editingMember, isOpen, cur
 
         setAvailableMemberships(filteredTypes);
 
-        const defaultMembershipId = nonMemberType?.id || (filteredTypes.length > 0 ? filteredTypes[0].id : '');
-        
-        if (!currentFormData.current_membership_type_id && defaultMembershipId) {
-             if (!editingMember || (editingMember && !editingMember.current_membership_type_id)){
-                 setFormDataCallback(prev => ({
-                    ...prev,
-                    current_membership_type_id: defaultMembershipId
-                }));
-             } else if (editingMember && editingMember.current_membership_type_id) {
-                 setFormDataCallback(prev => ({
-                    ...prev,
-                    current_membership_type_id: editingMember.current_membership_type_id
-                }));
-             }
-        }
+        const defaultId = nonMemberType?.id || (filteredTypes.length > 0 ? filteredTypes[0].id : '');
+        setDefaultMembershipId(defaultId);
 
-    }, [membershipTypesList, editingMember, isOpen, currentFormData.current_membership_type_id, setFormDataCallback]); // currentFormData.current_membership_type_id ensures this re-evaluates if that specific part of formData changes
-    return availableMemberships;
+    }, [membershipTypesList, editingMember?.current_membership_type_id, isOpen]);
+    
+    return { availableMemberships, defaultMembershipId };
 };
 
 
@@ -154,10 +166,34 @@ const MemberFormDialog = ({ isOpen, onOpenChange, editingMember, onSubmit, membe
     membership_history: [], assigned_plan_ids: [],
     auth_user_id: null, 
     role: 'member', 
-  }), []);
+  }), []);  const { formData, setFormData } = useMemberFormInitialization(editingMember, prefillName, isOpen, initialFormData);
+  const { availableMemberships, defaultMembershipId } = useAvailableMemberships(membershipTypesList, editingMember, isOpen);
 
-  const { formData, setFormData } = useMemberFormInitialization(editingMember, prefillName, isOpen, initialFormData);
-  const availableMemberships = useAvailableMemberships(membershipTypesList, editingMember, isOpen, formData, setFormData);
+  // Use ref to track if we've already set the default membership for this dialog session
+  const defaultMembershipSetRef = useRef(false);
+    // Handle default membership ID separately to avoid infinite loops
+  useEffect(() => {
+    if (isOpen && defaultMembershipId && !defaultMembershipSetRef.current) {
+      if (!formData.current_membership_type_id) {
+        if (!editingMember || !editingMember.current_membership_type_id) {
+          setFormData(prev => ({
+            ...prev,
+            current_membership_type_id: defaultMembershipId
+          }));
+          defaultMembershipSetRef.current = true;
+        } else if (editingMember && editingMember.current_membership_type_id) {
+          setFormData(prev => ({
+            ...prev,
+            current_membership_type_id: editingMember.current_membership_type_id
+          }));
+          defaultMembershipSetRef.current = true;
+        }
+      }
+    } else if (!isOpen) {
+      // Reset when dialog closes
+      defaultMembershipSetRef.current = false;
+    }
+  }, [isOpen, defaultMembershipId, editingMember?.current_membership_type_id, formData.current_membership_type_id]); // Remove setFormData from dependencies
 
   const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;

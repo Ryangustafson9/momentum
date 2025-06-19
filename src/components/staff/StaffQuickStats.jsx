@@ -96,15 +96,14 @@ const StaffQuickStats = ({ onNavigate }) => {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      <StatCard
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">      <StatCard
         title="Total Members"
         value={currentStats.totalMembers.toLocaleString()}
         icon={<Users />}
         color="bg-blue-500"
         description="Active memberships"
         trend={{ positive: true, value: "+12 this month" }}
-        onClick={() => onNavigate?.('/staff/members')}
+        onClick={() => onNavigate?.('/staff-portal/members')}
       />
 
       <StatCard

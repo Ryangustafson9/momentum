@@ -34,13 +34,12 @@ export const ROUTES = {
     MEMBERSHIPS: '/staff-portal/memberships',
     TRAINERS: '/staff-portal/trainers',
   },
-
   // Admin routes (same as staff for this app)
   ADMIN: {
-    DASHBOARD: '/staff/dashboard',         // Fixed to match App.jsx
-    SETTINGS: '/staff/settings',
-    MEMBERS: '/staff/members',
-    REPORTS: '/staff/reports',
+    DASHBOARD: '/staff-portal/dashboard',         // Updated to match new structure
+    SETTINGS: '/staff-portal/settings',
+    MEMBERS: '/staff-portal/members',
+    REPORTS: '/staff-portal/reports',
   },
 };
 

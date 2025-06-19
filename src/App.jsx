@@ -23,6 +23,7 @@ import Classes from '@/pages/staff-portal/Classes';
 import CheckIn from '@/pages/staff-portal/CheckIn';
 import Memberships from '@/pages/staff-portal/Memberships';
 import StaffMemberProfile from '@/pages/staff-portal/MemberProfile';
+import MemberRegistration from '@/pages/staff-portal/MemberRegistration';
 
 // Admin pages
 import AdminPanelPage from '@/pages/staff-portal/AdminPanelPage';
@@ -183,14 +184,21 @@ function App() {
                       </StaffDashboardLayout>
                     </PrivateRoute>
                   } 
-                />
-                <Route 
+                />                <Route 
                   path="/staff-portal/memberships" 
                   element={
                     <PrivateRoute allowedRoles={['staff', 'admin']}>
                       <StaffDashboardLayout>
                         <Memberships />
                       </StaffDashboardLayout>
+                    </PrivateRoute>
+                  } 
+                />
+                <Route 
+                  path="/staff-portal/register-member" 
+                  element={
+                    <PrivateRoute allowedRoles={['staff', 'admin']}>
+                      <MemberRegistration />
                     </PrivateRoute>
                   } 
                 />

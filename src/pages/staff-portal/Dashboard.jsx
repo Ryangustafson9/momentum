@@ -338,23 +338,22 @@ const StaffDashboard = () => {
           >
             <Users className="h-8 w-8 text-blue-600 mb-2" />
             <span className="text-sm font-medium">Check In</span>
-          </button>
-          <button
-            onClick={() => navigate('/staff/members')}
+          </button>          <button
+            onClick={() => navigate('/staff-portal/members')}
             className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
             <Users className="h-8 w-8 text-green-600 mb-2" />
             <span className="text-sm font-medium">Members</span>
           </button>
           <button
-            onClick={() => navigate('/staff/classes')}
+            onClick={() => navigate('/staff-portal/classes')}
             className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
             <Calendar className="h-8 w-8 text-purple-600 mb-2" />
             <span className="text-sm font-medium">Classes</span>
           </button>
           <button
-            onClick={() => navigate('/staff/memberships')}
+            onClick={() => navigate('/staff-portal/memberships')}
             className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
             <DollarSign className="h-8 w-8 text-orange-600 mb-2" />

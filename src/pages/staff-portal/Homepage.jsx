@@ -196,18 +196,17 @@ const StaffHomepage = () => {
       badge: { text: "New Features", type: "default" },
       color: "blue"
     },
-    {
-      title: "Member Management",
+    {      title: "Member Management",
       description: "View member profiles and manage accounts",
       icon: Users,
-      onClick: () => navigate('/staff/members'),
+      onClick: () => navigate('/staff-portal/members'),
       color: "purple"
     },
     {
       title: "Class Management",
       description: "Create and manage fitness classes",
       icon: Plus,
-      onClick: () => navigate('/staff/classes'),
+      onClick: () => navigate('/staff-portal/classes'),
       color: "orange"
     }
   ];

@@ -6,12 +6,11 @@ export const ALL_AVAILABLE_CARDS_CONFIG = [
 		id: 'totalMembers',
 		title: 'Total Members',
 		dataType: 'stat',
-		dataKey: 'totalMembers',
-		trendKey: 'totalMembersTrend',
+		dataKey: 'totalMembers',		trendKey: 'totalMembersTrend',
 		defaultVisible: true,
 		description: 'All registered members',
 		icon: Users,
-		navigateTo: '/staff/members',
+		navigateTo: '/staff-portal/members',
 		color: 'from-blue-500 to-blue-600'
 	},
 	{
@@ -56,9 +55,8 @@ export const ALL_AVAILABLE_CARDS_CONFIG = [
 		dataKey: 'expiringMembershipsCount',
 		badgeKey: 'expiringMembershipsCount',
 		defaultVisible: true,
-		description: 'Memberships expiring this month',
-		icon: AlertTriangle,
-		navigateTo: '/staff/memberships',
+		description: 'Memberships expiring this month',		icon: AlertTriangle,
+		navigateTo: '/staff-portal/memberships',
 		color: 'from-orange-500 to-orange-600'
 	},
 	{
@@ -70,7 +68,7 @@ export const ALL_AVAILABLE_CARDS_CONFIG = [
 		defaultVisible: true,
 		description: 'New members today',
 		icon: UserPlus,
-		navigateTo: '/staff/members',
+		navigateTo: '/staff-portal/members',
 		color: 'from-indigo-500 to-indigo-600'
 	},
 	{

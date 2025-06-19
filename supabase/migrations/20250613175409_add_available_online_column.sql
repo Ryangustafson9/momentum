@@ -1,9 +1,9 @@
 -- Add available_online column to membership_types table
 -- This column controls which membership types can be purchased online
 
--- Add the available_online column
+-- Add the available_online column (only if it doesn't exist)
 ALTER TABLE membership_types
-ADD COLUMN available_online boolean DEFAULT true;
+ADD COLUMN IF NOT EXISTS available_online boolean DEFAULT true;
 
 -- Set all existing membership types to be available online
 UPDATE membership_types

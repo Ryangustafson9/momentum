@@ -141,10 +141,10 @@ export const getNavigationItems = (user) => {
       { path: '/admin/super-admin', label: 'Super Admin', icon: 'Shield' },
     ],
     staff: [
-      { path: '/staff/dashboard', label: 'Dashboard', icon: 'Home' },
-      { path: '/staff/members', label: 'Members', icon: 'Users' },
-      { path: '/staff/classes', label: 'Classes', icon: 'Calendar' },
-      { path: '/staff/reports', label: 'Reports', icon: 'BarChart' },
+      { path: '/staff-portal/dashboard', label: 'Dashboard', icon: 'Home' },
+      { path: '/staff-portal/members', label: 'Members', icon: 'Users' },
+      { path: '/staff-portal/classes', label: 'Classes', icon: 'Calendar' },
+      { path: '/staff-portal/reports', label: 'Reports', icon: 'BarChart' },
     ],
     member: [
       { path: '/member/memberdashboard', label: 'Dashboard', icon: 'Home' },
