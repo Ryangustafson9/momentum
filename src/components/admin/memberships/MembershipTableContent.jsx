@@ -43,7 +43,30 @@ const MembershipTableContent = ({ types, visibleColumns, onEdit, onDelete, searc
           {visibleColumns.features && <TableCell className="text-xs max-w-xs truncate text-left">{Array.isArray(type.features) ? type.features.join(', ') : ''}</TableCell>}
           {visibleColumns.available_for_sale && (
             <TableCell className="text-center">
-              {type.available_for_sale ? <CheckCircle className="h-5 w-5 text-green-500 mx-auto" /> : <XCircle className="h-5 w-5 text-red-500 mx-auto" />}
+              <Badge
+                variant={(type.available_for_sale !== false) ? "default" : "secondary"}
+                className={`text-xs ${
+                  (type.available_for_sale !== false)
+                    ? "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800"
+                    : "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                }`}
+              >
+                {(type.available_for_sale !== false) ? "Yes" : "No"}
+              </Badge>
+            </TableCell>
+          )}
+          {visibleColumns.available_online && (
+            <TableCell className="text-center">
+              <Badge
+                variant={type.available_online ? "default" : "secondary"}
+                className={`text-xs ${
+                  type.available_online
+                    ? "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
+                    : "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                }`}
+              >
+                {type.available_online ? "Yes" : "No"}
+              </Badge>
             </TableCell>
           )}
           {visibleColumns.actions && (

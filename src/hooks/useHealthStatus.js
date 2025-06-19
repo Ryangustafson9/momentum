@@ -1,5 +1,5 @@
 // src/hooks/useHealthStatus.js
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { checkDatabaseHealth, getCachedHealthStatus } from '@/lib/healthUtils';
 
 export function useHealthStatus(autoRefresh = false, interval = 60000) {

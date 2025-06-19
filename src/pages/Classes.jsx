@@ -1,466 +1,333 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Search, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Filter, 
-  Calendar as CalendarIcon, 
-  Clock, 
-  Users,
-  MoreHorizontal,
-  X
-} from 'lucide-react';
+import { Calendar, Clock, Users, MapPin, MoreHorizontal, Edit, Trash2, PlusCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast.js';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import EmptyState from '@/components/EmptyState.jsx';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabaseClient';
+import ClassFormDialog from '@/components/admin/classes/ClassFormDialog';
+import DeleteClassDialog from '@/components/admin/classes/DeleteClassDialog';
 
-const initialClasses = [
-  { 
-    id: 1, 
-    name: 'Yoga Flow', 
-    instructor: 'Emma Wilson', 
-    schedule: 'Monday, Wednesday, Friday', 
-    time: '08:00 - 09:00', 
-    capacity: 20,
-    enrolled: 15,
-    location: 'Studio A',
-    description: 'A gentle flow yoga class suitable for all levels.'
-  },
-  { 
-    id: 2, 
-    name: 'HIIT Workout', 
-    instructor: 'James Rodriguez', 
-    schedule: 'Tuesday, Thursday', 
-    time: '18:00 - 19:00', 
-    capacity: 15,
-    enrolled: 12,
-    location: 'Main Floor',
-    description: 'High-intensity interval training to boost metabolism and burn calories.'
-  },
-  { 
-    id: 3, 
-    name: 'Spin Class', 
-    instructor: 'Alex Chen', 
-    schedule: 'Monday, Wednesday, Friday', 
-    time: '17:30 - 18:30', 
-    capacity: 12,
-    enrolled: 10,
-    location: 'Spin Room',
-    description: 'Indoor cycling class with energetic music and varying intensity.'
-  },
-];
+// Classes Service Functions
+const classService = {
+  async getClasses() {
+    try {
+      const { data, error } = await supabase
+        .from('classes')
+        .select(`
+          *,
+          rooms(name),
+          profiles!classes_instructor_id_fkey(name)
+        `)
+        .order('start_time', { ascending: true });
 
-const ClassFormDialog = ({ isOpen, onOpenChange, classData, onSubmit, title, submitButtonText }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    instructor: '',
-    schedule: '',
-    time: '',
-    capacity: 15,
-    enrolled: 0,
-    location: '',
-    description: ''
-  });
-
-  useEffect(() => {
-    if (classData) {
-      setFormData(classData);
-    } else {
-      setFormData({
-        name: '', instructor: '', schedule: '', time: '', capacity: 15, enrolled: 0, location: '', description: ''
-      });
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+      throw error;
     }
-  }, [classData, isOpen]);
+  },
 
-  const handleChange = (e) => {
-    const { name, value, type } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'number' ? parseInt(value) : value
-    }));
-  };
+  async addClass(classData) {
+    try {
+      const { data, error } = await supabase
+        .from('classes')
+        .insert([{
+          ...classData,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(formData);
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error adding class:', error);
+      throw error;
+    }
+  },
+
+  async updateClass(id, classData) {
+    try {
+      const { data, error } = await supabase
+        .from('classes')
+        .update({
+          ...classData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error updating class:', error);
+      throw error;
+    }
+  },
+
+  async deleteClass(id) {
+    try {
+      const { error } = await supabase
+        .from('classes')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error deleting class:', error);
+      throw error;
+    }
+  }
+};
+
+const ClassCard = ({ cls, onEdit, onDelete }) => {
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'full': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px]">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Class Name</Label>
-                <Input id="name" name="name" value={formData.name} onChange={handleChange} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="instructor">Instructor</Label>
-                <Input id="instructor" name="instructor" value={formData.instructor} onChange={handleChange} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="schedule">Schedule (Days)</Label>
-                <Input id="schedule" name="schedule" placeholder="e.g. Monday, Wednesday" value={formData.schedule} onChange={handleChange} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="time">Time</Label>
-                <Input id="time" name="time" placeholder="e.g. 09:00 - 10:00" value={formData.time} onChange={handleChange} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input id="location" name="location" value={formData.location} onChange={handleChange} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="capacity">Capacity</Label>
-                <Input id="capacity" name="capacity" type="number" value={formData.capacity} onChange={handleChange} />
-              </div>
-            </div>
-            {classData && (
-                 <div className="space-y-2">
-                    <Label htmlFor="enrolled">Current Enrollment</Label>
-                    <Input id="enrolled" name="enrolled" type="number" value={formData.enrolled} onChange={handleChange} />
-                </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Input id="description" name="description" value={formData.description} onChange={handleChange} />
-            </div>
+    <Card className="hover:shadow-lg transition-shadow">
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-start">
+          <h3 className="font-medium">{cls.name}</h3>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEdit(cls)}>
+                <Edit className="mr-2 h-4 w-4" /> Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onDelete(cls)} className="text-red-600">
+                <Trash2 className="mr-2 h-4 w-4" /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <div className="text-sm text-muted-foreground mt-1 space-y-1">
+          <div className="flex items-center">
+            <Clock className="h-4 w-4 mr-2" />
+            {cls.start_time} - {cls.end_time}
           </div>
-          <DialogFooter>
-            <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit">{submitButtonText}</Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+          <div className="flex items-center">
+            <Calendar className="h-4 w-4 mr-2" />
+            {cls.day_of_week || 'Not scheduled'}
+          </div>
+          <div className="flex items-center">
+            <MapPin className="h-4 w-4 mr-2" />
+            {cls.rooms?.name || 'No room assigned'}
+          </div>
+          <div className="flex items-center">
+            <Users className="h-4 w-4 mr-2" />
+            {cls.current_capacity || 0}/{cls.max_capacity || 0} participants
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="flex items-center justify-between">
+          <Badge className={getStatusColor(cls.status)}>
+            {cls.status || 'Unknown'}
+          </Badge>
+          <p className="text-sm text-muted-foreground">
+            Instructor: {cls.profiles?.name || 'TBD'}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
-
-const ClassListItem = ({ cls, onEdit, onDelete }) => (
-  <motion.tr
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    className="border-b transition-colors hover:bg-muted/50"
-  >
-    <td className="p-4 align-middle font-medium">{cls.name}</td>
-    <td className="p-4 align-middle">{cls.instructor}</td>
-    <td className="p-4 align-middle">{cls.schedule}</td>
-    <td className="p-4 align-middle">{cls.time}</td>
-    <td className="p-4 align-middle">{cls.location}</td>
-    <td className="p-4 align-middle">
-      <div className="flex items-center">
-        <span className="mr-2">{cls.enrolled}/{cls.capacity}</span>
-        <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-primary" 
-            style={{ width: `${(cls.enrolled / cls.capacity) * 100}%` }}
-          ></div>
-        </div>
-      </div>
-    </td>
-    <td className="p-4 align-middle text-center">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <MoreHorizontal className="h-4 w-4" />
-            <span className="sr-only">Open menu</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onEdit(cls)}>
-            <Edit className="mr-2 h-4 w-4" /> Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onDelete(cls)} className="text-red-600">
-            <Trash2 className="mr-2 h-4 w-4" /> Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </td>
-  </motion.tr>
-);
-
-const ClassCalendarCard = ({ cls, onEdit, onDelete }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="p-3 rounded-md border bg-card hover:bg-muted/50 transition-colors"
-  >
-    <div className="flex justify-between items-start">
-      <h3 className="font-medium">{cls.name}</h3>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onEdit(cls)}>
-            <Edit className="mr-2 h-4 w-4" /> Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onDelete(cls)} className="text-red-600">
-            <Trash2 className="mr-2 h-4 w-4" /> Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-    <div className="text-sm text-muted-foreground mt-1 space-y-1">
-      <div className="flex items-center"><Clock className="h-3.5 w-3.5 mr-1.5" /><span>{cls.time}</span></div>
-      <div className="flex items-center"><Users className="h-3.5 w-3.5 mr-1.5" /><span>{cls.enrolled}/{cls.capacity}</span></div>
-      <div className="flex items-center text-primary"><span>{cls.instructor}</span></div>
-    </div>
-  </motion.div>
-);
-
-
-const Classes = () => {
+const ClassesPage = () => {
   const [classes, setClasses] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedClass, setSelectedClass] = useState(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [currentClass, setCurrentClass] = useState(null);
-  const [instructorFilter, setInstructorFilter] = useState('all');
+  const [classToDelete, setClassToDelete] = useState(null);
+
   const { toast } = useToast();
 
-  useEffect(() => {
-    const savedClasses = localStorage.getItem('gymClasses_v2_refactored');
-    if (savedClasses) {
-      setClasses(JSON.parse(savedClasses));
-    } else {
-      setClasses(initialClasses);
-      localStorage.setItem('gymClasses_v2_refactored', JSON.stringify(initialClasses));
+  const fetchClasses = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await classService.getClasses();
+      setClasses(data);
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+      toast({ 
+        title: 'Error', 
+        description: `Failed to fetch classes: ${error.message}`, 
+        variant: 'destructive' 
+      });
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
-    if (classes.length > 0) {
-      localStorage.setItem('gymClasses_v2_refactored', JSON.stringify(classes));
-    }
-  }, [classes]);
+    fetchClasses();
+  }, [fetchClasses]);
 
   const filteredClasses = classes.filter(cls => {
-    const matchesSearch = cls.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         cls.instructor.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesInstructor = instructorFilter === 'all' || cls.instructor === instructorFilter;
-    return matchesSearch && matchesInstructor;
+    const searchLower = searchTerm.toLowerCase();
+    return !searchTerm || 
+      cls.name?.toLowerCase().includes(searchLower) ||
+      cls.description?.toLowerCase().includes(searchLower) ||
+      cls.instructor_name?.toLowerCase().includes(searchLower);
   });
 
-  const instructors = ['all', ...new Set(classes.map(cls => cls.instructor))];
-
-  const handleAddClass = (newClassData) => {
-    const id = Math.max(0, ...classes.map(c => c.id)) + 1;
-    const classToAdd = { ...newClassData, id, enrolled: 0 }; // Ensure enrolled is set for new classes
-    setClasses([...classes, classToAdd]);
-    setIsAddDialogOpen(false);
-    toast({ title: "Class added", description: `${classToAdd.name} has been added.` });
+  const handleAddClass = () => {
+    setSelectedClass(null);
+    setIsFormOpen(true);
   };
 
-  const handleEditClass = (updatedClassData) => {
-    setClasses(classes.map(cls => cls.id === updatedClassData.id ? updatedClassData : cls));
-    setIsEditDialogOpen(false);
-    toast({ title: "Class updated", description: `${updatedClassData.name} has been updated.` });
+  const handleEditClass = (cls) => {
+    setSelectedClass(cls);
+    setIsFormOpen(true);
   };
 
-  const handleDeleteClass = () => {
-    if (!currentClass) return;
-    setClasses(classes.filter(cls => cls.id !== currentClass.id));
-    setIsDeleteDialogOpen(false);
-    toast({ title: "Class deleted", description: `${currentClass.name} has been removed.`, variant: "destructive" });
-    setCurrentClass(null);
-  };
-
-  const openEditDialog = (cls) => {
-    setCurrentClass({ ...cls });
-    setIsEditDialogOpen(true);
-  };
-
-  const openDeleteDialog = (cls) => {
-    setCurrentClass(cls);
+  const handleDeleteClass = (cls) => {
+    setClassToDelete(cls);
     setIsDeleteDialogOpen(true);
   };
 
-  const classesByDay = {
-    Monday: classes.filter(cls => cls.schedule.includes('Monday')),
-    Tuesday: classes.filter(cls => cls.schedule.includes('Tuesday')),
-    Wednesday: classes.filter(cls => cls.schedule.includes('Wednesday')),
-    Thursday: classes.filter(cls => cls.schedule.includes('Thursday')),
-    Friday: classes.filter(cls => cls.schedule.includes('Friday')),
-    Saturday: classes.filter(cls => cls.schedule.includes('Saturday')),
-    Sunday: classes.filter(cls => cls.schedule.includes('Sunday')),
+  const confirmDeleteClass = async () => {
+    if (!classToDelete) return;
+    try {
+      await classService.deleteClass(classToDelete.id);
+      toast({ title: "Class Deleted", description: `${classToDelete.name} has been deleted.` });
+      fetchClasses();
+    } catch (error) {
+      console.error("Failed to delete class:", error);
+      toast({ title: "Error", description: `Could not delete ${classToDelete.name}. ${error.message}`, variant: "destructive" });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setClassToDelete(null);
+    }
   };
 
+  const handleSaveClass = async (classData) => {
+    try {
+      if (classData.id) {
+        await classService.updateClass(classData.id, classData);
+        toast({ title: "Class Updated", description: `${classData.name} has been updated.` });
+      } else {
+        await classService.addClass(classData);
+        toast({ title: "Class Created", description: `${classData.name} has been created.` });
+      }
+      fetchClasses();
+      setIsFormOpen(false);
+    } catch (error) {
+      console.error("Failed to save class:", error);
+      toast({ title: "Error", description: `Could not save class. ${error.message}`, variant: "destructive" });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="flex flex-col items-center space-y-2">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading classes...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-        <h1 className="text-3xl font-bold tracking-tight">Classes</h1>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Add Class
+    <motion.div
+      className="space-y-6 p-4 md:p-6 lg:p-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">Classes</h1>
+          <p className="text-muted-foreground">Manage your class schedule and instructors</p>
+        </div>
+        <Button onClick={handleAddClass}>
+          <PlusCircle className="h-4 w-4 mr-2" />
+          Add Class
         </Button>
       </div>
 
-      <Tabs defaultValue="list" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="list">List View</TabsTrigger>
-          <TabsTrigger value="calendar">Calendar View</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="list" className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search classes..." className="pl-8" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-            </div>
-            <div className="flex gap-2">
-              <Select value={instructorFilter} onValueChange={setInstructorFilter}>
-                <SelectTrigger className="w-[180px]"><SelectValue placeholder="Instructor" /></SelectTrigger>
-                <SelectContent>
-                  {instructors.map((instructor, index) => (
-                    <SelectItem key={index} value={instructor}>{instructor === 'all' ? 'All Instructors' : instructor}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="icon"><Filter className="h-4 w-4" /></Button>
-            </div>
-          </div>
+      {/* Search */}
+      <div className="max-w-md">
+        <Input
+          type="text"
+          placeholder="Search classes..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
 
-          {filteredClasses.length > 0 ? (
-            <div className="rounded-md border">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="h-10 px-4 text-left font-medium">Class Name</th>
-                      <th className="h-10 px-4 text-left font-medium">Instructor</th>
-                      <th className="h-10 px-4 text-left font-medium">Schedule</th>
-                      <th className="h-10 px-4 text-left font-medium">Time</th>
-                      <th className="h-10 px-4 text-left font-medium">Location</th>
-                      <th className="h-10 px-4 text-left font-medium">Capacity</th>
-                      <th className="h-10 px-4 text-center font-medium">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredClasses.map((cls) => (
-                      <ClassListItem key={cls.id} cls={cls} onEdit={openEditDialog} onDelete={openDeleteDialog} />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ) : (
-            <EmptyState 
-                icon={() => <Search className="w-12 h-12 text-gray-400 mb-4" />}
-                title="No Classes Found"
-                description={searchTerm ? "No classes match your current search or filter." : "There are no classes scheduled yet. Add one to get started!"}
-                actionText={!searchTerm ? "Add New Class" : undefined}
-                onActionClick={!searchTerm ? () => setIsAddDialogOpen(true) : undefined}
+      {/* Classes Grid */}
+      {filteredClasses.length === 0 ? (
+        <div className="text-center py-12">
+          <Calendar className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">No classes found</h3>
+          <p className="text-muted-foreground mb-4">
+            {searchTerm ? 'Try adjusting your search terms.' : 'Get started by creating your first class.'}
+          </p>
+          <Button onClick={handleAddClass}>
+            <PlusCircle className="h-4 w-4 mr-2" />
+            Add First Class
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredClasses.map((cls) => (
+            <ClassCard
+              key={cls.id}
+              cls={cls}
+              onEdit={handleEditClass}
+              onDelete={handleDeleteClass}
             />
-          )}
-        </TabsContent>
-        
-        <TabsContent value="calendar" className="space-y-6">
-            {Object.values(classesByDay).every(dayClasses => dayClasses.length === 0) ? (
-                 <EmptyState 
-                    icon={() => <CalendarIcon className="w-12 h-12 text-gray-400 mb-4" />}
-                    title="No Classes Scheduled"
-                    description="The calendar is empty. Add some classes to see them here."
-                    actionText="Add New Class"
-                    onActionClick={() => setIsAddDialogOpen(true)}
-                />
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {Object.entries(classesByDay).map(([day, dayClasses]) => (
-                    <Card key={day} className={dayClasses.length > 0 ? "" : "opacity-70"}>
-                        <CardHeader className="bg-muted/30"><CardTitle className="text-lg">{day}</CardTitle></CardHeader>
-                        <CardContent className="p-4">
-                        {dayClasses.length > 0 ? (
-                            <div className="space-y-3">
-                            {dayClasses.map((cls) => (
-                                <ClassCalendarCard key={cls.id} cls={cls} onEdit={openEditDialog} onDelete={openDeleteDialog} />
-                            ))}
-                            </div>
-                        ) : (
-                            <div className="h-24 flex items-center justify-center text-muted-foreground">No classes scheduled</div>
-                        )}
-                        </CardContent>
-                    </Card>
-                    ))}
-                </div>
-            )}
-        </TabsContent>
-      </Tabs>
+          ))}
+        </div>
+      )}
 
+      {/* Dialogs */}
       <ClassFormDialog
-        isOpen={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        onSubmit={handleAddClass}
-        title="Add New Class"
-        submitButtonText="Add Class"
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        onSave={handleSaveClass}
+        classData={selectedClass}
       />
 
-      {currentClass && (
-        <ClassFormDialog
-          isOpen={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          classData={currentClass}
-          onSubmit={handleEditClass}
-          title="Edit Class"
-          submitButtonText="Save Changes"
-        />
-      )}
-
-      {currentClass && (
-        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader><DialogTitle>Confirm Deletion</DialogTitle></DialogHeader>
-            <div className="py-4"><p>Are you sure you want to delete the {currentClass.name} class?</p></div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}><X className="mr-2 h-4 w-4" />Cancel</Button>
-              <Button variant="destructive" onClick={handleDeleteClass}><Trash2 className="mr-2 h-4 w-4" />Delete</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-    </div>
+      <DeleteClassDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={confirmDeleteClass}
+        className={classToDelete?.name}
+      />
+    </motion.div>
   );
 };
 
-export default Classes;
+export default ClassesPage;
 
 

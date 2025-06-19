@@ -4,18 +4,14 @@
  * Centralized toast notification utilities
  */
 
-export const showToast = {
-  success: (message, description = null) => {
-    console.log('Toast Success:', message, description);
+export const showToast = {  success: (message, description = null) => {
     // toast({
     //   title: message,
     //   description,
     //   variant: "default",
     // });
   },
-
   error: (message, description = null) => {
-    console.log('Toast Error:', message, description);
     // toast({
     //   title: message,
     //   description,

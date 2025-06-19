@@ -1,7 +1,7 @@
 // ⭐ React Query hooks for membership type operations
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiService } from '@/services/apiService';
-import { showToast } from '@/utils/toastUtils';
+import { supabase } from '@/lib/supabaseClient';
+import { useToast } from '@/hooks/use-toast';
 
 // Query keys for consistent caching
 export const membershipTypeKeys = {
@@ -16,14 +16,38 @@ export const membershipTypeKeys = {
  * Hook to fetch all membership types
  */
 export function useMembershipTypes(filters = {}) {
+  const { toast } = useToast();
+
   return useQuery({
     queryKey: membershipTypeKeys.list(filters),
-    queryFn: () => apiService.getMembershipTypes(filters),
+    queryFn: async () => {
+      let query = supabase
+        .from('membership_types')
+        .select('*')
+        .order('name');
+
+      // Apply filters
+      if (filters.category) {
+        query = query.eq('category', filters.category);
+      }
+
+      if (filters.available_online !== undefined) {
+        query = query.eq('available_online', filters.available_online);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    },
     staleTime: 10 * 60 * 1000, // 10 minutes (membership types change rarely)
     cacheTime: 30 * 60 * 1000, // 30 minutes
     onError: (error) => {
       console.error('Error fetching membership types:', error);
-      showToast.error('Failed to load membership types', error.message);
+      toast({
+        title: "Error",
+        description: `Failed to load membership types: ${error.message}`,
+        variant: "destructive"
+      });
     },
   });
 }

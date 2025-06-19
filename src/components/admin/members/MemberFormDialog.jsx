@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { dataService } from '@/services/apiService'; 
+import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast.js';
 
 const MemberFormField = React.memo(({ label, name, type = "text", value, onChange, isRequiredByAdmin = false, children, min }) => {
@@ -47,12 +47,19 @@ const useAdminSettings = () => {
     let isMounted = true;
     const fetchSettings = async () => {
       try {
-        const settings = await dataService.getAdminPanelSettings();
+        const { data: settings, error } = await supabase
+          .from('general_settings')
+          .select('*')
+          .single();
+
+        if (error) throw error;
+
         if (isMounted && settings) {
           setAdminSettings(prevSettings => ({ ...prevSettings, ...settings }));
         }
       } catch (error) {
         console.error("Failed to fetch admin panel settings", error);
+        // Use default settings if fetch fails
       }
     };
     fetchSettings();

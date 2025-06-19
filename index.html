@@ -5,8 +5,49 @@
 		<meta charset="UTF-8" />
 		<link rel="icon" type="image/svg+xml" href="/vite.svg" />
 		<meta name="generator" content="Hostinger Horizons" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>FitTrack - Gym Management System</title>
+
+		<!-- Enhanced Viewport for Mobile -->
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
+
+		<!-- PWA Meta Tags -->
+		<meta name="theme-color" content="#4f46e5" />
+		<meta name="background-color" content="#ffffff" />
+		<meta name="display" content="standalone" />
+		<meta name="orientation" content="portrait-primary" />
+
+		<!-- Apple Touch Icon (temporarily disabled until icons are created) -->
+		<!-- <link rel="apple-touch-icon" href="/icons/icon-192x192.png" /> -->
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+		<meta name="apple-mobile-web-app-title" content="Momentum" />
+
+		<!-- Microsoft Tiles (temporarily disabled until icons are created) -->
+		<meta name="msapplication-TileColor" content="#4f46e5" />
+		<!-- <meta name="msapplication-TileImage" content="/icons/icon-144x144.png" /> -->
+
+		<!-- Manifest -->
+		<link rel="manifest" href="/manifest.json" />
+
+		<!-- Preconnect for Performance -->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+		<!-- Safe Area CSS Variables -->
+		<style>
+			:root {
+				--safe-area-inset-top: env(safe-area-inset-top);
+				--safe-area-inset-right: env(safe-area-inset-right);
+				--safe-area-inset-bottom: env(safe-area-inset-bottom);
+				--safe-area-inset-left: env(safe-area-inset-left);
+			}
+
+			.safe-area-pt { padding-top: var(--safe-area-inset-top); }
+			.safe-area-pr { padding-right: var(--safe-area-inset-right); }
+			.safe-area-pb { padding-bottom: var(--safe-area-inset-bottom); }
+			.safe-area-pl { padding-left: var(--safe-area-inset-left); }
+		</style>
+
+		<title>Momentum - Gym Management System</title>
 	</head>
 	<body>
 		<div id="root"></div>

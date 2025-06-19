@@ -16,34 +16,31 @@ export const ROUTES = {
   GENERAL: {
     DASHBOARD: '/dashboard',           // Nonmember landing page
   },
-
   // Member-specific routes
   MEMBER: {
-    DASHBOARD: '/member/memberdashboard',  // Fixed to match App.jsx
-    CLASSES: '/member/classes',
-    BILLING: '/member/billing',
-    PROFILE: '/member/profile',
-  },
-
-  // Staff-specific routes (files in admin folder)
+    DASHBOARD: '/member-portal/dashboard',  // Updated to match new structure
+    CLASSES: '/member-portal/classes',
+    BILLING: '/member-portal/billing',
+    PROFILE: '/member-portal/profile',
+  },// Staff-specific routes
   STAFF: {
-    DASHBOARD: '/admin/staffdashboard',    // Points to admin/StaffDashboard.jsx
-    MEMBERS: '/admin/members',
-    CLASSES: '/admin/classes',
-    REPORTS: '/admin/reports',
-    SETTINGS: '/admin/settings',
-    CHECKIN: '/admin/check-in',
-    SCHEDULE: '/admin/schedule',
-    MEMBERSHIPS: '/admin/memberships',
-    TRAINERS: '/admin/trainers',
+    DASHBOARD: '/staff-portal/dashboard',         // Updated to match new structure
+    MEMBERS: '/staff-portal/members',
+    CLASSES: '/staff-portal/classes',
+    REPORTS: '/staff-portal/reports',
+    SETTINGS: '/staff-portal/settings',
+    CHECKIN: '/staff-portal/checkin',
+    SCHEDULE: '/staff-portal/schedule',
+    MEMBERSHIPS: '/staff-portal/memberships',
+    TRAINERS: '/staff-portal/trainers',
   },
 
-  // Admin routes (same as staff since files are in admin folder)
+  // Admin routes (same as staff for this app)
   ADMIN: {
-    DASHBOARD: '/admin/staffdashboard',    // Same as staff
-    SETTINGS: '/admin/settings',
-    MEMBERS: '/admin/members',
-    REPORTS: '/admin/reports',
+    DASHBOARD: '/staff/dashboard',         // Fixed to match App.jsx
+    SETTINGS: '/staff/settings',
+    MEMBERS: '/staff/members',
+    REPORTS: '/staff/reports',
   },
 };
 

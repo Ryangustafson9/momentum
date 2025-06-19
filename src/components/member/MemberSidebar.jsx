@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 const MemberSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
 
   const navigationItems = [
     { 
@@ -49,7 +49,7 @@ const MemberSidebar = () => {
 
   const handleSignOut = async () => {
     try {
-      await signOut();
+      await logout();
       navigate('/login');
     } catch (error) {
       console.error('Sign out error:', error);

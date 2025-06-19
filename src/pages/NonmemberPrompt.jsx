@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext.jsx';
-import { dataService } from '@/services/apiService';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabaseClient';
 import { Phone, Mail, CreditCard, Users, ArrowRight, ArrowLeft } from 'lucide-react';
 
 const NonmemberPrompt = () => {
@@ -20,12 +20,25 @@ const NonmemberPrompt = () => {
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const generalSettings = await dataService.getGeneralSettings();
-        if (generalSettings) {
-          setSettings(prev => ({ ...prev, ...generalSettings }));
+        // Try to load settings from Supabase
+        const { data: generalSettings, error } = await supabase
+          .from('settings')
+          .select('*')
+          .eq('category', 'general')
+          .single();
+
+        if (!error && generalSettings) {
+          setSettings(prev => ({ 
+            ...prev, 
+            clubName: generalSettings.club_name || prev.clubName,
+            clubPhone: generalSettings.club_phone || prev.clubPhone,
+            clubEmail: generalSettings.club_email || prev.clubEmail,
+            nonmemberRedirectMessage: generalSettings.nonmember_message || prev.nonmemberRedirectMessage
+          }));
         }
       } catch (error) {
         console.error('Error loading settings:', error);
+        // Use default settings if there's an error
       } finally {
         setIsLoading(false);
       }
@@ -44,6 +57,8 @@ const NonmemberPrompt = () => {
       navigate('/login');
     } catch (error) {
       console.error('Error logging out:', error);
+      // Still navigate to login even if logout fails
+      navigate('/login');
     }
   };
 
@@ -99,7 +114,7 @@ const NonmemberPrompt = () => {
         <div className="space-y-4 mb-6">
           <button
             onClick={handleSignUpOnline}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 font-medium"
           >
             <CreditCard className="h-5 w-5" />
             <span>Sign Up for Membership Online</span>
@@ -111,7 +126,7 @@ const NonmemberPrompt = () => {
               <div className="w-full border-t border-gray-300" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">or</span>
+              <span className="px-2 bg-white text-gray-500">or contact us</span>
             </div>
           </div>
 
@@ -119,15 +134,15 @@ const NonmemberPrompt = () => {
           <div className="grid grid-cols-1 gap-3">
             <a
               href={`tel:${settings.clubPhone}`}
-              className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+              className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 font-medium"
             >
               <Phone className="h-5 w-5" />
               <span>Call Us: {settings.clubPhone}</span>
             </a>
 
             <a
-              href={`mailto:${settings.clubEmail}`}
-              className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center space-x-2"
+              href={`mailto:${settings.clubEmail}?subject=Membership Inquiry`}
+              className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center space-x-2 font-medium"
             >
               <Mail className="h-5 w-5" />
               <span>Email Us</span>
@@ -145,18 +160,23 @@ const NonmemberPrompt = () => {
             <span>Back to Login</span>
           </button>
 
-          <button
-            onClick={handleLogout}
-            className="w-full text-gray-500 py-2 px-4 rounded-lg hover:text-gray-700 transition-colors text-sm"
-          >
-            Logout
-          </button>
+          {user && (
+            <button
+              onClick={handleLogout}
+              className="w-full text-gray-500 py-2 px-4 rounded-lg hover:text-gray-700 transition-colors text-sm"
+            >
+              Logout
+            </button>
+          )}
         </div>
 
         {/* Footer */}
         <div className="mt-6 text-center">
           <p className="text-xs text-gray-500">
             Need help? Contact us at {settings.clubPhone}
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            © 2024 {settings.clubName}. All rights reserved.
           </p>
         </div>
       </motion.div>

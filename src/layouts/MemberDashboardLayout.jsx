@@ -8,7 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Badge } from '@/components/ui/badge.jsx';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext.jsx';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from "@/hooks/use-toast.js";
 import MemberTopNavbar from '@/components/member/MemberTopNavbar';
 import MemberSidebar from '@/components/member/MemberSidebar';

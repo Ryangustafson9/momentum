@@ -31,7 +31,6 @@ export const updateGeneralSettings = async (settings) => {
   try {
     // For now, just return the settings since we don't have a settings table yet
     // This can be expanded later to update a database table
-    console.log('Settings would be updated:', settings);
     return settings;
   } catch (error) {
     console.error('Error updating general settings:', error);

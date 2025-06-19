@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, useLocation, useNavigate, Routes, Route } from 'react-router-dom'; // ⭐ ADD Routes import
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import AdminSidebar from '@/components/admin/AdminSidebar.jsx';
-import AdminHeader from '@/components/admin/AdminHeader.jsx';
-import { apiService } from '@/services/apiService';
+import TopNavbar from '@/components/admin/TopNavbar.jsx';
+import { supabase } from '@/lib/supabaseClient';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext.jsx';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from "@/hooks/use-toast.js";
 
 const pageTitles = {
@@ -28,7 +28,7 @@ const getPageTitle = (pathname) => {
 };
 
 const AdminDashboardLayout = ({ children }) => {
-  const { user, logout, startRoleImpersonation: authStartImpersonation } = useAuth();
+  const { user, logout } = useAuth();
   const { toast } = useToast();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(() => {
     const storedSidebarState = localStorage.getItem('sidebarExpanded');
@@ -67,16 +67,7 @@ const AdminDashboardLayout = ({ children }) => {
     fetchMembers();
     return () => { isMounted = false; };
   }, [user?.role]);
-
-  const handleStartImpersonation = async (roleToImpersonate) => {
-    try {
-      await authStartImpersonation(roleToImpersonate);
-      navigate('/dashboard'); 
-      toast({ title: "Role Impersonation Started", description: `You are now viewing the app as a ${roleToImpersonate}.`});
-    } catch (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    }
-  };
+  const handleStartImpersonation = null; // Impersonation disabled for now
 
   if (!user) {
     return null; 
@@ -89,26 +80,25 @@ const AdminDashboardLayout = ({ children }) => {
         user={user}
         isExpanded={isSidebarExpanded}
         toggleSidebar={toggleSidebar}
-        startRoleImpersonation={handleStartImpersonation}
       />
       <div className={cn(
         "flex flex-col flex-1 transition-all duration-300 ease-in-out",
         isSidebarExpanded ? "md:ml-64" : "md:ml-20" 
-      )}>
-        <AdminHeader 
+      )}>        <TopNavbar
           toggleSidebar={toggleSidebar}
-          userRole={user.role}
-          currentPathTitle={currentPathTitle}
-          allMembers={allMembers}
+          userRole={user?.role}
+          user={user}
+          onLogout={logout}
+          startRoleImpersonation={handleStartImpersonation}
         />
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8 bg-background dark:bg-slate-900">
           <motion.div
-            key={location.pathname} 
+            key={location.pathname}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
-            className="w-full" 
+            className="w-full"
           >
             {children}
           </motion.div>

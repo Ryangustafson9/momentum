@@ -21,11 +21,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast.js';
-import { dataService } from '@/services/apiService';
+import { supabase } from '@/lib/supabaseClient';
 import { Badge } from '@/components/ui/badge';
 import { format, addMonths, addDays } from 'date-fns';
 import { Briefcase, Shield, DollarSign, CalendarDays, Info, CheckCircle, XCircle } from 'lucide-react';
-import LoadingSpinner from '@/components/LoadingSpinner';
+import { LoadingSpinner } from '@/shared/components/LoadingStates';
 
 const PlanDetailsDisplay = ({ plan, type }) => {
   if (!plan) return <p className="text-sm text-muted-foreground">Select a {type} to see details.</p>;
@@ -98,13 +98,26 @@ const AssignPlanDialog = ({ isOpen, onOpenChange, member, onAssignmentSuccess })
   const fetchInitialData = useCallback(async () => {
     setIsLoadingData(true);
     try {
-      const [mTypesData, sRolesData] = await Promise.all([
-        dataService.getMembershipTypes(),
-        dataService.getStaffRoles()
+      const [mTypesResult, sRolesResult] = await Promise.all([
+        // Get membership types
+        supabase
+          .from('membership_types')
+          .select('*')
+          .order('name'),
+
+        // Get staff roles from membership_types with category 'Staff'
+        supabase
+          .from('membership_types')
+          .select('*')
+          .eq('category', 'Staff')
+          .order('name')
       ]);
-      
-      setAllMembershipTypes(Array.isArray(mTypesData) ? mTypesData : []);
-      setStaffRoles(Array.isArray(sRolesData) ? sRolesData : []);
+
+      if (mTypesResult.error) throw mTypesResult.error;
+      if (sRolesResult.error) throw sRolesResult.error;
+
+      setAllMembershipTypes(Array.isArray(mTypesResult.data) ? mTypesResult.data : []);
+      setStaffRoles(Array.isArray(sRolesResult.data) ? sRolesResult.data : []);
 
     } catch (error) {
       console.error("Error fetching initial data for AssignPlanDialog:", error);
@@ -154,14 +167,31 @@ const AssignPlanDialog = ({ isOpen, onOpenChange, member, onAssignmentSuccess })
       const startDate = new Date().toISOString().split('T')[0];
       const pricePaid = selectedMembershipPlan.price; 
       
-      const updatedMember = await dataService.assignMembershipToMember(
-        member.id,
-        selectedMembershipId,
-        startDate,
-        null, 
-        pricePaid,
-        `Assigned via profile. Pro-rate: ${proRatePayment}`
-      );
+      // Create membership assignment
+      const { data: newMembership, error: membershipError } = await supabase
+        .from('memberships')
+        .insert([{
+          auth_user_id: member.id,
+          current_membership_type_id: selectedMembershipId,
+          start_date: startDate,
+          status: 'active',
+          price_paid: pricePaid,
+          notes: `Assigned via profile. Pro-rate: ${proRatePayment}`
+        }])
+        .select()
+        .single();
+
+      if (membershipError) throw membershipError;
+
+      // Update member's role if needed
+      const { data: updatedMember, error: updateError } = await supabase
+        .from('profiles')
+        .update({ role: 'member' })
+        .eq('id', member.id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
       toast({ title: "Membership Assigned", description: `${selectedMembershipPlan.name} assigned to ${member.name}.`, className: "bg-green-500 text-white" });
       onAssignmentSuccess(updatedMember);
       onOpenChange(false);
@@ -187,14 +217,31 @@ const AssignPlanDialog = ({ isOpen, onOpenChange, member, onAssignmentSuccess })
       const startDate = new Date().toISOString().split('T')[0];
       const pricePaid = staffPlanToAssign.price || 0;
 
-      const updatedMember = await dataService.assignMembershipToMember(
-        member.id,
-        staffPlanToAssign.id, 
-        startDate,
-        null,
-        pricePaid,
-        `Assigned staff role: ${selectedStaffRoleDetails.name}`
-      );
+      // Create staff membership assignment
+      const { data: newMembership, error: membershipError } = await supabase
+        .from('memberships')
+        .insert([{
+          auth_user_id: member.id,
+          current_membership_type_id: staffPlanToAssign.id,
+          start_date: startDate,
+          status: 'active',
+          price_paid: pricePaid,
+          notes: `Assigned staff role: ${selectedStaffRoleDetails.name}`
+        }])
+        .select()
+        .single();
+
+      if (membershipError) throw membershipError;
+
+      // Update member's role to staff
+      const { data: updatedMember, error: updateError } = await supabase
+        .from('profiles')
+        .update({ role: 'staff' })
+        .eq('id', member.id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
       toast({ title: "Staff Role Assigned", description: `${selectedStaffRoleDetails.name} role (via plan ${staffPlanToAssign.name}) assigned to ${member.name}.`, className: "bg-green-500 text-white" });
       onAssignmentSuccess(updatedMember); 
       onOpenChange(false);

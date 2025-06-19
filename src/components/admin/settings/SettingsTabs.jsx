@@ -15,7 +15,7 @@ const iconMap = {
 const SettingsTabs = ({ defaultValue, children, tabsConfig }) => {
   return (
     <Tabs defaultValue={defaultValue} className="flex flex-col gap-6">
-      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 bg-transparent p-0">
+      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-2 bg-transparent p-0">
         {tabsConfig.map(tab => {
           const IconComponent = tab.Icon || iconMap[tab.value] || Settings;
           return (

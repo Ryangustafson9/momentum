@@ -11,12 +11,18 @@ const MemberSearch = ({ allMembers, navigate }) => {
   const searchRef = useRef(null);
 
   useEffect(() => {
-    if (searchTerm.length > 0) {
-      const filtered = allMembers.filter(member =>
-        member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (member.email && member.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (member.systemMemberId && String(member.systemMemberId).toLowerCase().includes(searchTerm.toLowerCase()))
-      );
+    if (searchTerm.length > 0 && Array.isArray(allMembers)) {
+      const filtered = allMembers.filter(member => {
+        if (!member) return false;
+
+        const name = member.name || member.full_name || '';
+        const email = member.email || '';
+        const systemId = member.systemMemberId || member.system_member_id || '';
+
+        return name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               String(systemId).toLowerCase().includes(searchTerm.toLowerCase());
+      });
       setSearchResults(filtered);
     } else {
       setSearchResults([]);
@@ -78,8 +84,8 @@ const MemberSearch = ({ allMembers, navigate }) => {
                   onKeyDown={(e) => e.key === 'Enter' && handleSelectMember(member.id)}
                   tabIndex={0}
               >
-                  <p className="font-medium">{member.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{member.email || member.systemMemberId}</p>
+                  <p className="font-medium">{member.name || member.full_name || member.email}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{member.email || member.systemMemberId || member.system_member_id}</p>
               </div>
           ))}
           {searchResults.length === 0 && (

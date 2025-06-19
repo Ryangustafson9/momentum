@@ -1,31 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
-import { checkDatabaseHealth } from '@/lib/healthUtils';
+import { createLogger } from '@/lib/logger';
+import { env } from '@/lib/env';
+import { realtimeCapability } from '@/lib/realtimeCapability';
 
-// Central logging system for consistent formatting and production control
-function log(message, ...args) {
-  if (import.meta.env.MODE !== 'production') {
-    console.log(`[Supabase] ${message}`, ...args);
-  }
-}
-
-function logError(message, ...args) {
-  if (import.meta.env.MODE !== 'production') {
-    console.error(`[Supabase] ❌ ${message}`, ...args);
-  }
-}
-
-function logWarn(message, ...args) {
-  if (import.meta.env.MODE !== 'production') {
-    console.warn(`[Supabase] ⚠️ ${message}`, ...args);
-  }
-}
-
-function logInfo(message, ...args) {
-  if (import.meta.env.MODE !== 'production') {
-    console.info(`[Supabase] ℹ️ ${message}`, ...args);
-  }
-}
+// Create logger for Supabase operations
+const logger = createLogger('Supabase');
 
 // Supabase ready state management
 let _ready = false;
@@ -57,14 +37,14 @@ export function waitForSupabase() {
 function markSupabaseReady() {
   if (!_ready) {
     _ready = true;
-    log('✅ Supabase client marked as ready');
+    logger.info('✅ Supabase client marked as ready');
     
     // Execute all waiting callbacks
     _readyCallbacks.forEach(callback => {
       try {
         callback();
       } catch (error) {
-        logError('Ready callback error:', error);
+        logger.error('Ready callback error:', error);
       }
     });
     
@@ -74,21 +54,21 @@ function markSupabaseReady() {
 }
 
 // Enhanced environment variable validation for local development
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = env.SUPABASE.URL;
+const supabaseAnonKey = env.SUPABASE.ANON_KEY;
 
 // Comprehensive validation with local development awareness
 if (!supabaseUrl) {
-  logError('VITE_SUPABASE_URL is missing from environment variables');
-  logError('📋 Add VITE_SUPABASE_URL=http://127.0.0.1:54321 to your .env file');
-  logError('💡 Note: Vite requires VITE_ prefix for client-side access');
+  logger.error('VITE_SUPABASE_URL is missing from environment variables');
+  logger.error('📋 Add VITE_SUPABASE_URL=http://127.0.0.1:54321 to your .env file');
+  logger.error('💡 Note: Vite requires VITE_ prefix for client-side access');
   throw new Error('Missing VITE_SUPABASE_URL environment variable');
 }
 
 if (!supabaseAnonKey) {
-  logError('VITE_SUPABASE_ANON_KEY is missing from environment variables');
-  logError('📋 Add VITE_SUPABASE_ANON_KEY=your_anon_key to your .env file');
-  logError('💡 Note: Vite requires VITE_ prefix for client-side access');
+  logger.error('VITE_SUPABASE_ANON_KEY is missing from environment variables');
+  logger.error('📋 Add VITE_SUPABASE_ANON_KEY=your_anon_key to your .env file');
+  logger.error('💡 Note: Vite requires VITE_ prefix for client-side access');
   throw new Error('Missing VITE_SUPABASE_ANON_KEY environment variable');
 }
 
@@ -96,44 +76,38 @@ if (!supabaseAnonKey) {
 export const isLocalDevelopment = supabaseUrl.includes('127.0.0.1') || supabaseUrl.includes('localhost');
 
 if (isLocalDevelopment) {
-  log('🏠 Local Supabase development environment detected');
-  log('🔗 Supabase URL:', supabaseUrl);
+  logger.info('🏠 Local Supabase development environment detected');
+  logger.info('🔗 Supabase URL:', supabaseUrl);
 } else {
   // Validate production URL format
   if (!supabaseUrl.startsWith('https://') || !supabaseUrl.includes('.supabase.co')) {
-    logError('Invalid Supabase URL format for production:', supabaseUrl);
-    logError('📋 Production URL should be: https://your-project.supabase.co');
+    logger.error('Invalid Supabase URL format for production:', supabaseUrl);
+    logger.error('📋 Production URL should be: https://your-project.supabase.co');
     throw new Error('Invalid VITE_SUPABASE_URL format for production');
   }
-  log('☁️ Production Supabase environment detected');
-  log('🔗 Supabase URL:', supabaseUrl);
+  logger.info('☁️ Production Supabase environment detected');
+  logger.info('🔗 Supabase URL:', supabaseUrl);
 }
 
 // Basic key validation
 if (supabaseAnonKey.length < 50) {
-  logError('Supabase anon key appears to be invalid (too short)');
-  logError('📋 Key should be a JWT token starting with eyJ...');
+  logger.error('Supabase anon key appears to be invalid (too short)');
+  logger.error('📋 Key should be a JWT token starting with eyJ...');
   throw new Error('Invalid VITE_SUPABASE_ANON_KEY format');
 }
 
-log('✅ Environment variables validated successfully');
-log('🔑 Anon Key:', supabaseAnonKey.substring(0, 20) + '...');
+logger.info('✅ Environment variables validated successfully');
+logger.info('🔑 Anon Key:', supabaseAnonKey.substring(0, 20) + '...');
 
 // Enhanced WebSocket transport configuration for local development
 const realtimeConfig = {
   params: {
     eventsPerSecond: 10,
   },
-  // Fix transport configuration for browser compatibility
-  ...(isLocalDevelopment ? {
-    // For local development, use minimal config to avoid transport errors
-    heartbeatIntervalMs: 30000,
-    reconnectAfterMs: () => Math.random() * 5000 + 1000,
-  } : {
-    // Production configuration
-    transport: 'websocket',
-    timeout: 20000,
-  })
+  // Simplified transport configuration to avoid constructor errors
+  heartbeatIntervalMs: 30000,
+  reconnectAfterMs: () => Math.random() * 5000 + 1000,
+  // Remove problematic transport configs that cause constructor errors
 };
 
 // ⚡ REQUEST TIMEOUT FIX: Add timeout configuration for API calls
@@ -144,7 +118,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    storage: window.localStorage,
+    storageKey: 'supabase.auth.token',
+    debug: isLocalDevelopment, // Enable debug in development
+    flowType: 'pkce' // Use PKCE flow for better security and session handling
   },
   realtime: realtimeConfig,
   global: {
@@ -174,7 +152,17 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-log('🔧 Supabase client initialized successfully with enhanced WebSocket config');
+logger.info('🔧 Supabase client initialized successfully with enhanced WebSocket config');
+
+// Test realtime capability after client initialization
+setTimeout(async () => {
+  try {
+    await realtimeCapability.testRealtimeCapability(supabase);
+  } catch (error) {
+    logger.error('Error testing realtime capability:', error);
+    realtimeCapability.disable('Failed to initialize realtime capability test');
+  }
+}, 1000);
 
 // Realtime monitoring state
 let realtimeChannel = null;
@@ -184,49 +172,49 @@ const MAX_MONITORING_RETRIES = 3;
 // Initialize realtime connection monitoring with retry logic
 const initializeRealtimeMonitoring = async () => {
   if (monitoringRetries >= MAX_MONITORING_RETRIES) {
-    logWarn('Max realtime monitoring retries reached, skipping for stability');
+    logger.warn('Max realtime monitoring retries reached, skipping for stability');
     return;
   }
 
   try {
-    log(`📡 Initializing realtime monitoring (attempt ${monitoringRetries + 1}/${MAX_MONITORING_RETRIES})`);
-    
+    logger.info(`📡 Initializing realtime monitoring (attempt ${monitoringRetries + 1}/${MAX_MONITORING_RETRIES})`);
+
     // Wait a moment for supabase client to fully initialize
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     // Create a simple monitoring channel with UUID for uniqueness
     realtimeChannel = supabase.channel(`system-status-${uuidv4()}`);
-    
+
     // Subscribe with enhanced error handling
     const subscription = realtimeChannel.subscribe((status, err) => {
       if (err) {
-        logWarn('Realtime subscription error:', err.message);
+        logger.warn('Realtime subscription error:', err.message);
         return;
       }
-      
+
       switch (status) {
         case 'SUBSCRIBED':
-          log('✅ Supabase realtime connected successfully');
+          logger.info('✅ Supabase realtime connected successfully');
           monitoringRetries = 0; // Reset retry counter on success
           break;
         case 'CHANNEL_ERROR':
-          logWarn('Supabase realtime channel error (will retry)');
+          logger.warn('Supabase realtime channel error (will retry)');
           scheduleRealtimeRetry();
           break;
         case 'TIMED_OUT':
-          logWarn('Supabase realtime connection timed out');
+          logger.warn('Supabase realtime connection timed out');
           scheduleRealtimeRetry();
           break;
         case 'CLOSED':
-          log('🔌 Supabase realtime connection closed');
+          logger.info('🔌 Supabase realtime connection closed');
           break;
         default:
-          log('📡 Supabase realtime status:', status);
+          logger.info('📡 Supabase realtime status:', status);
       }
     });
-    
+
   } catch (error) {
-    logWarn(`Realtime monitoring setup failed (attempt ${monitoringRetries + 1}):`, error.message);
+    logger.warn(`Realtime monitoring setup failed (attempt ${monitoringRetries + 1}):`, error.message);
     scheduleRealtimeRetry();
   }
 };
@@ -235,7 +223,7 @@ const initializeRealtimeMonitoring = async () => {
 const scheduleRealtimeRetry = () => {
   monitoringRetries++;
   if (monitoringRetries < MAX_MONITORING_RETRIES) {
-    log(`🔄 Scheduling realtime retry in ${monitoringRetries * 2} seconds...`);
+    logger.info(`🔄 Scheduling realtime retry in ${monitoringRetries * 2} seconds...`);
     setTimeout(initializeRealtimeMonitoring, monitoringRetries * 2000);
   }
 };
@@ -251,7 +239,7 @@ export function getRealtimeStatus() {
     }
     return realtimeChannel.state || 'UNKNOWN';
   } catch (error) {
-    logWarn('Error getting realtime status:', error.message);
+    logger.warn('Error getting realtime status:', error.message);
     return 'ERROR';
   }
 }
@@ -261,7 +249,7 @@ export function createRealtimeChannel(channelName, options = {}) {
     // Use UUID for truly unique channel names instead of timestamp
     const uniqueChannelName = `${channelName}-${uuidv4()}`;
     
-    log(`📺 Creating realtime channel: ${uniqueChannelName}`);
+    logger.info(`📺 Creating realtime channel: ${uniqueChannelName}`);
     
     const channel = supabase.channel(uniqueChannelName, {
       // Enhanced channel configuration for stability
@@ -273,10 +261,10 @@ export function createRealtimeChannel(channelName, options = {}) {
       ...options
     });
     
-    log(`✅ Created realtime channel: ${uniqueChannelName}`);
+    logger.info(`✅ Created realtime channel: ${uniqueChannelName}`);
     return channel;
   } catch (error) {
-    logWarn(`Failed to create realtime channel ${channelName}:`, error.message);
+    logger.warn(`Failed to create realtime channel ${channelName}:`, error.message);
     return null;
   }
 }
@@ -287,20 +275,20 @@ export function removeRealtimeChannel(channel) {
       // Unsubscribe from the channel first
       if (channel.unsubscribe) {
         channel.unsubscribe();
-        log('📺 Channel unsubscribed successfully');
+        logger.info('📺 Channel unsubscribed successfully');
       }
       
       // Then remove the channel from Supabase
       if (supabase.removeChannel) {
         supabase.removeChannel(channel);
-        log('📺 Realtime channel removed successfully');
+        logger.info('📺 Realtime channel removed successfully');
       }
       
       return true;
     }
     return false;
   } catch (error) {
-    logWarn('Failed to remove realtime channel:', error.message);
+    logger.warn('Failed to remove realtime channel:', error.message);
     return false;
   }
 }
@@ -312,16 +300,16 @@ export function cleanup() {
       // Unsubscribe before removing
       if (realtimeChannel.unsubscribe) {
         realtimeChannel.unsubscribe();
-        log('📺 System channel unsubscribed');
+        logger.info('📺 System channel unsubscribed');
       }
       
       removeRealtimeChannel(realtimeChannel);
       realtimeChannel = null;
     }
     monitoringRetries = 0;
-    log('🧹 Supabase client cleanup completed');
+    logger.info('🧹 Supabase client cleanup completed');
   } catch (error) {
-    logError('Cleanup failed:', error);
+    logger.error('Cleanup failed:', error);
   }
 }
 
@@ -338,24 +326,24 @@ export async function getPublicUsers() {
       .select('*');
     
     if (error) {
-      logError('Error fetching users:', error);
+      logger.error('Error fetching users:', error);
       return [];
     }
     
     return data || [];
   } catch (err) {
-    logError('Unexpected error in getPublicUsers:', err);
+    logger.error('Unexpected error in getPublicUsers:', err);
     return [];
   }
 }
 
 export async function testConnection() {
   try {
-    log('🔍 Testing Supabase connection...');
+    logger.info('🔍 Testing Supabase connection...');
     
     // Wait for client to be ready if not already
     if (!_ready) {
-      log('⏳ Waiting for Supabase client to be ready...');
+      logger.info('⏳ Waiting for Supabase client to be ready...');
       await waitForSupabase();
     }
     
@@ -365,30 +353,60 @@ export async function testConnection() {
       .select('count')
       .limit(1);
     
-    log('📊 Connection test result:', { data, error });
+    logger.info('📊 Connection test result:', { data, error });
     
     if (error) {
-      logError('Connection test failed:', error);
+      logger.error('Connection test failed:', error);
       // For local development, try alternative test
       if (isLocalDevelopment) {
-        log('🔄 Trying alternative connection test for local environment...');
+        logger.info('🔄 Trying alternative connection test for local environment...');
         const { error: healthError } = await supabase.from('general_settings').select('*').limit(1);
         return !healthError;
       }
       return false;
     }
     
-    log('✅ Supabase connection confirmed');
+    logger.info('✅ Supabase connection confirmed');
     return true;
     
   } catch (err) {
-    logError('Connection test failed:', err);
+    logger.error('Connection test failed:', err);
     return false;
   }
 }
 
-// ⚠️ DUPLICATE FUNCTION REMOVED: Use checkDatabaseHealth from healthUtils.js instead
-// This prevents code duplication and ensures consistent health checking behavior
+// ENHANCED: Database health check utility
+export async function checkDatabaseHealth() {
+  try {
+    const results = await Promise.allSettled([
+      // Test critical tables
+      supabase.from('general_settings').select('count').limit(1),
+      supabase.from('profiles').select('count').limit(1)
+    ]);
+
+    const healthReport = {
+      settings: results[0].status === 'fulfilled' && !results[0].value.error,
+      profiles: results[1].status === 'fulfilled' && !results[1].value.error,
+      overall: results.every(r => r.status === 'fulfilled' && !r.value.error),
+      realtime: getRealtimeStatus(),
+      realtimeRetries: monitoringRetries
+    };
+
+    logger.info('🏥 Database health check:', healthReport);
+    return healthReport;
+
+  } catch (error) {
+    logger.error('Database health check failed:', error);
+    return {
+      settings: false,
+      profiles: false,
+      overall: false,
+      realtime: 'ERROR',
+      realtimeRetries: monitoringRetries,
+      error: error.message
+    };
+  }
+}
 
 export function getSupabaseLoadingState() {
   return {
@@ -404,11 +422,11 @@ export function getSupabaseLoadingState() {
   _initializing = true;
   
   try {
-    log('🔄 Initializing Supabase connection...');
+    logger.info('🔄 Initializing Supabase connection...');
     
     const connected = await testConnection();
     if (connected) {
-      log('🚀 Application ready for database operations');
+      logger.info('🚀 Application ready for database operations');
       
       // Mark Supabase as ready for use
       markSupabaseReady();
@@ -423,13 +441,13 @@ export function getSupabaseLoadingState() {
         }
       }, 5000);
     } else {
-      logWarn('Database connection issues detected - some features may not work');
+      logger.warn('Database connection issues detected - some features may not work');
       
       // Still mark as ready for offline functionality
       markSupabaseReady();
     }
   } catch (error) {
-    logError('Startup connection test failed:', error);
+    logger.error('Startup connection test failed:', error);
     
     // Mark as ready even if connection fails (for offline handling)
     markSupabaseReady();

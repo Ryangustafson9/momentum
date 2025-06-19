@@ -5,7 +5,7 @@ import { CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getGymLogo, getGymName, getGymColors } from '@/helpers/gymBranding';
+import { getGymLogo, getGymName, getGymColors } from '@/utils/gymBranding';
 import { supabase } from '@/lib/supabaseClient';
 import { calculatePasswordStrength } from '@/utils/formHelpers.js';
 import { showToast } from '@/utils/toastUtils.js';

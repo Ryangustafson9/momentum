@@ -7,18 +7,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, Star, Dumbbell, Crown, AlertCircle, Lock, Edit3, Settings, Users, Calendar, Target } from 'lucide-react';
-import { getGymName, getContactInfo, isFeatureEnabled, initializeGymBranding } from '@/helpers/gymBranding.js';
+import { getGymName, getContactInfo, isFeatureEnabled, initializeGymBranding } from '@/utils/gymBranding.js';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast.js';
 
 const JoinOnline = () => {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [onlineJoiningEnabled, setOnlineJoiningEnabled] = useState(null);
   const [membershipPlans, setMembershipPlans] = useState([]);
   const [isStaff, setIsStaff] = useState(false);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [contactInfo, setContactInfo] = useState({
     email: 'info@nordicfitness.com', // Default fallback
     phone: '(555) 123-4567'         // Default fallback
@@ -139,9 +140,13 @@ const JoinOnline = () => {
         
         // Load membership plans
         await fetchMembershipPlans();
-        
+
+        // Mark settings as loaded
+        setSettingsLoaded(true);
+
       } catch (error) {
         console.error('❌ Error loading settings:', error);
+        setSettingsLoaded(true); // Still mark as loaded to prevent infinite loading
       }
     };
 
@@ -150,7 +155,7 @@ const JoinOnline = () => {
 
   // Handle authentication status
   useEffect(() => {
-    if (!loading) {
+    if (!authLoading) {
       if (!user) {
         // Show a message or redirect to login with return URL
         console.log('🔄 User not authenticated, showing sign-in prompt...');
@@ -163,7 +168,7 @@ const JoinOnline = () => {
         console.log('✅ User authenticated:', user.display_name);
       }
     }
-  }, [user, loading, navigate]);
+  }, [user, authLoading, navigate]);
 
   const fetchMembershipPlans = async () => {
     try {
@@ -201,7 +206,7 @@ const JoinOnline = () => {
       if (!plans || plans.length === 0) {
         console.log('⚠️ No membership plans found with available_online=true and active=true');
         console.log('💡 To fix this, you need to:');
-        console.log('   1. Go to /staff/memberships');
+        console.log('   1. Go to /staff-portal/memberships');
         console.log('   2. Create or edit membership plans');
         console.log('   3. Set "Available for Sale" = true');
         console.log('   4. Set "Available Online" = true');
@@ -249,7 +254,7 @@ const JoinOnline = () => {
   };
 
   // Loading state
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
         <div className="text-center">
@@ -297,8 +302,20 @@ const JoinOnline = () => {
     );
   }
 
-  // If online joining is disabled
-  if (!onlineJoiningEnabled) {
+  // If settings haven't loaded yet (but auth is complete), show loading
+  if (!authLoading && !settingsLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
+          <p className="mt-4 text-white">Loading membership options...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If online joining is disabled (only check after settings are loaded)
+  if (settingsLoaded && onlineJoiningEnabled === false) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4 flex items-center justify-center">
         <motion.div
@@ -327,10 +344,9 @@ const JoinOnline = () => {
             </AlertDescription>
           </Alert>
 
-          <div className="space-y-3">
-            {isStaff && (
+          <div className="space-y-3">            {isStaff && (
               <Button
-                onClick={() => navigate('/staff/settings')}
+                onClick={() => navigate('/staff-portal/settings')}
                 className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white mb-2"
               >
                 <Settings className="w-4 h-4 mr-2" />
@@ -358,8 +374,11 @@ const JoinOnline = () => {
     );
   }
 
-  // If no plans available for online sale
-  if (membershipPlans.length === 0) {
+  // If no plans available for online sale - only show this when:
+  // 1. Settings have been loaded (settingsLoaded = true)
+  // 2. Online joining is enabled (onlineJoiningEnabled = true)
+  // 3. No membership plans were found (membershipPlans.length === 0)
+  if (settingsLoaded && onlineJoiningEnabled && membershipPlans.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4 flex items-center justify-center">
         <motion.div
@@ -375,10 +394,9 @@ const JoinOnline = () => {
           <p className="text-gray-600 mb-6">
             There are currently no membership plans available for online purchase.
           </p>
-          
-          {isStaff && (
+            {isStaff && (
             <Button
-              onClick={() => navigate('/staff/memberships')}
+              onClick={() => navigate('/staff-portal/memberships')}
               className="w-full mb-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white"
             >
               <Settings className="w-4 h-4 mr-2" />
@@ -435,7 +453,7 @@ const JoinOnline = () => {
             <div className="mt-4">
               <Button
                 variant="outline"
-                onClick={() => navigate('/staff/settings')}
+                onClick={() => navigate('/staff-portal/settings')}
                 className="bg-white/20 text-white border-white/30 hover:bg-white/30"
               >
                 <Settings className="w-4 h-4 mr-2" />
@@ -536,7 +554,7 @@ const JoinOnline = () => {
             className="text-center mb-8"
           >
             <Button
-              onClick={() => navigate(`/join-online/checkout?plan=${selectedPlan}`)}
+              onClick={() => navigate(`/join-online/customize?plan=${selectedPlan}`)}
               className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-12 py-4 text-xl font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
               size="lg"
             >

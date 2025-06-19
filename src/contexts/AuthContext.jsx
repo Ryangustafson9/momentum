@@ -4,6 +4,24 @@ import { showToast } from '@/utils/toastUtils';
 import { storage, STORAGE_KEYS } from '@/utils/storageUtils';
 import { normalizeRole } from '@/utils/roleUtils';
 import { createProfileSafe, validateAuthUserExists } from '@/utils/profileValidation';
+import { useProfileFetcher } from '@/hooks/useProfileFetcher';
+
+/**
+ * 🔐 AuthContext - Centralized Authentication Management
+ * 
+ * ✅ COMPLETED ENHANCEMENTS:
+ * - Refactored fetchUserProfile to dedicated useProfileFetcher hook
+ * - Added user normalization and caching in signup() for consistency
+ * - Maintained comprehensive error handling and profile creation
+ * 
+ * 🚀 FUTURE ENHANCEMENTS CHECKLIST:
+ * - 🔁 autoRefreshToken: Implement background token refresh via supabase.auth.startAutoRefresh()
+ * - 🌍 locale support: Cache preferred language/locale with profile or localStorage
+ * - 🧼 supabase-js v3 migration: Upgrade to @supabase/ssr methods for SSR when stable
+ * - 🧱 Profile utilities: Continue extracting profile-related functions to dedicated modules
+ * - 📊 Analytics: Add login/signup event tracking for user behavior analysis
+ * - 🔒 Security: Implement session timeout and concurrent session management
+ */
 
 const AuthContext = createContext();
 
@@ -16,205 +34,66 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  // ⚡ PERFORMANCE: Initialize with cached user for faster UI hydration
+  const [user, setUser] = useState(() => {
+    try {
+      const cached = storage.local.get('cached_user');
+      const cacheTimestamp = storage.local.get('cached_user_timestamp');
+
+      // 💾 CACHE VALIDATION: Check if cache is still valid (24 hours)
+      if (cached && cacheTimestamp) {
+        const cacheAge = Date.now() - cacheTimestamp;
+        const maxCacheAge = 24 * 60 * 60 * 1000; // 24 hours
+
+        if (cacheAge < maxCacheAge) {
+          console.log('[AuthContext] 💾 Using cached user data');
+          return cached;
+        } else {
+          console.log('[AuthContext] ⏰ Cached user data expired, clearing cache');
+          storage.local.remove('cached_user');
+          storage.local.remove('cached_user_timestamp');
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.warn('[AuthContext] ⚠️ Failed to load cached user:', error);
+      return null;
+    }
+  });
   const [authReady, setAuthReady] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // ⭐ SIMPLIFIED: Faster user profile fetching
-  const fetchUserProfile = async (userId) => {
+  // ⭐ REFACTORED: Use dedicated profile fetcher hook
+  const { 
+    fetchUserProfile, 
+    getCachedProfile, 
+    clearProfileCache 
+  } = useProfileFetcher();
+
+  // ⭐ ENHANCED: Profile fetcher with user state management
+  const fetchAndSetProfile = async (userId, options = {}) => {
     try {
-      console.log('[AuthContext] 🔍 Fetching user profile for:', userId);
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        console.error('[AuthContext] ❌ Profile fetch error:', error);
-        
-        // ⭐ CHECK: If profile doesn't exist, create one
-        if (error.code === 'PGRST116') { // No rows returned
-          console.log('[AuthContext] 📝 No profile found, creating basic profile...');
-
-          // ⭐ GET: User email from auth session
-          const { data: { session } } = await supabase.auth.getSession();
-          const userEmail = session?.user?.email || `user_${userId}@temp.local`;
-
-          console.log('[AuthContext] 📧 Using email for profile:', userEmail);
-
-          // ⭐ CHECK: If email already exists, try to find that profile first
-          if (userEmail && userEmail !== `user_${userId}@temp.local`) {
-            const { data: existingProfile } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('email', userEmail)
-              .single();
-
-            if (existingProfile) {
-              console.log('[AuthContext] 🔍 Found existing profile with same email:', existingProfile);
-              // Update the existing profile with the correct user ID
-              const { data: updatedProfile, error: updateError } = await supabase
-                .from('profiles')
-                .update({ id: userId })
-                .eq('email', userEmail)
-                .select()
-                .single();
-
-              if (!updateError && updatedProfile) {
-                console.log('[AuthContext] ✅ Updated existing profile:', updatedProfile);
-                setUser(updatedProfile);
-                return updatedProfile;
-              }
-            }
-          }
-
-          // ⭐ TRY: Create a basic profile with unique email (using only existing fields)
-          const newProfile = {
-            id: userId,
-            role: 'nonmember', // Default to nonmember for new signups
-            first_name: '',
-            last_name: '',
-            email: userEmail, // ⭐ FIXED: Use actual email from auth or temp email
-            name: '' // Add name field that exists in schema
-          };
-
-          // ⚠️ FOREIGN KEY FIX: Try safe function first, fallback to direct insert
-          let insertData, insertError;
-
-          try {
-            // Try using safe creation function
-            const result = await supabase.rpc('create_profile_safe', {
-              p_user_id: newProfile.id,
-              p_email: newProfile.email,
-              p_role: newProfile.role,
-              p_first_name: newProfile.first_name,
-              p_last_name: newProfile.last_name,
-              p_phone: null
-            });
-            insertData = result.data;
-            insertError = result.error;
-          } catch (rpcError) {
-            // Fallback to direct insert if function doesn't exist
-            console.warn('[AuthContext] ⚠️ Safe function not available, using direct insert');
-            const result = await supabase
-              .from('profiles')
-              .insert([newProfile])
-              .select()
-              .single();
-            insertData = result.data;
-            insertError = result.error;
-          }
-
-          if (insertError) {
-            console.error('[AuthContext] ❌ Failed to create profile:', insertError);
-
-            // ⭐ FALLBACK: If still failing due to email conflict, use temp email
-            if (insertError.code === '23505' && insertError.message.includes('email')) {
-              console.log('[AuthContext] 🔄 Retrying with unique temp email...');
-              const tempEmail = `user_${userId}_${Date.now()}@temp.local`;
-              newProfile.email = tempEmail;
-
-              // ⚠️ FOREIGN KEY FIX: Try safe function for retry, fallback to direct insert
-              let retryData, retryError;
-
-              try {
-                const result = await supabase.rpc('create_profile_safe', {
-                  p_user_id: newProfile.id,
-                  p_email: newProfile.email,
-                  p_role: newProfile.role,
-                  p_first_name: newProfile.first_name,
-                  p_last_name: newProfile.last_name,
-                  p_phone: null
-                });
-                retryData = result.data;
-                retryError = result.error;
-              } catch (rpcError) {
-                const result = await supabase
-                  .from('profiles')
-                  .insert([newProfile])
-                  .select()
-                  .single();
-                retryData = result.data;
-                retryError = result.error;
-              }
-
-              if (!retryError && retryData) {
-                console.log('[AuthContext] ✅ Created profile with temp email:', retryData);
-                setUser(retryData);
-                return retryData;
-              }
-            }
-
-            // Return fallback profile anyway
-            return newProfile;
-          }
-
-          console.log('[AuthContext] ✅ Created new profile:', insertData);
-          setUser(insertData);
-          return insertData;
+      const profile = await fetchUserProfile(userId, {
+        ...options,
+        onProfileCreated: (createdProfile) => {
+          console.log('[AuthContext] 🎉 New profile created:', createdProfile);
+          setUser(createdProfile);
         }
-        
-        throw error;
-      }
-
-      // ⭐ VALIDATE: Ensure role exists
-      if (!data.role || data.role === null) {
-        console.warn('[AuthContext] ⚠️ Profile has no role, defaulting to nonmember');
-        data.role = 'nonmember';
-        
-        // Update the profile with default role
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ role: 'nonmember' })
-          .eq('id', userId);
-          
-        if (updateError) {
-          console.error('[AuthContext] ❌ Failed to update role:', updateError);
-        }
-      }
-
-      // ⭐ NORMALIZE: Clean and normalize the user data
-      const normalizedUser = {
-        ...data,
-        role: normalizeRole(data.role || 'nonmember')
-      };
-
-      console.log('[AuthContext] ✅ Profile fetched and normalized:', {
-        id: normalizedUser.id,
-        email: normalizedUser.email,
-        role: normalizedUser.role
       });
       
-      setUser(normalizedUser);
-      return normalizedUser;
-      
+      setUser(profile);
+      return profile;
     } catch (error) {
-      console.error('[AuthContext] ❌ Error fetching profile:', error);
-      
-      // ⭐ FALLBACK: Don't break auth flow, create minimal user
-      const fallbackUser = {
-        id: userId,
-        role: 'nonmember',
-        email: 'unknown@example.com',
-        first_name: '',
-        last_name: '',
-        name: ''
-      };
-      
-      console.log('[AuthContext] 🔧 Using fallback user:', fallbackUser);
-      setUser(fallbackUser);
-      return fallbackUser;
-    }
-  };
+      console.error('[AuthContext] ❌ Failed to fetch and set profile:', error);
+      throw error;
+    }  };
 
   // ⭐ SIMPLIFIED: Auth state listener with faster timeout
   useEffect(() => {
     console.log('[AuthContext] 🔄 Initializing auth state...');
     
     let isMounted = true;
-    let timeoutId;
     
     // ⭐ FASTER: Reduced timeout to 3 seconds
     const authTimeout = setTimeout(() => {
@@ -239,9 +118,8 @@ export const AuthProvider = ({ children }) => {
 
         if (session?.user && isMounted) {
           console.log('[AuthContext] 👤 Found existing session for:', session.user.id);
-          
-          // ⭐ ASYNC: Fetch profile in background, don't wait
-          fetchUserProfile(session.user.id)
+            // ⭐ ASYNC: Fetch profile in background, don't wait
+          fetchAndSetProfile(session.user.id)
             .catch((error) => {
               console.warn('[AuthContext] ⚠️ Background profile fetch failed during init:', error);
               // Don't throw - this is a background operation
@@ -282,7 +160,7 @@ export const AuthProvider = ({ children }) => {
         case 'SIGNED_IN':
           if (session?.user) {
             // ⭐ BACKGROUND: Don't block UI for profile fetching
-            fetchUserProfile(session.user.id)
+            fetchAndSetProfile(session.user.id)
               .catch((error) => {
                 console.warn('[AuthContext] ⚠️ Background profile fetch failed on sign in:', error);
                 // Don't throw - this is a background operation
@@ -293,6 +171,9 @@ export const AuthProvider = ({ children }) => {
           
         case 'SIGNED_OUT':
           setUser(null);
+          // 💾 PERSISTENCE: Clear cached user on logout
+          storage.local.remove('cached_user');
+          storage.local.remove('cached_user_timestamp');
           storage.local.clear();
           storage.session.clear();
           break;
@@ -351,7 +232,7 @@ export const AuthProvider = ({ children }) => {
       if (data.user) {
         try {
           console.log('[AuthContext] 📋 Fetching profile for user ID:', data.user.id);
-          userProfile = await fetchUserProfile(data.user.id);
+          userProfile = await fetchAndSetProfile(data.user.id);
           console.log('[AuthContext] ✅ Profile fetched successfully:', userProfile);
         } catch (profileError) {
           console.warn('[AuthContext] ⚠️ Profile fetch failed:', profileError);
@@ -366,6 +247,15 @@ export const AuthProvider = ({ children }) => {
             name: ''
           };
           setUser(userProfile);
+
+          // 💾 PERSISTENCE: Cache fallback user
+          try {
+            storage.local.set('cached_user', userProfile);
+            storage.local.set('cached_user_timestamp', Date.now());
+          } catch (error) {
+            console.warn('[AuthContext] ⚠️ Failed to cache fallback user:', error);
+          }
+
           console.log('[AuthContext] 📋 Fallback profile created:', userProfile);
         }
       }
@@ -484,9 +374,19 @@ export const AuthProvider = ({ children }) => {
 
             if (error) throw error;
             createdProfile = data;
-          }
+          }          console.log('[AuthContext] ✅ Profile created successfully with foreign key validation:', createdProfile);
 
-          console.log('[AuthContext] ✅ Profile created successfully with foreign key validation:', createdProfile);
+          // ⚠️ FIX: Normalize and cache user data like in login()
+          const normalizedUser = {
+            ...createdProfile,
+            role: normalizeRole(createdProfile.role || 'nonmember')
+          };
+          
+          // Cache the normalized user data
+          storage.local.set('cached_user', normalizedUser);
+          storage.local.set('cached_user_timestamp', Date.now());
+          
+          console.log('[AuthContext] 💾 User data normalized and cached:', normalizedUser);
 
         } catch (profileCreationError) {
           console.error('[AuthContext] ❌ Profile creation process failed:', profileCreationError);
@@ -553,7 +453,9 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('[AuthContext] 🚪 Logging out...');
 
-      // ⭐ CLEAR: All stored data
+      // ⭐ CLEAR: All stored data including cached user
+      storage.local.remove('cached_user');
+      storage.local.remove('cached_user_timestamp');
       storage.local.remove(STORAGE_KEYS.USER_PREFERENCES);
       storage.local.remove(STORAGE_KEYS.DASHBOARD_CONFIG);
       storage.session.clear();
@@ -575,7 +477,6 @@ export const AuthProvider = ({ children }) => {
       window.location.href = '/login';
     }
   };
-
   // ⚡ PERFORMANCE FIX: Memoize context value to prevent unnecessary re-renders
   const value = useMemo(() => ({
     user,
@@ -585,8 +486,9 @@ export const AuthProvider = ({ children }) => {
     signup,
     logout,
     resetPassword,
-    fetchUserProfile,
-  }), [user, authReady, loading]);
+    fetchAndSetProfile,
+    clearProfileCache,
+  }), [user, authReady, loading, fetchAndSetProfile, clearProfileCache]);
 
   return (
     <AuthContext.Provider value={value}>

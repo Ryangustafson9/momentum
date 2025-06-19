@@ -1,37 +1,41 @@
 
 import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  Settings, LogOut, UserCircle,
-  PanelLeftClose, PanelRightOpen, 
-  Sun, Moon, Laptop, Eye
+import {
+  Settings, ArrowLeft, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuPortal
-} from "@/components/ui/dropdown-menu";
-import { useTheme } from '@/hooks/useTheme.jsx';
+
 import { navLinks } from '@/config/adminNavLinks.js';
 import { hasStaffAccess } from '@/utils/roleUtils.js';
 
-const SidebarNavLink = ({ to, label, icon: Icon, currentPath, isExpanded }) => {
-  const isActive = currentPath === to || (to !== "/" && currentPath.startsWith(to));
+const SidebarNavLink = ({ to, label, icon: Icon, currentPath, isExpanded, location }) => {
+  // Determine if we're in staff or admin context and build the correct path
+  const isStaffContext = location.pathname.startsWith('/staff-portal');
+  const isAdminContext = location.pathname.startsWith('/admin');
+
+  let linkPath = to;
+  if (to === '/') {
+    // Dashboard link
+    linkPath = isStaffContext ? '/staff-portal/dashboard' : isAdminContext ? '/admin/dashboard' : '/dashboard';
+  } else if (!to.startsWith('/staff-portal') && !to.startsWith('/admin')) {
+    // Relative links - add context prefix
+    if (isStaffContext) {
+      linkPath = `/staff-portal${to}`;
+    } else if (isAdminContext) {
+      linkPath = `/admin${to}`;
+    }
+  }
+
+  // More precise active state logic to avoid false matches (e.g., /members vs /memberships)
+  const isActive = currentPath === linkPath ||
+    (linkPath !== "/" && (currentPath.startsWith(linkPath + "/") || currentPath === linkPath));
+
   return (
     <NavLink
-      to={to}
-      className={({ isActive: navIsActive }) => 
+      to={linkPath}
+      className={({ isActive: navIsActive }) =>
         cn(
           "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out",
           "hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20",
@@ -49,33 +53,17 @@ const SidebarNavLink = ({ to, label, icon: Icon, currentPath, isExpanded }) => {
 };
 
 
-const AdminSidebar = ({ onLogout, user, isExpanded, toggleSidebar, startRoleImpersonation }) => {
+const AdminSidebar = ({ onLogout, isExpanded, toggleSidebar }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { theme, setTheme } = useTheme();
   const currentPath = location.pathname;
-  const initials = user?.name ? user.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : 'AD';
-  
-  const handleSettingsNavigation = () => {
-    navigate('/staff/settings');
+    const handleSettingsNavigation = () => {
+    navigate('/staff-portal/settings');
   };
-
-  const UserCardContent = () => (
-    <div className="flex items-center mr-auto overflow-hidden cursor-pointer">
-      <Avatar className={cn("h-10 w-10 transition-all duration-300")}>
-        <AvatarImage src={user?.profile_picture_url || `https://avatar.vercel.sh/${user?.email}.png?s=40`} alt={user?.name || 'User Avatar'} />
-        <AvatarFallback>{initials}</AvatarFallback>
-      </Avatar>
-      <div className="ml-3 text-left">
-        <p className="text-sm font-medium text-foreground leading-none truncate" title={user?.name || "Staff User"}>{user?.name || "Staff User"}</p>
-        <p className="text-xs text-muted-foreground leading-none mt-0.5 truncate" title={user?.email || "staff@example.com"}>{user?.email || "staff@example.com"}</p>
-      </div>
-    </div>
-  );
 
   const UserDropdownContent = () => (
     <>
-      <DropdownMenuItem onClick={() => navigate('/staff/settings')}>
+      <DropdownMenuItem onClick={() => navigate('/staff-portal/settings')}>
         <UserCircle className="mr-2 h-4 w-4" />
         Profile
       </DropdownMenuItem>
@@ -122,51 +110,36 @@ const AdminSidebar = ({ onLogout, user, isExpanded, toggleSidebar, startRoleImpe
       isExpanded ? "w-64" : "w-20"
     )}>
       
-      <div className="flex items-center p-4 h-16 border-b border-border">
-        {isExpanded ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <div className="flex-1 min-w-0">
-                <UserCardContent />
+      <div className="flex items-center justify-between p-4 h-16 border-b border-border">
+        <div className="flex items-center space-x-2">
+          {isExpanded && (
+            <>
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">M</span>
               </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="bottom" align="start" className="w-56 ml-2">
-              <UserDropdownContent />
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <div className="flex-1 min-w-0" /> 
-        )}
-
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={toggleSidebar} 
-          className={cn(
-            "text-muted-foreground hover:text-foreground",
-            isExpanded ? "ml-2" : "mx-auto" 
+              <div>
+                <h2 className="text-sm font-semibold text-foreground">Momentum</h2>
+                <p className="text-xs text-muted-foreground">Gym Management</p>
+              </div>
+            </>
           )}
+          {!isExpanded && (
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center mx-auto">
+              <span className="text-white font-bold text-sm">M</span>
+            </div>
+          )}
+        </div>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSidebar}
+          className="text-muted-foreground hover:text-foreground h-8 w-8"
         >
-          {isExpanded ? <PanelLeftClose className="h-5 w-5" /> : <PanelRightOpen className="h-5 w-5" />}
+          {isExpanded ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           <span className="sr-only">Toggle sidebar</span>
         </Button>
       </div>
-
-      {!isExpanded && (
-        <div className="flex flex-col items-center p-4 border-b border-border">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Avatar className={cn("h-10 w-10 transition-all duration-300 cursor-pointer")}>
-                <AvatarImage src={user?.profile_picture_url || `https://avatar.vercel.sh/${user?.email}.png?s=40`} alt={user?.name || 'User Avatar'} />
-                <AvatarFallback>{initials}</AvatarFallback>
-              </Avatar>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="right" align="start" className="w-56">
-               <UserDropdownContent />
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )}
       
       <nav className="flex-grow px-3 py-4 space-y-1 overflow-y-auto">
         {navLinks.map((link) => (
@@ -177,6 +150,7 @@ const AdminSidebar = ({ onLogout, user, isExpanded, toggleSidebar, startRoleImpe
             icon={link.icon}
             currentPath={currentPath}
             isExpanded={isExpanded}
+            location={location}
           />
         ))}
       </nav>
@@ -192,7 +166,7 @@ const AdminSidebar = ({ onLogout, user, isExpanded, toggleSidebar, startRoleImpe
             )}
             title="Logout"
           >
-            <LogOut className={cn("h-5 w-5", isExpanded ? "mr-2" : "mr-0")} />
+            <ArrowLeft className={cn("h-5 w-5", isExpanded ? "mr-2" : "mr-0")} />
             {isExpanded && <span className="text-sm">Logout</span>}
             {!isExpanded && <span className="sr-only">Logout</span>}
           </Button>

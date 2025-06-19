@@ -1,26 +1,30 @@
 import React from 'react';
+import { Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
+/**
+ * Reusable loading spinner component
+ */
 const LoadingSpinner = ({ 
   text = "Loading...", 
-  size = "medium", 
-  className = "" 
+  className = "",
+  size = "default",
+  showText = true 
 }) => {
   const sizeClasses = {
-    small: "h-6 w-6",
-    medium: "h-12 w-12",
-    large: "h-16 w-16"
+    sm: "h-4 w-4",
+    default: "h-8 w-8",
+    lg: "h-12 w-12"
   };
 
   return (
-    <div className={`flex items-center justify-center ${className}`}>
-      <div className="text-center">
-        <div className={`animate-spin rounded-full border-b-2 border-blue-600 mx-auto ${sizeClasses[size]}`}></div>
-        {text && <p className="mt-4 text-gray-600">{text}</p>}
-      </div>
+    <div className={cn("flex flex-col items-center justify-center space-y-2", className)}>
+      <Loader2 className={cn("animate-spin text-primary", sizeClasses[size])} />
+      {showText && text && (
+        <p className="text-sm text-muted-foreground">{text}</p>
+      )}
     </div>
   );
 };
 
 export default LoadingSpinner;
-
-

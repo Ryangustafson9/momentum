@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast.js';
-import { dataService } from '@/services/apiService';
 import { supabase } from '@/lib/supabaseClient.js';
+import { realtimeCapability } from '@/lib/realtimeCapability';
 
 export const useMemberClassesData = () => {
   const navigate = useNavigate();
@@ -13,6 +13,26 @@ export const useMemberClassesData = () => {
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(null);
+  const [realtimeEnabled, setRealtimeEnabled] = useState(false);
+
+  // Listen for realtime capability changes
+  useEffect(() => {
+    const handleCapabilityChange = (enabled) => {
+      setRealtimeEnabled(enabled);
+    };
+
+    realtimeCapability.onCapabilityChange(handleCapabilityChange);
+    
+    // Set initial state
+    const capability = realtimeCapability.getCapability();
+    if (capability.testCompleted) {
+      setRealtimeEnabled(capability.isEnabled);
+    }
+
+    return () => {
+      realtimeCapability.removeCallback(handleCapabilityChange);
+    };
+  }, []);
 
   const fetchPageData = useCallback(async (currentUser) => {
     if (!currentUser) {
@@ -21,13 +41,34 @@ export const useMemberClassesData = () => {
     }
     setIsLoading(true);
     try {
-      const [classesData, attendanceData] = await Promise.all([
-        dataService.getClasses(),
-        dataService.getAttendanceRecords({ memberId: currentUser.id })
+      const [classesResult, attendanceResult] = await Promise.all([
+        // Get classes
+        supabase
+          .from('classes')
+          .select(`
+            *,
+            instructor:profiles!classes_instructor_id_fkey(
+              id,
+              first_name,
+              last_name,
+              email
+            )
+          `)
+          .order('start_time', { ascending: true }),
+
+        // Get attendance records
+        supabase
+          .from('attendance')
+          .select('*')
+          .eq('member_id', currentUser.id)
+          .order('check_in_time', { ascending: false })
       ]);
-      
-      setAllClasses(Array.isArray(classesData) ? classesData : []);
-      setMemberAttendance(Array.isArray(attendanceData) ? attendanceData : []);
+
+      if (classesResult.error) throw classesResult.error;
+      if (attendanceResult.error) throw attendanceResult.error;
+
+      setAllClasses(Array.isArray(classesResult.data) ? classesResult.data : []);
+      setMemberAttendance(Array.isArray(attendanceResult.data) ? attendanceResult.data : []);
     } catch (error) {
       console.error("Error fetching member classes page data:", error);
       toast({ title: "Error", description: "Could not load class information. Please try again.", variant: "destructive" });
@@ -47,48 +88,88 @@ export const useMemberClassesData = () => {
     setLoggedInUser(user);
     fetchPageData(user);
   }, [navigate, fetchPageData]);
-  
-  useEffect(() => {
-    if (!loggedInUser) return;
+    useEffect(() => {
+    if (!loggedInUser || !realtimeEnabled) {
+      if (!realtimeEnabled) {
+        console.info('useMemberClassesData: Realtime disabled, working in poll-only mode');
+      }
+      return;
+    }
 
-    const classesChannel = supabase
-      .channel('public:classes:member-classes-hook')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'classes' },
-        (payload) => {
-          console.log('useMemberClassesData: Classes change received!', payload);
-          fetchPageData(loggedInUser); 
-        }
-      )
-      .subscribe((status, err) => {
-        if (status === 'SUBSCRIBED') console.log('useMemberClassesData: Subscribed to classes channel');
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') console.error('useMemberClassesData: Classes channel error:', err);
-      });
+    let classesChannel = null;
+    let attendanceChannel = null;
 
-    const attendanceChannel = supabase
-      .channel(`public:attendance:member_id=eq.${loggedInUser.id}:member-classes-hook`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance', filter: `member_id=eq.${loggedInUser.id}` },
-        (payload) => {
-          console.log('useMemberClassesData: Attendance change received for user!', payload);
-          fetchPageData(loggedInUser); 
-        }
-      )
-      .subscribe((status, err) => {
-        if (status === 'SUBSCRIBED') console.log(`useMemberClassesData: Subscribed to attendance channel for user ${loggedInUser.id}`);
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') console.error('useMemberClassesData: Attendance channel error:', err);
-      });
+    try {
+      classesChannel = supabase
+        .channel('public:classes:member-classes-hook')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'classes' },
+          (payload) => {
+            console.log('useMemberClassesData: Classes change received!', payload);
+            fetchPageData(loggedInUser); 
+          }
+        )
+        .subscribe((status, err) => {
+          if (status === 'SUBSCRIBED') console.log('useMemberClassesData: Subscribed to classes channel');
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.error('useMemberClassesData: Classes channel error:', err);
+            realtimeCapability.disable(`useMemberClassesData classes channel error: ${status}`);
+          }
+        });
+
+      attendanceChannel = supabase
+        .channel(`public:attendance:member_id=eq.${loggedInUser.id}:member-classes-hook`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance', filter: `member_id=eq.${loggedInUser.id}` },
+          (payload) => {
+            console.log('useMemberClassesData: Attendance change received for user!', payload);
+            fetchPageData(loggedInUser); 
+          }
+        )
+        .subscribe((status, err) => {
+          if (status === 'SUBSCRIBED') console.log(`useMemberClassesData: Subscribed to attendance channel for user ${loggedInUser.id}`);
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.error('useMemberClassesData: Attendance channel error:', err);
+            realtimeCapability.disable(`useMemberClassesData attendance channel error: ${status}`);
+          }
+        });
+    } catch (error) {
+      console.error('useMemberClassesData: Error setting up realtime channels:', error);
+      realtimeCapability.disable(`useMemberClassesData channel setup error: ${error.message}`);
+    }
       
     return () => {
-      supabase.removeChannel(classesChannel);
-      supabase.removeChannel(attendanceChannel);
+      if (classesChannel) {
+        try {
+          supabase.removeChannel(classesChannel);
+        } catch (error) {
+          console.warn('useMemberClassesData: Error removing classes channel:', error);
+        }
+      }
+      if (attendanceChannel) {
+        try {
+          supabase.removeChannel(attendanceChannel);
+        } catch (error) {
+          console.warn('useMemberClassesData: Error removing attendance channel:', error);
+        }
+      }
       console.log('useMemberClassesData: Unsubscribed from channels');
     };
-  }, [loggedInUser, fetchPageData]);
+  }, [loggedInUser, fetchPageData, realtimeEnabled]);
 
   const handleBookClass = async (classToBook) => {
     if (!loggedInUser) return;
     setIsProcessing(classToBook.id);
     try {
-      await dataService.bookClassForMember(loggedInUser.id, classToBook.id);
+      const { error } = await supabase
+        .from('class_bookings')
+        .insert([{
+          class_id: classToBook.id,
+          member_id: loggedInUser.id,
+          status: 'confirmed',
+          booked_at: new Date().toISOString()
+        }]);
+
+      if (error) throw error;
+
       toast({ title: "Class Booked!", description: `You've successfully booked ${classToBook.name}.`, className: "bg-green-500 text-white" });
     } catch (error) {
       console.error("Error booking class:", error);
@@ -107,7 +188,14 @@ export const useMemberClassesData = () => {
     }
     setIsProcessing(classToCancel.id);
     try {
-        await dataService.cancelClassBookingForMember(loggedInUser.id, classToCancel.id, attendanceRecord.id);
+        const { error } = await supabase
+          .from('class_bookings')
+          .delete()
+          .eq('id', attendanceRecord.id)
+          .eq('member_id', loggedInUser.id);
+
+        if (error) throw error;
+
         toast({ title: "Booking Cancelled", description: `Your booking for ${classToCancel.name} has been cancelled.` });
     } catch (error) {
         console.error("Error cancelling booking:", error);

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CheckCircle, AlertCircle } from 'lucide-react';
-import { getGymLogo, getGymName, getGymColors } from '@/helpers/gymBranding';
+import { getGymLogo, getGymName, getGymColors } from '@/utils/gymBranding';
 import { supabase } from '@/lib/supabaseClient';
 import { capitalizeName, calculatePasswordStrength } from '@/utils/formHelpers.js';
 import { normalizeRole, getDefaultRoute } from '@/utils/roleUtils.js';
@@ -32,10 +32,30 @@ const Signup = () => {
   const [momentumLogoError, setMomentumLogoError] = useState(false);
   const [passwordsMatch, setPasswordsMatch] = useState(null);
   const [duplicateEmailError, setDuplicateEmailError] = useState(false);
-  
+
+
   // Get loading state and user from useAuth hook
-  const { signup, loading, user } = useAuth(); // ⭐ FIXED: Use 'signup' not 'register'
+  const { signup, loading, user } = useAuth(); // Use signup instead of register
   const { toast } = useToast();
+
+  // Password strength calculation function
+  const calculatePasswordStrength = (password) => {
+    const requirements = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    };
+
+    const metRequirements = Object.values(requirements).filter(Boolean).length;
+    const score = (metRequirements / 4) * 100;
+
+    return {
+      score,
+      requirements,
+      strength: score === 100 ? 'Strong' : score >= 75 ? 'Good' : score >= 50 ? 'Fair' : 'Weak'
+    };
+  };
 
   // Check if passwords match
   const checkPasswordsMatch = (password, confirmPassword) => {
@@ -218,7 +238,6 @@ const Signup = () => {
       }
 
       console.log('✅ Email is unique, proceeding with registration...');
-      
       const result = await signup(formData.email, formData.password, {
         firstName: formData.firstName,
         lastName: formData.lastName
@@ -266,8 +285,38 @@ const Signup = () => {
 
   // ⭐ REMOVED: Auto-clear URL params - let user control when to leave success page
 
-  // ⭐ REMOVED: Auto-redirect logic - let users choose their path after signup
-  // Users will manually click "Go to Dashboard" or "Sign Up for Membership"
+  // Add this useEffect to handle authenticated users
+  useEffect(() => {
+    // Only redirect if user is authenticated, we're not showing success,
+    // and we're not in the middle of a signup flow
+    if (user && !showSuccess && !searchParams.get('success')) {
+      console.log('🔄 User is authenticated and not in signup flow, redirecting...', {
+        userRole: user.role,
+        showSuccess,
+        hasSuccessParam: !!searchParams.get('success')
+      });
+
+      // Add a small delay to ensure success state has time to be set
+      const redirectTimer = setTimeout(() => {
+        // Double-check we're still not showing success
+        if (!searchParams.get('success')) {
+          // Determine redirect based on user role
+          if (user.role === 'admin' || user.role === 'staff') {
+            console.log('🎯 Redirecting admin/staff to staff dashboard');
+            navigate('/staff-portal/dashboard');
+          } else if (user.role === 'member') {
+            console.log('🎯 Redirecting member to member dashboard');
+            navigate('/member-portal/dashboard');
+          } else {
+            // Non-members should not be auto-redirected to dashboards
+            console.log('🎯 Non-member user, staying on current page');
+          }
+        }
+      }, 100); // Small delay to allow success state to be processed
+
+      return () => clearTimeout(redirectTimer);
+    }
+  }, [user, showSuccess, navigate, searchParams]);
 
   const gymColors = getGymColors();
 
@@ -371,22 +420,26 @@ const Signup = () => {
               <Button
                 variant="outline"
                 onClick={() => {
-                  console.log('🔍 Dashboard button clicked');
+                  console.log('🔍 Dashboard button clicked', { userRole: user?.role });
 
                   // Clear success state when going to dashboard
-                  setSearchParams({});
-
-                  // ⭐ FIXED: Use centralized routing logic
-                  const role = normalizeRole(user?.role);
-                  const defaultRoute = getDefaultRoute(role);
-                  console.log('🎯 Dashboard button - Role:', role, '-> Route:', defaultRoute);
-
-                  navigate(defaultRoute);
+                  setSearchParams({});                  if (user?.role === 'admin' || user?.role === 'staff') {
+                    console.log('🎯 Navigating to staff dashboard');
+                    navigate('/staff-portal/dashboard');
+                  } else if (user?.role === 'member') {
+                    console.log('🎯 Navigating to member dashboard');
+                    navigate('/member-portal/dashboard');
+                  } else {
+                    // Non-members should go to a welcome page or profile
+                    console.log('🎯 Non-member user, redirecting to dashboard');
+                    navigate('/dashboard');
+                  }
                 }}
                 className="w-full py-3 text-lg"
                 size="lg"
               >
-                Go to Dashboard
+                {user?.role === 'admin' || user?.role === 'staff' ? 'Go to Staff Dashboard' :
+                 user?.role === 'member' ? 'Go to Member Dashboard' : 'Go to Profile'}
               </Button>
             </div>
           </div>
@@ -515,7 +568,7 @@ const Signup = () => {
                       <span className={`text-xs font-medium ${
                         passwordStrength.color === 'green' ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        {passwordStrength.strengthText}
+                        {passwordStrength.strength}
                       </span>
                     </div>
                     

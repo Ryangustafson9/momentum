@@ -13,7 +13,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast.js';
-import { apiService, dataService } from '@/services/apiService';
+import { supabase } from '@/lib/supabaseClient';
 import MemberFormDialog from '@/components/admin/members/MemberFormDialog.jsx';
 import {
   AlertDialog,
@@ -206,16 +206,33 @@ const MembersPage = () => {
   const fetchMembers = useCallback(async () => {
     setIsLoading(true);
     try {
-      let fetchedMembers = await dataService.getMembers();
-      
-      const membersWithPlanNames = await Promise.all(fetchedMembers.map(async member => {
-        let current_membership_name = 'N/A';
-        if (member.current_membership_type_id) {
-          const plan = await dataService.getMembershipTypeById(member.current_membership_type_id);
-          current_membership_name = plan?.name || 'Unknown Plan';
-        }
-        return { ...member, current_membership_name };
-      }));
+      const { data: fetchedMembers, error } = await supabase
+        .from('profiles')
+        .select(`
+          *,
+          memberships(
+            id,
+            current_membership_type_id,
+            membership_type:membership_types!current_membership_type_id(
+              id,
+              name,
+              category
+            )
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const membersWithPlanNames = fetchedMembers.map(member => {
+        const currentMembership = member.memberships?.[0];
+        const current_membership_name = currentMembership?.membership_type?.name || 'N/A';
+        return {
+          ...member,
+          current_membership_name,
+          current_membership_type_id: currentMembership?.current_membership_type_id
+        };
+      });
 
       setMembers(membersWithPlanNames);
     } catch (error) {
@@ -228,7 +245,13 @@ const MembersPage = () => {
 
   const fetchMembershipTypes = useCallback(async () => {
     try {
-      const types = await dataService.getMembershipTypes();
+      const { data: types, error } = await supabase
+        .from('membership_types')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+
       setMembershipTypes(types || []);
     } catch (error) {
       console.error("Failed to fetch membership types:", error);
@@ -273,7 +296,13 @@ const MembersPage = () => {
   const confirmDeleteMember = async () => {
     if (!currentMember) return;
     try {
-      await dataService.archiveMember(currentMember.id); // Using archive instead of hard delete
+      const { error } = await supabase
+        .from('profiles')
+        .update({ status: 'archived' })
+        .eq('id', currentMember.id);
+
+      if (error) throw error;
+
       toast({ title: "Member Archived", description: `${currentMember.name} has been archived.` });
       fetchMembers(); // Refresh list
     } catch (error) {

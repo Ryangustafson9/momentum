@@ -33,10 +33,7 @@ class ApiService {
           status,
           created_at,
           updated_at,
-          avatar_url,
-          membership_status,
-          membership_type,
-          last_check_in
+          profile_picture_url
         `);
       
       // Apply filters
@@ -96,17 +93,13 @@ class ApiService {
       
       if (totalError) throw totalError;
       
-      // Get active members count (last 30 days)
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
+      // Get active members count (just count active status for now)
       const { count: activeMembers, error: activeError } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
         .eq('role', 'member')
-        .eq('status', 'active')
-        .gte('last_check_in', thirtyDaysAgo.toISOString());
-      
+        .eq('status', 'active');
+
       if (activeError) throw activeError;
       
       // Get new members this month
@@ -217,9 +210,8 @@ class ApiService {
       
       if (softDelete) {
         // Soft delete - just mark as inactive
-        await this.updateMember(memberId, { 
-          status: 'inactive',
-          membership_status: 'cancelled'
+        await this.updateMember(memberId, {
+          status: 'inactive'
         });
       } else {
         // Hard delete
