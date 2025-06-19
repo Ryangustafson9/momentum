@@ -173,10 +173,9 @@ const Dashboard = () => {
         >
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Welcome to {clubInfo?.name || "Our Fitness Center"}
-          </h1>
-          {user ? (
+          </h1>          {user ? (
             <p className="text-xl text-gray-600 mb-6">
-              Hello {user.first_name || user.display_name || 'there'}! Ready to continue your fitness journey?
+              Hello {user.first_name || user.name?.split(' ')[0] || user.email?.split('@')[0] || 'there'}! Ready to continue your fitness journey?
             </p>
           ) : (
             <p className="text-xl text-gray-600 mb-6">

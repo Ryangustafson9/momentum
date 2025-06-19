@@ -68,13 +68,14 @@ const Header = () => {
     <header className="bg-white shadow-md border-b">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         
-        {/* ⭐ LOGO: Brand logo and name */}
+        {/* ⭐ LOGO: Brand logo only */}
         <div className="flex items-center space-x-3">
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="h-8 w-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">M</span>
-            </div>
-            <h1 className="text-2xl font-bold text-indigo-600">Momentum Fitness</h1>
+          <Link to="/" className="flex items-center">
+            <img
+              src="/assets/momentum-logo.svg"
+              alt="Momentum Gym"
+              className="h-10 w-16 object-contain"
+            />
           </Link>
         </div>
 

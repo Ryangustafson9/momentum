@@ -34,6 +34,7 @@ import StaffRolesPermissionsPage from '@/pages/staff-portal/StaffRolesPermission
 import StaffDashboardLayout from '@/layouts/StaffDashboardLayout';
 
 // Public pages
+import JoinOnline from '@/pages/joinOnline';
 import JoinOnlineCheckout from '@/pages/JoinOnlineCheckout';
 import NonmemberPrompt from '@/pages/NonmemberPrompt';
 
@@ -113,7 +114,8 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/join-online" element={<JoinOnlineCheckout />} />
+              <Route path="/join-online" element={<JoinOnline />} />
+              <Route path="/join-online/checkout" element={<JoinOnlineCheckout />} />
               <Route path="/nonmember-prompt" element={<NonmemberPrompt />} />
                   {/* Member routes */}
                 <Route 
@@ -202,15 +204,25 @@ function App() {
                     </PrivateRoute>
                   } 
                 />
-                <Route 
-                  path="/staff-portal/member/:id" 
+                <Route
+                  path="/staff-portal/member/:id"
                   element={
                     <PrivateRoute allowedRoles={['staff', 'admin']}>
                       <StaffDashboardLayout>
                         <StaffMemberProfile />
                       </StaffDashboardLayout>
                     </PrivateRoute>
-                  } 
+                  }
+                />
+                <Route
+                  path="/profile=:id"
+                  element={
+                    <PrivateRoute allowedRoles={['staff', 'admin']}>
+                      <StaffDashboardLayout>
+                        <StaffMemberProfile />
+                      </StaffDashboardLayout>
+                    </PrivateRoute>
+                  }
                 />
                   {/* Admin routes */}
                 <Route 

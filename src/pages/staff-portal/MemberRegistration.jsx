@@ -104,7 +104,7 @@ const MemberRegistration = () => {
           className="text-center mb-8"
         >
           <img 
-            src="/assets/momentum-logo.png" 
+            src="/assets/momentum-logo.svg"
             alt="Momentum Gym" 
             className="h-16 mx-auto mb-4"
           />

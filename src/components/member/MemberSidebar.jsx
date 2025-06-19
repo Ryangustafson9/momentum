@@ -60,9 +60,12 @@ const MemberSidebar = () => {
     <div className="w-64 bg-white shadow-lg border-r border-gray-200 min-h-screen">
       <div className="p-6">
         {/* Logo/Brand */}
-        <div className="mb-8">
-          <h1 className="text-xl font-bold text-gray-900">Momentum</h1>
-          <p className="text-sm text-gray-500">Fitness Dashboard</p>
+        <div className="mb-8 flex items-center justify-center">
+          <img
+            src="/assets/momentum-logo.svg"
+            alt="Momentum Gym"
+            className="w-24 h-16 object-contain"
+          />
         </div>
 
         {/* User Info */}

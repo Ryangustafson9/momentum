@@ -6,13 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle, Star, Dumbbell, Crown, AlertCircle, Lock, Edit3, Settings, Users, Calendar, Target } from 'lucide-react';
-import { getGymName, getContactInfo, isFeatureEnabled, initializeGymBranding } from '@/utils/gymBranding.js';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { CheckCircle, Star, Dumbbell, Crown, AlertCircle, Lock, Edit3, Settings, Users, Calendar, Target, ArrowRight, ArrowLeft, User, Mail, Phone, Shield } from 'lucide-react';
+import { getGymName, getContactInfo, isFeatureEnabled, initializeGymBranding, getGymColors } from '@/utils/gymBranding.js';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast.js';
+import { normalizeRole } from '@/utils/roleUtils';
 
 const JoinOnline = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, signup, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -20,10 +24,24 @@ const JoinOnline = () => {
   const [membershipPlans, setMembershipPlans] = useState([]);
   const [isStaff, setIsStaff] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
-  const [contactInfo, setContactInfo] = useState({
-    email: 'info@nordicfitness.com', // Default fallback
-    phone: '(555) 123-4567'         // Default fallback
+  const [currentStep, setCurrentStep] = useState(1); // 1: Plan Selection, 2: User Info, 3: Confirmation
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    phone: '',
+    agreeToTerms: false
   });
+  const [contactInfo, setContactInfo] = useState({
+    email: 'info@momentumfitness.com',
+    phone: '(555) 123-4567'
+  });
+
+  // THEME: Get branded colors for consistent styling
+  const gymColors = getGymColors();
 
   // Default design configurations based on category
   const getDesignForCategory = (category, name) => {
@@ -251,6 +269,260 @@ const JoinOnline = () => {
       title: "Edit Plan Design",
       description: `Design editor for ${plan.name} - Coming soon!`,
     });
+  };
+
+  // Validation functions
+  const validateStep1 = () => {
+    return selectedPlan !== null;
+  };
+
+  const validateStep2 = () => {
+    const { firstName, lastName, email, password, confirmPassword, phone, agreeToTerms } = formData;
+    
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password || !phone.trim()) {
+      toast({ title: "Error", description: "Please fill in all required fields", variant: "destructive" });
+      return false;
+    }
+    
+    if (password !== confirmPassword) {
+      toast({ title: "Error", description: "Passwords do not match", variant: "destructive" });
+      return false;
+    }
+    
+    if (password.length < 6) {
+      toast({ title: "Error", description: "Password must be at least 6 characters", variant: "destructive" });
+      return false;
+    }
+    
+    if (password.length > 20) {
+      toast({ title: "Error", description: "Password must be no more than 20 characters", variant: "destructive" });
+      return false;
+    }
+    
+    if (!email.includes('@')) {
+      toast({ title: "Error", description: "Please enter a valid email address", variant: "destructive" });
+      return false;
+    }
+    
+    if (!agreeToTerms) {
+      toast({ title: "Error", description: "Please agree to the terms and conditions", variant: "destructive" });
+      return false;
+    }
+    
+    return true;
+  };
+
+  // Handle form input changes
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Handle step navigation
+  const nextStep = () => {
+    if (currentStep === 1 && validateStep1()) {
+      setCurrentStep(2);
+    } else if (currentStep === 2 && validateStep2()) {
+      setCurrentStep(3);
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  // Complete signup process
+  const handleCompleteSignup = async () => {
+    if (!validateStep2()) return;
+    
+    setIsLoading(true);
+    
+    try {
+      console.log('🚀 Starting complete signup process...');
+      
+      // Step 1: Check if email already exists
+      const { data: existingProfiles, error: checkError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('email', formData.email.toLowerCase().trim());
+      
+      if (checkError) {
+        throw new Error('Error checking existing users: ' + checkError.message);
+      }
+      
+      if (existingProfiles && existingProfiles.length > 0) {
+        toast({
+          title: "Account Already Exists",
+          description: "An account with this email already exists. Please sign in instead.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Step 2: Create auth user using signup from AuthContext
+      console.log('📝 Creating auth user...');
+      const { user: newUser } = await signup(formData.email, formData.password);
+      
+      if (!newUser) {
+        throw new Error('Failed to create user account');
+      }
+      
+      console.log('✅ Auth user created:', newUser.id);
+      
+      // Step 3: Create profile with membership plan
+      console.log('👤 Creating user profile...');
+      const profileData = {
+        id: newUser.id,
+        email: formData.email.toLowerCase().trim(),
+        first_name: formData.firstName.trim(),
+        last_name: formData.lastName.trim(),
+        phone: formData.phone.trim(),
+        role: normalizeRole('member'),
+        current_membership_type_id: selectedPlan.id,
+        status: 'Active',
+        join_date: new Date().toISOString().split('T')[0],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([profileData]);
+      
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        throw new Error('Failed to create user profile: ' + profileError.message);
+      }
+      
+      console.log('✅ Profile created successfully');
+      
+      // Step 4: Create membership record (optional, depending on your business logic)
+      if (selectedPlan) {
+        console.log('💳 Creating membership record...');
+        const membershipData = {
+          user_id: newUser.id,
+          membership_type_id: selectedPlan.id,
+          start_date: new Date().toISOString(),
+          status: 'active',
+          payment_status: 'pending', // Will be updated after payment
+          created_at: new Date().toISOString()
+        };
+        
+        const { error: membershipError } = await supabase
+          .from('memberships')
+          .insert([membershipData]);
+        
+        if (membershipError) {
+          console.warn('Membership creation warning:', membershipError);
+          // Don't fail the whole process for this
+        } else {
+          console.log('✅ Membership record created');
+        }
+      }
+        // Success! Show welcome message and redirect
+      toast({
+        title: "Welcome to " + getGymName() + "!",
+        description: "Your account has been created successfully. Welcome to our community!",
+        variant: "default"
+      });
+      
+      console.log('🎉 Signup complete, redirecting to member dashboard...');
+        // Redirect to member dashboard
+      setTimeout(() => {
+        navigate('/member-portal/dashboard');
+      }, 2000);
+      
+    } catch (error) {
+      console.error('❌ Signup error:', error);
+      toast({
+        title: "Signup Failed",
+        description: error.message || "Failed to create account. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Password strength calculation helper
+  const calculatePasswordStrength = (password) => {
+    if (!password) return { score: 0, label: '', color: 'bg-gray-200' };
+    
+    let score = 0;
+    const checks = {
+      length: password.length >= 8,
+      lowercase: /[a-z]/.test(password),
+      uppercase: /[A-Z]/.test(password),
+      numbers: /\d/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    };
+    
+    // Calculate score
+    if (checks.length) score += 2;
+    if (checks.lowercase) score += 1;
+    if (checks.uppercase) score += 1;
+    if (checks.numbers) score += 1;
+    if (checks.special) score += 1;
+    
+    // Determine strength level
+    if (score <= 2) return { score, label: 'Weak', color: 'bg-red-500', requirements: checks };
+    if (score <= 4) return { score, label: 'Fair', color: 'bg-yellow-500', requirements: checks };
+    if (score <= 5) return { score, label: 'Good', color: 'bg-blue-500', requirements: checks };
+    return { score, label: 'Strong', color: 'bg-green-500', requirements: checks };
+  };
+
+  // Password Strength Meter Component
+  const PasswordStrengthMeter = ({ password }) => {
+    const strength = calculatePasswordStrength(password);
+    const progressWidth = (strength.score / 6) * 100;
+    
+    return (
+      <div className="mt-2 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-600">Password Strength</span>
+          <span className={`text-xs font-medium ${
+            strength.label === 'Strong' ? 'text-green-600' :
+            strength.label === 'Good' ? 'text-blue-600' :
+            strength.label === 'Fair' ? 'text-yellow-600' : 
+            'text-red-600'
+          }`}>
+            {strength.label}
+          </span>
+        </div>
+        
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div 
+            className={`h-2 rounded-full transition-all duration-300 ${strength.color}`} 
+            style={{ width: `${progressWidth}%` }}
+          />
+        </div>
+        
+        {password && (
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className={`flex items-center gap-1 ${strength.requirements.length ? 'text-green-600' : 'text-gray-400'}`}>
+              {strength.requirements.length ? <Shield className="w-3 h-3" /> : <div className="w-3 h-3 rounded-full border border-gray-300" />}
+              8+ characters
+            </div>
+            <div className={`flex items-center gap-1 ${strength.requirements.uppercase ? 'text-green-600' : 'text-gray-400'}`}>
+              {strength.requirements.uppercase ? <Shield className="w-3 h-3" /> : <div className="w-3 h-3 rounded-full border border-gray-300" />}
+              Uppercase letter
+            </div>
+            <div className={`flex items-center gap-1 ${strength.requirements.lowercase ? 'text-green-600' : 'text-gray-400'}`}>
+              {strength.requirements.lowercase ? <Shield className="w-3 h-3" /> : <div className="w-3 h-3 rounded-full border border-gray-300" />}
+              Lowercase letter
+            </div>
+            <div className={`flex items-center gap-1 ${strength.requirements.numbers ? 'text-green-600' : 'text-gray-400'}`}>
+              {strength.requirements.numbers ? <Shield className="w-3 h-3" /> : <div className="w-3 h-3 rounded-full border border-gray-300" />}
+              Number
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   // Loading state
@@ -560,6 +832,248 @@ const JoinOnline = () => {
             >
               Continue with {membershipPlans.find(p => p.id === selectedPlan)?.name}
             </Button>
+          </motion.div>
+        )}
+
+        {/* User Info Form - Step 2 */}
+        {currentStep === 2 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="bg-white/90 backdrop-blur rounded-2xl p-8 shadow-xl w-full max-w-md mx-auto mb-8"
+          >
+            <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
+              Your Information
+            </h2>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                    First Name
+                  </Label>
+                  <Input
+                    id="firstName"
+                    value={formData.firstName}
+                    onChange={(e) => handleInputChange('firstName', e.target.value)}
+                    className="mt-1"
+                    placeholder="John"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                    Last Name
+                  </Label>
+                  <Input
+                    id="lastName"
+                    value={formData.lastName}
+                    onChange={(e) => handleInputChange('lastName', e.target.value)}
+                    className="mt-1"
+                    placeholder="Doe"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  className="mt-1"
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                  Phone
+                </Label>
+                <Input
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  className="mt-1"
+                  placeholder="(555) 123-4567"
+                  required
+                />
+              </div>              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                    Password
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    className="mt-1"
+                    placeholder="••••••"
+                    required
+                  />
+                  <PasswordStrengthMeter password={formData.password} />
+                </div>
+                
+                <div>
+                  <Label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                    Confirm Password
+                  </Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                    className="mt-1"
+                    placeholder="••••••"
+                    required
+                  />
+                  {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                    <p className="mt-1 text-sm text-red-600">Passwords do not match</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center">
+                <Checkbox
+                  id="agreeToTerms"
+                  checked={formData.agreeToTerms}
+                  onCheckedChange={(checked) => handleInputChange('agreeToTerms', checked)}
+                  className="h-5 w-5 text-indigo-600 rounded"
+                />
+                <Label htmlFor="agreeToTerms" className="ml-3 block text-sm text-gray-700">
+                  I agree to the{" "}
+                  <a href="/terms" className="text-indigo-600 hover:underline">
+                    terms and conditions
+                  </a>
+                </Label>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 mt-6">
+              <Button
+                onClick={prevStep}
+                variant="outline"
+                className="w-full sm:w-auto"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+              
+              <Button
+                onClick={nextStep}
+                className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
+                isLoading={isLoading}
+              >
+                Continue
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+
+            {/* Password Strength Meter */}
+            <PasswordStrengthMeter password={formData.password} />
+          </motion.div>
+        )}
+
+        {/* Confirmation Step - Step 3 */}
+        {currentStep === 3 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="bg-white/90 backdrop-blur rounded-2xl p-8 shadow-xl w-full max-w-md mx-auto mb-8"
+          >
+            <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
+              Confirm Your Details
+            </h2>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label className="block text-sm font-medium text-gray-700">
+                    First Name
+                  </Label>
+                  <p className="mt-1 text-gray-900">
+                    {formData.firstName}
+                  </p>
+                </div>
+                
+                <div>
+                  <Label className="block text-sm font-medium text-gray-700">
+                    Last Name
+                  </Label>
+                  <p className="mt-1 text-gray-900">
+                    {formData.lastName}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <Label className="block text-sm font-medium text-gray-700">
+                  Email
+                </Label>
+                <p className="mt-1 text-gray-900">
+                  {formData.email}
+                </p>
+              </div>
+
+              <div>
+                <Label className="block text-sm font-medium text-gray-700">
+                  Phone
+                </Label>
+                <p className="mt-1 text-gray-900">
+                  {formData.phone}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label className="block text-sm font-medium text-gray-700">
+                    Password
+                  </Label>
+                  <p className="mt-1 text-gray-900">
+                    ********
+                  </p>
+                </div>
+                
+                <div>
+                  <Label className="block text-sm font-medium text-gray-700">
+                    Confirm Password
+                  </Label>
+                  <p className="mt-1 text-gray-900">
+                    ********
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <Button
+                onClick={handleCompleteSignup}
+                className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
+                isLoading={isLoading}
+              >
+                Complete Signup
+              </Button>
+            </div>
+
+            <div className="mt-4 text-center">
+              <Button
+                onClick={prevStep}
+                variant="outline"
+                className="w-full sm:w-auto"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Edit
+              </Button>
+            </div>
           </motion.div>
         )}
 

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
@@ -20,12 +19,31 @@ const memberService = {
         .from('profiles')
         .select(`
           *,
-          membership_types(name, category)
+          memberships(
+            id,
+            status,
+            start_date,
+            end_date,
+            membership_type:membership_types(
+              id,
+              name,
+              category
+            )
+          )
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+
+      // Process the data to add computed fields
+      const processedData = (data || []).map(profile => ({
+        ...profile,
+        name: profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email,
+        current_membership: profile.memberships?.[0] || null,
+        current_membership_type_id: profile.memberships?.[0]?.membership_type?.id || null
+      }));
+
+      return processedData;
     } catch (error) {
       console.error('Error fetching members:', error);
       throw error;
@@ -160,8 +178,10 @@ const MembersPage = () => {
     setIsFormDialogOpen(false);
   };
 
-  const handleNavigateToProfile = (memberId) => {
-    navigate(`/member/${memberId}`);
+  const handleNavigateToProfile = (member) => {
+    // Use system_member_id for the profile route
+    const profileId = member.system_member_id || member.id;
+    navigate(`/profile=${profileId}`);
   };
 
   const handleAssignMembership = (member) => {
@@ -199,12 +219,7 @@ const MembersPage = () => {
   }
 
   return (
-    <motion.div
-      className="space-y-6 p-4 md:p-6 lg:p-8 bg-background dark:bg-slate-900 min-h-screen"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
+    <div className="space-y-6 p-4 md:p-6 lg:p-8 bg-background dark:bg-slate-900 min-h-screen">
       <MembersHeader onAddMemberClick={handleAddMemberClick} />
       <MembersFilterControls
         searchTerm={searchTerm}
@@ -255,7 +270,7 @@ const MembersPage = () => {
         onConfirm={confirmImpersonate}
         member={memberToImpersonate}
       />
-    </motion.div>
+    </div>
   );
 };
 

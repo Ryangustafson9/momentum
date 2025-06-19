@@ -1,11 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Bell,
   Search as SearchIcon,
   UserCircle,
-  Settings,
   Eye,
   Sun,
   Moon,
@@ -31,8 +30,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import MemberSearch from '@/components/admin/topnav_parts/MemberSearch.jsx';
-import { supabase } from '@/lib/supabaseClient';
-import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/hooks/useTheme.jsx';
 
@@ -174,51 +171,15 @@ const StaffSearch = ({ allMembers, navigate }) => (
   </div>
 );
 
-const TopNavbar = ({ userRole, toggleSidebar, user, onLogout, startRoleImpersonation }) => {
+const TopNavbar = ({ user, onLogout, startRoleImpersonation, allMembers = [] }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [allMembers, setAllMembers] = useState([]);
   const [currentPathTitle, setCurrentPathTitle] = useState(getPageTitle(location.pathname));
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     setCurrentPathTitle(getPageTitle(location.pathname));
   }, [location.pathname]);
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchMembers = async () => {
-      if (userRole === 'staff') {
-        try {
-          const { data: membersData, error } = await supabase
-            .from('profiles')
-            .select(`
-              id,
-              email,
-              first_name,
-              last_name,
-              phone,
-              role,
-              status
-            `)
-            .eq('role', 'member')
-            .order('created_at', { ascending: false });
-
-          if (error) throw error;
-
-          if (isMounted && membersData) {
-            setAllMembers(membersData);
-          }
-        } catch (error) {
-          console.error("Failed to fetch members for search:", error);
-          if (isMounted) setAllMembers([]);
-        }
-      }
-    };
-
-    fetchMembers();
-    return () => { isMounted = false; };
-  }, [userRole]);
   
   useEffect(() => {
     const handleScroll = () => {
@@ -246,10 +207,13 @@ const TopNavbar = ({ userRole, toggleSidebar, user, onLogout, startRoleImpersona
       <div className="flex-1" />
 
       <div className="flex items-center gap-2 md:gap-3">
-        {userRole === 'staff' && (
-          <StaffSearch allMembers={allMembers} navigate={navigate} />
-        )}
+        <StaffSearch allMembers={allMembers} navigate={navigate} />
         <NotificationsButton />
+        <UserProfileDropdown
+          user={user}
+          onLogout={onLogout}
+          startRoleImpersonation={startRoleImpersonation}
+        />
       </div>
     </header>
   );

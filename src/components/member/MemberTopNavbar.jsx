@@ -41,9 +41,11 @@ const MemberTopNavbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo/Brand */}
           <div className="flex items-center">
-            <h1 className="text-xl font-bold text-gray-900">
-              Momentum Fitness
-            </h1>
+            <img
+              src="/assets/momentum-logo.svg"
+              alt="Momentum Gym"
+              className="h-10 w-16 object-contain"
+            />
           </div>
 
           {/* Right side - Notifications and User Menu */}

@@ -276,7 +276,7 @@ const StaffNotesSection = ({ memberId, staffId }) => {
 
 
 const StaffMemberProfilePage = () => {
-  const { memberId } = useParams();
+  const { id: systemMemberId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [memberData, setMemberData] = useState(null);
@@ -304,15 +304,15 @@ const StaffMemberProfilePage = () => {
       setLoggedInStaff(staffProfile);
     }
 
-    if (!memberId) {
+    if (!systemMemberId) {
       toast({ title: "Error", description: "No member ID provided.", variant: "destructive" });
-      navigate('/admin/members');
+      navigate('/staff-portal/members');
       return;
     }
 
     try {
       const [memberDetails, types, attendanceRecordsData, logData] = await Promise.all([
-        // Get member by ID
+        // Get member by system_member_id
         supabase
           .from('profiles')
           .select(`
@@ -326,7 +326,7 @@ const StaffMemberProfilePage = () => {
               membership_type:membership_types(*)
             )
           `)
-          .eq('id', memberId)
+          .eq('system_member_id', systemMemberId)
           .single()
           .then(({ data, error }) => {
             if (error) throw error;
@@ -343,39 +343,55 @@ const StaffMemberProfilePage = () => {
             return data || [];
           }),
 
-        // Get attendance records
-        supabase
-          .from('attendance')
-          .select('*')
-          .eq('member_id', memberId)
-          .order('check_in_time', { ascending: false })
-          .then(({ data, error }) => {
-            if (error) throw error;
-            return data || [];
-          }),
+        // Get attendance records (will be updated after we get the member data)
+        Promise.resolve([]),
 
-        // Get membership log
-        supabase
-          .from('membership_log')
-          .select('*')
-          .eq('member_id', memberId)
-          .order('created_at', { ascending: false })
-          .then(({ data, error }) => {
-            if (error) throw error;
-            return data || [];
-          })
+        // Get membership log (will be updated after we get the member data)
+        Promise.resolve([])
       ]);
       
       if (memberDetails) {
         setMemberData(memberDetails);
         setMembershipTypes(types || []);
-        const allRecords = Array.isArray(attendanceRecordsData) ? attendanceRecordsData : [];
-        setCheckIns(allRecords.filter(r => r.status === 'Present' || r.status === 'Checked In (General)' || r.status === 'Checked In (Class)'));
-        setBookings(allRecords.filter(r => r.status === 'Booked' || r.status === 'Cancelled'));
-        setMembershipLog(logData || []);
+
+        // Now fetch attendance and membership log using the actual member ID
+        try {
+          const [attendanceData, membershipLogData] = await Promise.all([
+            supabase
+              .from('attendance')
+              .select('*')
+              .eq('member_id', memberDetails.id)
+              .order('check_in_time', { ascending: false })
+              .then(({ data, error }) => {
+                if (error) throw error;
+                return data || [];
+              }),
+
+            supabase
+              .from('membership_log')
+              .select('*')
+              .eq('member_id', memberDetails.id)
+              .order('created_at', { ascending: false })
+              .then(({ data, error }) => {
+                if (error) throw error;
+                return data || [];
+              })
+          ]);
+
+          const allRecords = Array.isArray(attendanceData) ? attendanceData : [];
+          setCheckIns(allRecords.filter(r => r.status === 'Present' || r.status === 'Checked In (General)' || r.status === 'Checked In (Class)'));
+          setBookings(allRecords.filter(r => r.status === 'Booked' || r.status === 'Cancelled'));
+          setMembershipLog(membershipLogData || []);
+        } catch (error) {
+          console.error("Error fetching attendance/membership log:", error);
+          // Continue without this data
+          setCheckIns([]);
+          setBookings([]);
+          setMembershipLog([]);
+        }
       } else {
         toast({ title: "Error", description: "Could not load member details.", variant: "destructive" });
-        navigate('/admin/members');
+        navigate('/staff-portal/members');
       }
     } catch (error) {
       console.error("Error fetching profile data:", error);
@@ -383,7 +399,7 @@ const StaffMemberProfilePage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [memberId, navigate, toast]);
+  }, [systemMemberId, navigate, toast]);
 
   useEffect(() => {
     fetchProfileData();

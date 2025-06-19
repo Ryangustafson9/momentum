@@ -28,16 +28,17 @@ const Sidebar = ({ onLogout, mobile = false, closeSidebar }) => {
   return (
     <div className="flex h-full flex-col border-r border-gray-200 bg-white">
       <div className="flex items-center justify-between px-4 py-6">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="flex items-center"
+          className="flex items-center justify-center w-full"
         >
-          <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
-            <span className="text-white font-bold">FT</span>
-          </div>
-          <h1 className="ml-2 text-xl font-bold text-gray-900">FitTrack</h1>
+          <img
+            src="/assets/momentum-logo.svg"
+            alt="Momentum Gym"
+            className="h-12 w-20 object-contain"
+          />
         </motion.div>
         {mobile && (
           <Button variant="ghost" size="icon" onClick={closeSidebar}>

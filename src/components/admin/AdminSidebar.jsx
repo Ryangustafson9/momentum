@@ -110,24 +110,13 @@ const AdminSidebar = ({ onLogout, isExpanded, toggleSidebar }) => {
       isExpanded ? "w-64" : "w-20"
     )}>
       
-      <div className="flex items-center justify-between p-4 h-16 border-b border-border">
-        <div className="flex items-center space-x-2">
-          {isExpanded && (
-            <>
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">M</span>
-              </div>
-              <div>
-                <h2 className="text-sm font-semibold text-foreground">Momentum</h2>
-                <p className="text-xs text-muted-foreground">Gym Management</p>
-              </div>
-            </>
-          )}
-          {!isExpanded && (
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center mx-auto">
-              <span className="text-white font-bold text-sm">M</span>
-            </div>
-          )}
+      <div className="flex items-center justify-between p-4 h-20 border-b border-border">
+        <div className="flex items-center justify-center w-full">
+          <img
+            src="/assets/momentum-logo.svg"
+            alt="Momentum Gym"
+            className="w-24 h-16 object-contain"
+          />
         </div>
 
         <Button

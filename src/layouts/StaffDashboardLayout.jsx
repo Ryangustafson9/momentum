@@ -1,12 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import AdminSidebar from '@/components/admin/AdminSidebar.jsx';
 import TopNavbar from '@/components/admin/TopNavbar.jsx';
 import { supabase } from '@/lib/supabaseClient';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from "@/hooks/use-toast.js";
 
 const pageTitles = {
   '/': 'Dashboard',
@@ -29,16 +26,12 @@ const getPageTitle = (pathname) => {
 
 const AdminDashboardLayout = ({ children }) => {
   const { user, logout } = useAuth();
-  const { toast } = useToast();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(() => {
     const storedSidebarState = localStorage.getItem('sidebarExpanded');
     return storedSidebarState ? JSON.parse(storedSidebarState) : true;
   });
-  
-  const location = useLocation(); 
-  const navigate = useNavigate();
+
   const [allMembers, setAllMembers] = useState([]);
-  const currentPathTitle = getPageTitle(location.pathname);
 
   useEffect(() => {
     localStorage.setItem('sidebarExpanded', JSON.stringify(isSidebarExpanded));
@@ -47,18 +40,40 @@ const AdminDashboardLayout = ({ children }) => {
   const toggleSidebar = () => {
     setIsSidebarExpanded(!isSidebarExpanded);
   };
-  
-  useEffect(() => {
+    useEffect(() => {
     let isMounted = true;
     const fetchMembers = async () => {
-      if (user?.role === 'staff') {
+      if (user?.role === 'staff' || user?.role === 'admin') {
         try {
-          const membersData = await apiService.getMembers();
-          if (isMounted && membersData) {
-            setAllMembers(membersData);
+          console.log('Fetching all profiles for search...');          const { data: profiles, error } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, display_name, email, role, system_member_id, phone')
+            .order('first_name', { ascending: true });
+          
+          if (error) {
+            console.error('Error fetching profiles:', error);
+            return;
+          }
+            // Transform data for search component
+          const transformedMembers = profiles?.map(profile => ({
+            id: profile.id,
+            name: profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
+            full_name: profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
+            first_name: profile.first_name,
+            last_name: profile.last_name,
+            email: profile.email,
+            role: profile.role,
+            system_member_id: profile.system_member_id,
+            phone: profile.phone
+          })) || [];
+          
+          if (isMounted) {
+            setAllMembers(transformedMembers);
+            console.log('✅ StaffDashboardLayout: Loaded profiles for search:', transformedMembers.length);
+            console.log('📊 Sample transformed data:', transformedMembers.slice(0, 2));
           }
         } catch (error) {
-          console.error("Failed to fetch members for search:", error);
+          console.error("Failed to fetch profiles for search:", error);
           if (isMounted) setAllMembers([]);
         }
       }
@@ -85,23 +100,15 @@ const AdminDashboardLayout = ({ children }) => {
         "flex flex-col flex-1 transition-all duration-300 ease-in-out",
         isSidebarExpanded ? "md:ml-64" : "md:ml-20" 
       )}>        <TopNavbar
-          toggleSidebar={toggleSidebar}
-          userRole={user?.role}
           user={user}
           onLogout={logout}
           startRoleImpersonation={handleStartImpersonation}
+          allMembers={allMembers}
         />
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8 bg-background dark:bg-slate-900">
-          <motion.div
-            key={location.pathname}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-            className="w-full"
-          >
+          <div className="w-full">
             {children}
-          </motion.div>
+          </div>
         </main>
       </div>
     </div>

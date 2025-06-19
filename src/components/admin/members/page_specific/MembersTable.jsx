@@ -47,7 +47,7 @@ const MembersTable = ({ members, onArchiveMember, requestSort, sortConfig, membe
           {members.length > 0 ? members.map(member => (
             <TableRow key={member.id} className={`hover:bg-slate-50 dark:hover:bg-slate-700/50 ${member.status === 'Archived' ? 'opacity-60 bg-slate-100 dark:bg-slate-800' : ''}`}>
               <TableCell className="font-medium">
-                <Link to={`/member/${member.id}`} className="hover:underline text-primary flex items-center">
+                <Link to={`/profile=${member.system_member_id || member.id}`} className="hover:underline text-primary flex items-center">
                   {member.name} <ExternalLink className="h-3 w-3 ml-1 opacity-70" />
                 </Link>
               </TableCell>
@@ -66,7 +66,7 @@ const MembersTable = ({ members, onArchiveMember, requestSort, sortConfig, membe
                 </Badge>
               </TableCell>
               <TableCell className="text-right space-x-1">
-                <Link to={`/member/${member.id}`}>
+                <Link to={`/profile=${member.system_member_id || member.id}`}>
                   <Button variant="ghost" size="icon" title="View Profile">
                     <Eye className="h-4 w-4 text-blue-500" />
                   </Button>

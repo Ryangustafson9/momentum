@@ -81,15 +81,13 @@ const CollapsibleSidebar = ({ sidebarOpen, setSidebarOpen, sidebarCollapsed, set
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="flex items-center"
+                className="flex items-center justify-center w-full"
               >
-                <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-lg">M</span>
-                </div>
-                <div className="ml-3">
-                  <h1 className="text-lg font-bold text-gray-900">Momentum</h1>
-                  <p className="text-xs text-gray-500">Fitness Club</p>
-                </div>
+                <img
+                  src="/assets/momentum-logo.svg"
+                  alt="Momentum Gym"
+                  className="w-28 h-20 object-contain"
+                />
               </motion.div>
             )}
           </AnimatePresence>

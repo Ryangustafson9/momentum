@@ -243,7 +243,7 @@ const Login = () => {
               <span className="text-sm">Powered by</span>
               {!momentumLogoError ? (
                 <img
-                  src="/assets/momentum-logo.png"
+                  src="/assets/momentum-logo.svg"
                   alt="Momentum Logo"
                   className="h-5 object-contain"
                   onError={() => setMomentumLogoError(true)}
