@@ -33,29 +33,9 @@ const Signup = () => {
   const [passwordsMatch, setPasswordsMatch] = useState(null);
   const [duplicateEmailError, setDuplicateEmailError] = useState(false);
 
-
   // Get loading state and user from useAuth hook
   const { signup, loading, user } = useAuth(); // Use signup instead of register
   const { toast } = useToast();
-
-  // Password strength calculation function
-  const calculatePasswordStrength = (password) => {
-    const requirements = {
-      length: password.length >= 8,
-      uppercase: /[A-Z]/.test(password),
-      number: /\d/.test(password),
-      special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
-    };
-
-    const metRequirements = Object.values(requirements).filter(Boolean).length;
-    const score = (metRequirements / 4) * 100;
-
-    return {
-      score,
-      requirements,
-      strength: score === 100 ? 'Strong' : score >= 75 ? 'Good' : score >= 50 ? 'Fair' : 'Weak'
-    };
-  };
 
   // Check if passwords match
   const checkPasswordsMatch = (password, confirmPassword) => {
@@ -557,16 +537,20 @@ const Signup = () => {
                   <div className="mt-2 space-y-3">
                     {/* Strength Bar */}
                     <div className="flex items-center space-x-2">
-                      <div className="flex-1 bg-gray-200 rounded-full h-2">
-                        <div
+                      <div className="flex-1 bg-gray-200 rounded-full h-2">                        <div
                           style={{ width: `${passwordStrength.score}%` }}
                           className={`h-2 rounded-full transition-all duration-300 ${
-                            passwordStrength.color === 'green' ? 'bg-green-400' : 'bg-red-400'
+                            passwordStrength.score === 100 ? 'bg-green-500' : 
+                            passwordStrength.score >= 75 ? 'bg-yellow-400' : 
+                            passwordStrength.score >= 50 ? 'bg-orange-400' : 
+                            'bg-red-400'
                           }`}
                         />
-                      </div>
-                      <span className={`text-xs font-medium ${
-                        passwordStrength.color === 'green' ? 'text-green-600' : 'text-red-600'
+                      </div>                      <span className={`text-xs font-medium ${
+                        passwordStrength.color === 'green' ? 'text-green-600' : 
+                        passwordStrength.color === 'yellow' ? 'text-yellow-600' : 
+                        passwordStrength.color === 'orange' ? 'text-orange-600' :
+                        'text-red-600'
                       }`}>
                         {passwordStrength.strength}
                       </span>

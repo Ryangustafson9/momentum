@@ -55,18 +55,29 @@ export const calculatePasswordStrength = (password) => {
   if (!requirements.uppercase) feedback.push('uppercase letter');
   if (!requirements.number) feedback.push('number');
   if (!requirements.special) feedback.push('special character');
-
   let strengthText = '';
   let color = '';
+  let strength = '';
 
   if (score === 0) {
     strengthText = '';
+    strength = '';
     color = 'gray';
   } else if (score === 100) {
     strengthText = 'Requirements Met';
+    strength = 'Strong';
     color = 'green';
+  } else if (score >= 75) {
+    strengthText = 'Almost There';
+    strength = 'Good';
+    color = 'yellow';
+  } else if (score >= 50) {
+    strengthText = 'Getting Better';
+    strength = 'Fair';
+    color = 'orange';
   } else {
     strengthText = 'Requirements Needed';
+    strength = 'Weak';
     color = 'red';
   }
 
@@ -74,6 +85,7 @@ export const calculatePasswordStrength = (password) => {
     score,
     feedback: feedback.length > 0 ? `Add: ${feedback.join(', ')}` : 'All requirements met!',
     strengthText,
+    strength,
     color,
     requirements
   };

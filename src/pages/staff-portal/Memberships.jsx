@@ -37,7 +37,7 @@ const initialColumnVisibility = {
   actions: true,
 };
 
-const DESIRED_TAB_ORDER = ['All', 'Membership', 'Add-on', 'Guest', 'Staff'];
+const DESIRED_TAB_ORDER = ['All', 'Membership', 'Add-ons', 'Guest', 'Staff'];
 
 // Membership Service Functions
 const membershipService = {
@@ -140,12 +140,12 @@ const MembershipsFilterControlsAndTabs = React.memo(({
     if (category === 'All') return 'Add New Plan';
     return `Add ${category} Plan`;
   };
-
   const getAddButtonIcon = (category) => {
     switch (category) {
       case 'Membership': return <Users className="mr-2 h-4 w-4" />;
       case 'Staff': return <Shield className="mr-2 h-4 w-4" />;
-      case 'Add-on': return <Package className="mr-2 h-4 w-4" />;
+      case 'Add-on':
+      case 'Add-ons': return <Package className="mr-2 h-4 w-4" />;
       case 'Guest': return <Ticket className="mr-2 h-4 w-4" />;
       default: return <PlusCircle className="mr-2 h-4 w-4" />;
     }
@@ -347,9 +347,20 @@ const getUniqueCategoriesForTabs = (types) => {
     { value: 'All', label: 'All' },
     { value: 'Membership', label: 'Membership' },
     { value: 'Staff', label: 'Staff' },
-    { value: 'Add-on', label: 'Add-on' },
+    { value: 'Add-on', label: 'Add-ons' },
     { value: 'Guest', label: 'Guest' }
   ];
+
+  // Create a mapping of database categories to tab categories to avoid duplicates
+  const dbCategoryToTabCategory = {
+    'Membership': 'Membership',
+    'Staff': 'Staff',
+    'Staff Plans': 'Staff',
+    'Add-ons': 'Add-on',
+    'Add-on': 'Add-on',
+    'Guest': 'Guest',
+    'Guest Plans': 'Guest'
+  };
 
   // If there are types, we can add any additional custom categories that aren't in the standard list
   if (types && types.length > 0) {
@@ -357,8 +368,12 @@ const getUniqueCategoriesForTabs = (types) => {
     const customCategories = new Set();
     
     types.forEach(type => {
-      if (type.category && !existingCategories.has(type.category)) {
-        customCategories.add(type.category);
+      if (type.category) {
+        // Check if this database category maps to an existing tab
+        const mappedCategory = dbCategoryToTabCategory[type.category];
+        if (!mappedCategory && !existingCategories.has(type.category)) {
+          customCategories.add(type.category);
+        }
       }
     });
 
@@ -525,9 +540,15 @@ const MembershipsPage = () => {
           'Membership': 'Membership',
           'Add-on': 'Add-ons',
           'Guest': 'Guest Plans',
-          'Staff': 'Staff'
-        };        const dbCategory = categoryMap[activeTabCategory] || activeTabCategory;
-        matchesCategory = type.category === dbCategory;
+          'Staff': ['Staff', 'Staff Plans'] // Support both variants
+        };
+        
+        const dbCategory = categoryMap[activeTabCategory];
+        if (Array.isArray(dbCategory)) {
+          matchesCategory = dbCategory.includes(type.category);
+        } else {
+          matchesCategory = type.category === (dbCategory || activeTabCategory);
+        }
       }      const result = matchesSearch && matchesCategory;
       return result;
     });
