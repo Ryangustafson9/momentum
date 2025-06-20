@@ -421,11 +421,26 @@ const StaffMemberProfilePage = () => {
       console.log('🏁 Setting isLoading to false');
       setIsLoading(false);
     }
-  }, [systemMemberId, navigate, toast]);
+  }, [systemMemberId, navigate, toast]);  useEffect(() => {
+    if (systemMemberId) {
+      // Add timeout to prevent infinite loading
+      const timeoutId = setTimeout(() => {
+        console.error('❌ Profile data loading timeout');
+        setIsLoading(false);
+        toast({ 
+          title: "Loading Timeout", 
+          description: "Profile data is taking too long to load. Please try again.", 
+          variant: "destructive" 
+        });
+      }, 15000); // 15 second timeout
 
-  useEffect(() => {
-    fetchProfileData();
-  }, [fetchProfileData]);
+      fetchProfileData().finally(() => {
+        clearTimeout(timeoutId);
+      });
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [systemMemberId]); // Only depend on systemMemberId, not the function
 
   const handleEditProfile = () => setIsEditModalOpen(true);
 
