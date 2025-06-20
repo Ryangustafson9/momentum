@@ -8,6 +8,7 @@ import RoleFormDialog from '@/components/admin/settings/RoleFormDialog';
 import UserRolesList from '@/components/admin/settings/UserRolesList';
 import UserRolesSettingsTabHeader from '@/components/admin/settings/UserRolesSettingsTabHeader';
 import AdminPanelSettingsTab from '@/components/admin/settings/tabs/AdminPanelSettingsTab';
+import PermissionsTable from '@/components/admin/permissions/PermissionsTable';
 import { motion } from 'framer-motion';
 import { SlidersHorizontal, Shield, PlusCircle, ShieldCheck, Loader2 } from 'lucide-react';
 
@@ -287,27 +288,34 @@ const AdminPanelPage = () => {
             Manage system-wide configurations and staff permissions.
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-0">
-          <Tabs defaultValue="adminSettings" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 rounded-none border-b dark:border-slate-700">
+        <CardContent className="p-0">          <Tabs defaultValue="adminSettings" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 rounded-none border-b dark:border-slate-700">
               <TabsTrigger
                 value="adminSettings"
                 className="py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none"
               >
-                <SlidersHorizontal className="mr-2 h-4 w-4" /> General Admin Settings
+                <SlidersHorizontal className="mr-2 h-4 w-4" /> General Settings
               </TabsTrigger>
               <TabsTrigger
                 value="staffRoles"
                 className="py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none"
               >
-                <Shield className="mr-2 h-4 w-4" /> Staff Roles & Permissions
+                <Shield className="mr-2 h-4 w-4" /> Staff Roles
               </TabsTrigger>
-            </TabsList>
-            <TabsContent value="adminSettings" className="p-4 md:p-6">
+              <TabsTrigger
+                value="permissions"
+                className="py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none"
+              >
+                <Shield className="mr-2 h-4 w-4" /> Permissions Table
+              </TabsTrigger>
+            </TabsList>            <TabsContent value="adminSettings" className="p-4 md:p-6">
               <AdminPanelSettingsTab />
             </TabsContent>
             <TabsContent value="staffRoles" className="p-4 md:p-6">
               <StaffRolesPermissionsTabContent />
+            </TabsContent>
+            <TabsContent value="permissions" className="p-4 md:p-6">
+              <PermissionsTable />
             </TabsContent>
           </Tabs>
         </CardContent>

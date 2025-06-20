@@ -33,6 +33,7 @@ import Equipment from '@/pages/staff-portal/Equipment';
 import Reports from '@/pages/staff-portal/Reports';
 import Settings from '@/pages/staff-portal/Settings';
 import Trainers from '@/pages/staff-portal/Trainers';
+import PointOfSale from '@/pages/staff-portal/PointOfSale';
 import StaffMemberProfile from '@/pages/staff-portal/MemberProfile';
 import MemberRegistration from '@/pages/staff-portal/MemberRegistration';
 
@@ -238,6 +239,7 @@ function App() {
                   <Route path="reports" element={<Reports />} />
                   <Route path="settings" element={<Settings />} />
                   <Route path="trainers" element={<Trainers />} />
+                  <Route path="pos" element={<PointOfSale />} />
                   <Route path="member/:id" element={<StaffMemberProfile />} />
                   <Route path="register-member" element={<MemberRegistration />} />
                   <Route index element={<Navigate to="/staff-portal/dashboard" replace />} />

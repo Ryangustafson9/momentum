@@ -1,0 +1,686 @@
+// 🛒 POINT OF SALE SYSTEM - Complete POS for gym transactions
+import React, { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import {
+  ShoppingCart, CreditCard, DollarSign, Package, Users, Search,
+  Plus, Minus, X, Check, Calculator, Receipt, Barcode,
+  Tag, Percent, Gift, Clock, AlertCircle, CheckCircle, UserCog,
+  Coffee, Shirt, Glasses, UserCheck, Zap, Apple, Ticket,
+  Calendar, UserPlus, Watch
+} from 'lucide-react';
+
+// UI Components
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+
+// Hooks and Services
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabaseClient';
+
+// Icon mapping for categories and products
+const getIconComponent = (iconName) => {
+  const iconMap = {
+    'Coffee': Coffee,
+    'Shirt': Shirt,
+    'Glasses': Glasses,
+    'UserCheck': UserCheck,
+    'CreditCard': CreditCard,
+    'Package': Package,
+    'Zap': Zap,
+    'Users': Users,
+    'Apple': Apple,
+    'Ticket': Ticket,
+    'Calendar': Calendar,
+    'UserPlus': UserPlus,
+    'Milk': Package, // Fallback for protein bottle
+    'Watch': Watch
+  };
+  return iconMap[iconName] || Package;
+};
+
+const PointOfSale = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  // State management
+  const [cart, setCart] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [customer, setCustomer] = useState(null);
+  const [showCustomerSearch, setShowCustomerSearch] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [cashReceived, setCashReceived] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch categories and products
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch categories
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('pos_categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order');
+
+      if (categoriesError) throw categoriesError;
+
+      // Fetch products with category info
+      const { data: productsData, error: productsError } = await supabase
+        .from('pos_inventory')
+        .select(`
+          *,
+          category:pos_categories(name, slug, icon_name, color)
+        `)
+        .eq('is_active', true)
+        .order('name');
+
+      if (productsError) throw productsError;
+
+      setCategories([{ name: 'All', slug: 'all' }, ...(categoriesData || [])]);
+      setProducts(productsData || []);
+
+    } catch (error) {
+      console.error('Error fetching POS data:', error);
+      toast({
+        title: "Error loading data",
+        description: "Failed to load products and categories",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Filtered products
+  const filteredProducts = products.filter(product => {
+    const categoryMatch = selectedCategory === 'All' ||
+                         (product.category && product.category.slug === selectedCategory.toLowerCase());
+    const searchMatch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                       (product.barcode && product.barcode.includes(searchQuery)) ||
+                       (product.sku && product.sku.includes(searchQuery));
+    return categoryMatch && searchMatch;
+  });
+
+  // Cart calculations
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const tax = subtotal * 0.08; // 8% tax
+  const total = subtotal + tax;
+
+  // Add item to cart
+  const addToCart = useCallback((product) => {
+    setCart(prevCart => {
+      const existingItem = prevCart.find(item => item.id === product.id);
+      if (existingItem) {
+        return prevCart.map(item =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prevCart, { ...product, quantity: 1 }];
+    });
+    
+    toast({
+      title: "Added to cart",
+      description: `${product.name} added to cart`,
+    });
+  }, [toast]);
+
+  // Remove item from cart
+  const removeFromCart = useCallback((productId) => {
+    setCart(prevCart => prevCart.filter(item => item.id !== productId));
+  }, []);
+
+  // Update quantity
+  const updateQuantity = useCallback((productId, newQuantity) => {
+    if (newQuantity <= 0) {
+      removeFromCart(productId);
+      return;
+    }
+    
+    setCart(prevCart =>
+      prevCart.map(item =>
+        item.id === productId
+          ? { ...item, quantity: newQuantity }
+          : item
+      )
+    );
+  }, [removeFromCart]);
+
+  // Clear cart
+  const clearCart = useCallback(() => {
+    setCart([]);
+    setCustomer(null);
+  }, []);
+
+  // Search for customer
+  const searchCustomer = async (query) => {
+    if (!query.trim()) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email, phone')
+        .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%`)
+        .limit(10);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Customer search error:', error);
+      toast({
+        title: "Search failed",
+        description: "Unable to search customers",
+        variant: "destructive"
+      });
+      return [];
+    }
+  };
+
+  // Process payment
+  const processPayment = async () => {
+    if (cart.length === 0) {
+      toast({
+        title: "Empty cart",
+        description: "Please add items to cart before processing payment",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      // Simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Save transaction to database
+      const transactionData = {
+        staff_id: user.id,
+        customer_id: customer?.id || null,
+        items: cart,
+        subtotal: subtotal,
+        tax_amount: tax,
+        total_amount: total,
+        payment_method: paymentMethod,
+        cash_received: paymentMethod === 'cash' ? parseFloat(cashReceived) : null,
+        change_given: paymentMethod === 'cash' ? Math.max(0, parseFloat(cashReceived) - total) : null,
+        transaction_type: 'pos',
+        status: 'completed'
+      };
+
+      const { data: transaction, error: transactionError } = await supabase
+        .from('transactions')
+        .insert([transactionData])
+        .select()
+        .single();
+
+      if (transactionError) {
+        throw new Error('Failed to save transaction: ' + transactionError.message);
+      }
+
+      // Update inventory for physical products
+      for (const item of cart) {
+        if (!item.is_service) {
+          const { error: inventoryError } = await supabase
+            .from('pos_inventory')
+            .update({
+              stock_quantity: item.stock_quantity - item.quantity
+            })
+            .eq('id', item.id);
+
+          if (inventoryError) {
+            console.error('Failed to update inventory for', item.name, inventoryError);
+          }
+        }
+      }
+
+      // Refresh products to show updated stock
+      await fetchData();
+
+      toast({
+        title: "Payment successful!",
+        description: `Transaction completed for $${total.toFixed(2)}`,
+      });
+
+      // Clear cart and close dialog
+      clearCart();
+      setShowPaymentDialog(false);
+      setCashReceived('');
+
+    } catch (error) {
+      toast({
+        title: "Payment failed",
+        description: "Please try again or use a different payment method",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-6">
+      <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-8rem)]">
+        
+        {/* Left Panel - Products */}
+        <div className="flex-1 flex flex-col">
+          {/* Header */}
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Point of Sale</h1>
+            <p className="text-gray-600">Process sales and manage transactions</p>
+          </div>
+
+          {/* Search and Categories */}
+          <div className="mb-6 space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search products or scan barcode..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {categories.map(category => (
+                <Button
+                  key={category.slug}
+                  variant={selectedCategory === category.name ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedCategory(category.name)}
+                >
+                  {category.name}
+                </Button>
+              ))}
+            </div>
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const dayPass = products.find(p => p.name === 'Day Pass');
+                  if (dayPass) addToCart(dayPass);
+                }}
+                className="text-xs"
+                disabled={!products.find(p => p.name === 'Day Pass')}
+              >
+                <Clock className="mr-1 h-3 w-3" />
+                Day Pass
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const ptSession = products.find(p => p.name === 'Personal Training Session');
+                  if (ptSession) addToCart(ptSession);
+                }}
+                className="text-xs"
+                disabled={!products.find(p => p.name === 'Personal Training Session')}
+              >
+                <UserCog className="mr-1 h-3 w-3" />
+                PT Session
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const proteinShake = products.find(p => p.name === 'Protein Shake');
+                  if (proteinShake) addToCart(proteinShake);
+                }}
+                className="text-xs"
+                disabled={!products.find(p => p.name === 'Protein Shake')}
+              >
+                <Package className="mr-1 h-3 w-3" />
+                Protein
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const waterBottle = products.find(p => p.name === 'Water Bottle');
+                  if (waterBottle) addToCart(waterBottle);
+                }}
+                className="text-xs"
+                disabled={!products.find(p => p.name === 'Water Bottle')}
+              >
+                <Gift className="mr-1 h-3 w-3" />
+                Bottle
+              </Button>
+            </div>
+          </div>
+
+          {/* Products Grid */}
+          <div className="flex-1 overflow-y-auto">
+            {loading ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {[...Array(8)].map((_, i) => (
+                  <Card key={i} className="animate-pulse">
+                    <CardContent className="p-4">
+                      <div className="aspect-square bg-gray-200 rounded-lg mb-3"></div>
+                      <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded mb-2"></div>
+                      <div className="flex justify-between">
+                        <div className="h-4 bg-gray-200 rounded w-16"></div>
+                        <div className="h-4 bg-gray-200 rounded w-12"></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filteredProducts.map(product => {
+                  const IconComponent = getIconComponent(product.icon_name);
+                  const isLowStock = !product.is_service && product.stock_quantity <= product.low_stock_threshold;
+
+                  return (
+                    <motion.div
+                      key={product.id}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Card
+                        className={`cursor-pointer hover:shadow-md transition-shadow ${
+                          isLowStock ? 'border-orange-200 bg-orange-50' : ''
+                        }`}
+                        onClick={() => addToCart(product)}
+                      >
+                        <CardContent className="p-4">
+                          <div className="aspect-square bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                            <IconComponent className={`h-8 w-8 ${
+                              product.category?.color ? `text-[${product.category.color}]` : 'text-gray-400'
+                            }`} />
+                          </div>
+                          <h3 className="font-semibold text-sm mb-1 line-clamp-2">{product.name}</h3>
+                          <p className="text-xs text-gray-500 mb-2">{product.category?.name || 'Uncategorized'}</p>
+                          <div className="flex justify-between items-center">
+                            <span className="font-bold text-green-600">${product.price}</span>
+                            {product.is_service ? (
+                              <Badge variant="secondary" className="text-xs">
+                                Service
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant={isLowStock ? "destructive" : "outline"}
+                                className="text-xs"
+                              >
+                                {product.stock_quantity} left
+                              </Badge>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Panel - Cart */}
+        <div className="w-full lg:w-96 flex flex-col">
+          <Card className="flex-1 flex flex-col">
+            <CardHeader className="border-b">
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center">
+                  <ShoppingCart className="mr-2 h-5 w-5" />
+                  Cart ({cart.length})
+                </span>
+                {cart.length > 0 && (
+                  <Button variant="ghost" size="sm" onClick={clearCart}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </CardTitle>
+            </CardHeader>
+            
+            <CardContent className="flex-1 flex flex-col p-0">
+              {/* Customer Selection */}
+              <div className="p-4 border-b bg-gray-50">
+                {customer ? (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-sm">{customer.first_name} {customer.last_name}</p>
+                      <p className="text-xs text-gray-500">{customer.email}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setCustomer(null)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => setShowCustomerSearch(true)}
+                  >
+                    <Users className="mr-2 h-4 w-4" />
+                    Select Customer (Optional)
+                  </Button>
+                )}
+              </div>
+
+              {/* Cart Items */}
+              <div className="flex-1 overflow-y-auto p-4">
+                {cart.length === 0 ? (
+                  <div className="text-center py-8">
+                    <ShoppingCart className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">Cart is empty</p>
+                    <p className="text-sm text-gray-400">Add products to get started</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {cart.map(item => (
+                      <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-sm">{item.name}</h4>
+                          <p className="text-xs text-gray-500">${item.price} each</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="w-8 text-center text-sm">{item.quantity}</span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removeFromCart(item.id)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Cart Summary */}
+              {cart.length > 0 && (
+                <div className="border-t p-4 space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Subtotal:</span>
+                      <span>${subtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Tax (8%):</span>
+                      <span>${tax.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-lg border-t pt-2">
+                      <span>Total:</span>
+                      <span>${total.toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  <Button 
+                    className="w-full" 
+                    size="lg"
+                    onClick={() => setShowPaymentDialog(true)}
+                  >
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    Process Payment
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Payment Dialog */}
+      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Process Payment</DialogTitle>
+            <DialogDescription>
+              Complete the transaction for ${total.toFixed(2)}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <Tabs value={paymentMethod} onValueChange={setPaymentMethod}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="card">Card</TabsTrigger>
+                <TabsTrigger value="cash">Cash</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="card" className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Insert, swipe, or tap card on the payment terminal
+                </p>
+              </TabsContent>
+              
+              <TabsContent value="cash" className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Cash Received</label>
+                  <Input
+                    type="number"
+                    placeholder="0.00"
+                    value={cashReceived}
+                    onChange={(e) => setCashReceived(e.target.value)}
+                  />
+                  {cashReceived && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      Change: ${Math.max(0, parseFloat(cashReceived) - total).toFixed(2)}
+                    </p>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={processPayment}
+              disabled={isProcessing || (paymentMethod === 'cash' && parseFloat(cashReceived) < total)}
+            >
+              {isProcessing ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Check className="mr-2 h-4 w-4" />
+                  Complete Sale
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Customer Search Dialog */}
+      <Dialog open={showCustomerSearch} onOpenChange={setShowCustomerSearch}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Select Customer</DialogTitle>
+            <DialogDescription>
+              Search for a customer to associate with this transaction
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <Input
+              placeholder="Search by name, email, or phone..."
+              onChange={async (e) => {
+                const query = e.target.value;
+                if (query.length > 2) {
+                  const results = await searchCustomer(query);
+                  // You would set search results state here
+                  console.log('Search results:', results);
+                }
+              }}
+            />
+
+            {/* Search results would go here */}
+            <div className="text-center py-4 text-gray-500">
+              <Users className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+              <p className="text-sm">Type to search for customers</p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCustomerSearch(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => setShowCustomerSearch(false)}>
+              Continue without Customer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default PointOfSale;
