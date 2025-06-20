@@ -259,8 +259,11 @@ const Login = () => {
 
 
 
-          {/* Dev Login Buttons - Only show in development */}
-          {process.env.NODE_ENV === 'development' && (
+          {/* Dev Login Buttons - Show in development and for testing */}
+          {(process.env.NODE_ENV === 'development' ||
+            window.location.hostname.includes('momentumapp') ||
+            window.location.hostname.includes('pages.dev') ||
+            new URLSearchParams(window.location.search).has('dev')) && (
             <div className="mt-6 pt-6 border-t border-gray-200">
               <div className="text-center mb-4">
                 <p className="text-sm font-medium text-gray-700 mb-3">🔧 Development Quick Login</p>
