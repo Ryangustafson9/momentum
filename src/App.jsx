@@ -15,6 +15,9 @@ import NotFound from '@/pages/NotFound';
 // Member pages - ✅ FIXED: Updated to correct paths
 import MemberDashboard from '@/pages/member-portal/MemberDashboard';
 import MemberProfilePage from '@/pages/member-portal/MemberProfilePage';
+import MemberClasses from '@/pages/member-portal/MemberClasses';
+import MemberBilling from '@/pages/member-portal/MemberBilling';
+import AdvancedFeatures from '@/pages/member-portal/AdvancedFeatures';
 
 // Staff pages - Updated to correct staff-portal paths
 import StaffDashboard from '@/pages/staff-portal/Dashboard';
@@ -22,6 +25,14 @@ import Members from '@/pages/staff-portal/Members';
 import Classes from '@/pages/staff-portal/Classes';
 import CheckIn from '@/pages/staff-portal/CheckIn';
 import Memberships from '@/pages/staff-portal/Memberships';
+import Schedule from '@/pages/staff-portal/Schedule';
+import Attendance from '@/pages/staff-portal/Attendance';
+import Billing from '@/pages/staff-portal/Billing';
+import Communications from '@/pages/staff-portal/Communications';
+import Equipment from '@/pages/staff-portal/Equipment';
+import Reports from '@/pages/staff-portal/Reports';
+import Settings from '@/pages/staff-portal/Settings';
+import Trainers from '@/pages/staff-portal/Trainers';
 import StaffMemberProfile from '@/pages/staff-portal/MemberProfile';
 import MemberRegistration from '@/pages/staff-portal/MemberRegistration';
 
@@ -36,6 +47,7 @@ import StaffDashboardLayout from '@/layouts/StaffDashboardLayout';
 // Public pages
 import JoinOnline from '@/pages/joinOnline';
 import JoinOnlineCheckout from '@/pages/JoinOnlineCheckout';
+import JoinOnlineCustomize from '@/pages/joinOnlineCustomize';
 import NonmemberPrompt from '@/pages/NonmemberPrompt';
 
 // Mobile components
@@ -113,11 +125,10 @@ function App() {
               {/* Public routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/join-online" element={<JoinOnline />} />
+              <Route path="/dashboard" element={<Dashboard />} />              <Route path="/join-online" element={<JoinOnline />} />
+              <Route path="/join-online/customize" element={<JoinOnlineCustomize />} />
               <Route path="/join-online/checkout" element={<JoinOnlineCheckout />} />
-              <Route path="/nonmember-prompt" element={<NonmemberPrompt />} />
-                  {/* Member routes */}
+              <Route path="/nonmember-prompt" element={<NonmemberPrompt />} />                {/* Member routes */}
                 <Route 
                   path="/member-portal/dashboard" 
                   element={
@@ -134,7 +145,46 @@ function App() {
                     </PrivateRoute>
                   } 
                 />
-                  {/* Legacy member routes - redirect to new paths */}
+                <Route 
+                  path="/member-portal/classes" 
+                  element={
+                    <PrivateRoute allowedRoles={['member', 'staff', 'admin']}>
+                      <MemberClasses />
+                    </PrivateRoute>
+                  } 
+                />
+                <Route 
+                  path="/member-portal/billing" 
+                  element={
+                    <PrivateRoute allowedRoles={['member', 'staff', 'admin']}>
+                      <MemberBilling />
+                    </PrivateRoute>
+                  } 
+                />
+                <Route 
+                  path="/member-portal/advanced" 
+                  element={
+                    <PrivateRoute allowedRoles={['member', 'staff', 'admin']}>
+                      <AdvancedFeatures />
+                    </PrivateRoute>
+                  } 
+                />
+                <Route 
+                  path="/member-portal/attendance" 
+                  element={
+                    <PrivateRoute allowedRoles={['member', 'staff', 'admin']}>
+                      <MemberClasses />
+                    </PrivateRoute>
+                  } 
+                />
+                <Route 
+                  path="/member-portal/settings" 
+                  element={
+                    <PrivateRoute allowedRoles={['member', 'staff', 'admin']}>
+                      <MemberProfilePage />
+                    </PrivateRoute>
+                  } 
+                />                {/* Legacy member routes - redirect to new paths */}
                 <Route 
                   path="/member/dashboard" 
                   element={<Navigate to="/member-portal/dashboard" replace />}
@@ -144,96 +194,76 @@ function App() {
                   element={<Navigate to="/member-portal/dashboard" replace />}
                 />
                 <Route 
+                  path="/member/memberdashboard" 
+                  element={<Navigate to="/member-portal/dashboard" replace />}
+                />
+                <Route 
                   path="/member/profile" 
                   element={<Navigate to="/member-portal/profile" replace />}
-                />                  {/* Staff routes */}
-                <Route 
-                  path="/staff-portal/dashboard" 
-                  element={
-                    <PrivateRoute allowedRoles={['staff', 'admin']}>
-                      <StaffDashboardLayout>
-                        <StaffDashboard />
-                      </StaffDashboardLayout>
-                    </PrivateRoute>
-                  } 
                 />
                 <Route 
-                  path="/staff-portal/members" 
-                  element={
-                    <PrivateRoute allowedRoles={['staff', 'admin']}>
-                      <StaffDashboardLayout>
-                        <Members />
-                      </StaffDashboardLayout>
-                    </PrivateRoute>
-                  } 
+                  path="/member/classes" 
+                  element={<Navigate to="/member-portal/classes" replace />}
                 />
                 <Route 
-                  path="/staff-portal/classes" 
-                  element={
-                    <PrivateRoute allowedRoles={['staff', 'admin']}>
-                      <StaffDashboardLayout>
-                        <Classes />
-                      </StaffDashboardLayout>
-                    </PrivateRoute>
-                  } 
+                  path="/member/billing" 
+                  element={<Navigate to="/member-portal/billing" replace />}
                 />
                 <Route 
-                  path="/staff-portal/checkin" 
-                  element={
-                    <PrivateRoute allowedRoles={['staff', 'admin']}>
-                      <StaffDashboardLayout>
-                        <CheckIn />
-                      </StaffDashboardLayout>
-                    </PrivateRoute>
-                  } 
-                />                <Route 
-                  path="/staff-portal/memberships" 
-                  element={
-                    <PrivateRoute allowedRoles={['staff', 'admin']}>
-                      <StaffDashboardLayout>
-                        <Memberships />
-                      </StaffDashboardLayout>
-                    </PrivateRoute>
-                  } 
+                  path="/member/attendance" 
+                  element={<Navigate to="/member-portal/attendance" replace />}
                 />
                 <Route 
-                  path="/staff-portal/register-member" 
-                  element={
-                    <PrivateRoute allowedRoles={['staff', 'admin']}>
-                      <MemberRegistration />
-                    </PrivateRoute>
-                  } 
-                />
+                  path="/member/settings" 
+                  element={<Navigate to="/member-portal/settings" replace />}
+                />{/* Staff routes - using proper nested routing with Outlet */}
                 <Route
-                  path="/staff-portal/member/:id"
+                  path="/staff-portal"
                   element={
                     <PrivateRoute allowedRoles={['staff', 'admin']}>
-                      <StaffDashboardLayout>
-                        <StaffMemberProfile />
-                      </StaffDashboardLayout>
+                      <StaffDashboardLayout />
                     </PrivateRoute>
                   }
-                />
-                <Route
-                  path="/profile=:id"
-                  element={
-                    <PrivateRoute allowedRoles={['staff', 'admin']}>
-                      <StaffDashboardLayout>
-                        <StaffMemberProfile />
-                      </StaffDashboardLayout>
-                    </PrivateRoute>
-                  }
-                />
+                >
+                  <Route path="dashboard" element={<StaffDashboard />} />
+                  <Route path="members" element={<Members />} />
+                  <Route path="classes" element={<Classes />} />
+                  <Route path="checkin" element={<CheckIn />} />
+                  <Route path="memberships" element={<Memberships />} />
+                  <Route path="schedule" element={<Schedule />} />
+                  <Route path="attendance" element={<Attendance />} />
+                  <Route path="billing" element={<Billing />} />
+                  <Route path="communications" element={<Communications />} />
+                  <Route path="equipment" element={<Equipment />} />
+                  <Route path="reports" element={<Reports />} />
+                  <Route path="settings" element={<Settings />} />
+                  <Route path="trainers" element={<Trainers />} />
+                  <Route path="member/:id" element={<StaffMemberProfile />} />
+                  <Route path="register-member" element={<MemberRegistration />} />
+                  <Route index element={<Navigate to="/staff-portal/dashboard" replace />} />
+                </Route>
+
+
                   {/* Admin routes */}
-                <Route 
-                  path="/admin/panel" 
+                <Route
+                  path="/admin/panel"
                   element={
                     <PrivateRoute allowedRoles={['admin']}>
                       <StaffDashboardLayout>
                         <AdminPanelPage />
                       </StaffDashboardLayout>
                     </PrivateRoute>
-                  } 
+                  }
+                />
+                <Route
+                  path="/admin/adminpanel"
+                  element={
+                    <PrivateRoute allowedRoles={['admin']}>
+                      <StaffDashboardLayout>
+                        <AdminPanelPage />
+                      </StaffDashboardLayout>
+                    </PrivateRoute>
+                  }
                 />
                 <Route 
                   path="/admin/super-admin" 

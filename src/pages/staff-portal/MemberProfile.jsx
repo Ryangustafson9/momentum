@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast.js';
 import { supabase } from '@/lib/supabaseClient';
+import { dataService } from '@/services/apiService';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -143,8 +144,9 @@ const StaffNotesSection = ({ memberId, staffId }) => {
     if (!memberId) return;
     setIsLoadingNotes(true);
     try {
-      const staffNotes = await dataService.getStaffMemberNotes(memberId);
-      setNotes(staffNotes || []);
+      // TODO: Implement staff notes functionality
+      // const staffNotes = await dataService.getStaffMemberNotes(memberId);
+      setNotes([]);
     } catch (error) {
       toast({ title: "Error", description: "Could not load staff notes.", variant: "destructive" });
     } finally {
@@ -162,13 +164,15 @@ const StaffNotesSection = ({ memberId, staffId }) => {
       return;
     }
     try {
-      if (editingNote) {
-        await dataService.updateStaffMemberNote(editingNote.id, newNoteContent);
-        toast({ title: "Note Updated", description: "Staff note has been successfully updated." });
-      } else {
-        await dataService.addStaffMemberNote(memberId, staffId, newNoteContent);
-        toast({ title: "Note Saved", description: "Staff note has been successfully saved." });
-      }
+      // TODO: Implement staff notes functionality
+      // if (editingNote) {
+      //   await dataService.updateStaffMemberNote(editingNote.id, newNoteContent);
+      //   toast({ title: "Note Updated", description: "Staff note has been successfully updated." });
+      // } else {
+      //   await dataService.addStaffMemberNote(memberId, staffId, newNoteContent);
+      //   toast({ title: "Note Saved", description: "Staff note has been successfully saved." });
+      // }
+      toast({ title: "Feature Coming Soon", description: "Staff notes functionality will be available soon.", variant: "info" });
       setNewNoteContent('');
       setEditingNote(null);
       fetchNotes();
@@ -184,8 +188,9 @@ const StaffNotesSection = ({ memberId, staffId }) => {
 
   const handleDeleteNote = async (noteId) => {
     try {
-      await dataService.deleteStaffMemberNote(noteId);
-      toast({ title: "Note Deleted", description: "Staff note has been successfully deleted." });
+      // TODO: Implement staff notes functionality
+      // await dataService.deleteStaffMemberNote(noteId);
+      toast({ title: "Feature Coming Soon", description: "Staff notes functionality will be available soon.", variant: "info" });
       fetchNotes();
     } catch (error) {
       toast({ title: "Error Deleting Note", description: error.message, variant: "destructive" });
@@ -291,28 +296,38 @@ const StaffMemberProfilePage = () => {
   const [loggedInStaff, setLoggedInStaff] = useState(null);
 
   const fetchProfileData = useCallback(async () => {
+    console.log('🔍 Starting fetchProfileData for systemMemberId:', systemMemberId);
     setIsLoading(true);
 
     // Get current staff user from auth
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: staffProfile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      setLoggedInStaff(staffProfile);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('👤 Auth user:', user?.email);
+      if (user) {
+        const { data: staffProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        console.log('👨‍💼 Staff profile:', staffProfile?.email);
+        setLoggedInStaff(staffProfile || { id: user.id, email: user.email });
+      }
+    } catch (error) {
+      console.error('Error fetching staff profile:', error);
+      setLoggedInStaff({ id: 'temp', email: 'temp@example.com' });
     }
 
     if (!systemMemberId) {
+      console.error('❌ No systemMemberId provided');
       toast({ title: "Error", description: "No member ID provided.", variant: "destructive" });
       navigate('/staff-portal/members');
       return;
     }
 
+    console.log('🔍 Fetching member data for ID:', systemMemberId);
     try {
       const [memberDetails, types, attendanceRecordsData, logData] = await Promise.all([
-        // Get member by system_member_id
+        // Get member by system_member_id or id
         supabase
           .from('profiles')
           .select(`
@@ -326,10 +341,14 @@ const StaffMemberProfilePage = () => {
               membership_type:membership_types(*)
             )
           `)
-          .eq('system_member_id', systemMemberId)
+          .or(`system_member_id.eq.${systemMemberId},id.eq.${systemMemberId}`)
           .single()
           .then(({ data, error }) => {
-            if (error) throw error;
+            if (error) {
+              console.error('❌ Error fetching member:', error);
+              throw error;
+            }
+            console.log('✅ Member data fetched:', data);
             return data;
           }),
 
@@ -351,6 +370,7 @@ const StaffMemberProfilePage = () => {
       ]);
       
       if (memberDetails) {
+        console.log('✅ Setting member data:', memberDetails);
         setMemberData(memberDetails);
         setMembershipTypes(types || []);
 
@@ -390,13 +410,15 @@ const StaffMemberProfilePage = () => {
           setMembershipLog([]);
         }
       } else {
+        console.error('❌ No member details found for ID:', systemMemberId);
         toast({ title: "Error", description: "Could not load member details.", variant: "destructive" });
         navigate('/staff-portal/members');
       }
     } catch (error) {
-      console.error("Error fetching profile data:", error);
+      console.error("❌ Error fetching profile data:", error);
       toast({ title: "Error", description: `Failed to load profile data: ${error.message}`, variant: "destructive" });
     } finally {
+      console.log('🏁 Setting isLoading to false');
       setIsLoading(false);
     }
   }, [systemMemberId, navigate, toast]);
@@ -453,12 +475,17 @@ const StaffMemberProfilePage = () => {
     toast({ title: "Impersonation (Conceptual)", description: `Would start impersonating ${memberData?.name}. This is a UI demonstration.`, duration: 5000 });
   };
 
-  if (isLoading || !memberData || !loggedInStaff) {
+  if (isLoading || !memberData) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <LoadingSpinner size="lg" className="mb-4" />
           <p className="text-gray-600">Loading member profile...</p>
+          <p className="text-xs text-gray-400 mt-2">
+            Loading: {isLoading ? 'true' : 'false'} |
+            Member: {memberData ? 'loaded' : 'loading'} |
+            Staff: {loggedInStaff ? 'loaded' : 'loading'}
+          </p>
         </div>
       </div>
     );

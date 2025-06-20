@@ -37,7 +37,7 @@ const initialColumnVisibility = {
   actions: true,
 };
 
-const DESIRED_TAB_ORDER = ['All', 'Membership', 'Add-ons', 'Guest', 'Staff'];
+
 
 // Membership Service Functions
 const membershipService = {
@@ -144,8 +144,7 @@ const MembershipsFilterControlsAndTabs = React.memo(({
     switch (category) {
       case 'Membership': return <Users className="mr-2 h-4 w-4" />;
       case 'Staff': return <Shield className="mr-2 h-4 w-4" />;
-      case 'Add-on':
-      case 'Add-ons': return <Package className="mr-2 h-4 w-4" />;
+      case 'Add-on': return <Package className="mr-2 h-4 w-4" />;
       case 'Guest': return <Ticket className="mr-2 h-4 w-4" />;
       default: return <PlusCircle className="mr-2 h-4 w-4" />;
     }
@@ -234,10 +233,10 @@ const StatsCardSkeleton = () => (
 
 const MembershipStatsCards = React.memo(({ membershipTypes, isLoading }) => {
   const stats = React.useMemo(() => {
-    const memberPlans = membershipTypes.filter(t => t.category === 'Member Plans');
-    const staffPlans = membershipTypes.filter(t => t.category === 'Staff Plans');
-    const addons = membershipTypes.filter(t => t.category === 'Add-ons');
-    const guestPlans = membershipTypes.filter(t => t.category === 'Guest Plans');
+    const memberPlans = membershipTypes.filter(t => ['Membership', 'Member Plans'].includes(t.category));
+    const staffPlans = membershipTypes.filter(t => ['Staff', 'Staff Plans'].includes(t.category));
+    const addons = membershipTypes.filter(t => ['Add-On', 'Add-on', 'Add-ons'].includes(t.category));
+    const guestPlans = membershipTypes.filter(t => ['Guest', 'Guest Plans'].includes(t.category));
 
     return {
       memberPlans: {
@@ -306,23 +305,15 @@ const MembershipStatsCards = React.memo(({ membershipTypes, isLoading }) => {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-6 py-6">
       <StatCard
         icon={<Users className="h-6 w-6 text-white" />}
-        title="Member Plans"
+        title="Membership"
         count={stats.memberPlans.count}
         available={stats.memberPlans.available}
         online={stats.memberPlans.online}
         color="bg-gradient-to-br from-blue-500 to-blue-600"
       />
       <StatCard
-        icon={<Shield className="h-6 w-6 text-white" />}
-        title="Staff Plans"
-        count={stats.staffPlans.count}
-        available={stats.staffPlans.available}
-        online={stats.staffPlans.online}
-        color="bg-gradient-to-br from-purple-500 to-purple-600"
-      />
-      <StatCard
         icon={<Package className="h-6 w-6 text-white" />}
-        title="Add-ons"
+        title="Add-On"
         count={stats.addons.count}
         available={stats.addons.available}
         online={stats.addons.online}
@@ -330,67 +321,36 @@ const MembershipStatsCards = React.memo(({ membershipTypes, isLoading }) => {
       />
       <StatCard
         icon={<Ticket className="h-6 w-6 text-white" />}
-        title="Guest Plans"
+        title="Guest"
         count={stats.guestPlans.count}
         available={stats.guestPlans.available}
         online={stats.guestPlans.online}
         color="bg-gradient-to-br from-orange-500 to-orange-600"
+      />
+      <StatCard
+        icon={<Shield className="h-6 w-6 text-white" />}
+        title="Staff"
+        count={stats.staffPlans.count}
+        available={stats.staffPlans.available}
+        online={stats.staffPlans.online}
+        color="bg-gradient-to-br from-purple-500 to-purple-600"
       />
     </div>
   );
 });
 MembershipStatsCards.displayName = 'MembershipStatsCards';
 
-const getUniqueCategoriesForTabs = (types) => {
-  // Always show all standard tabs, regardless of whether data exists
+const getUniqueCategoriesForTabs = () => {
+  // Always show only the standard tabs - no custom categories to avoid duplicates
   const tabItems = [
     { value: 'All', label: 'All' },
     { value: 'Membership', label: 'Membership' },
-    { value: 'Staff', label: 'Staff' },
-    { value: 'Add-on', label: 'Add-ons' },
-    { value: 'Guest', label: 'Guest' }
+    { value: 'Add-on', label: 'Add-On' },
+    { value: 'Guest', label: 'Guest' },
+    { value: 'Staff', label: 'Staff' }
   ];
 
-  // Create a mapping of database categories to tab categories to avoid duplicates
-  const dbCategoryToTabCategory = {
-    'Membership': 'Membership',
-    'Staff': 'Staff',
-    'Staff Plans': 'Staff',
-    'Add-ons': 'Add-on',
-    'Add-on': 'Add-on',
-    'Guest': 'Guest',
-    'Guest Plans': 'Guest'
-  };
-
-  // If there are types, we can add any additional custom categories that aren't in the standard list
-  if (types && types.length > 0) {
-    const existingCategories = new Set(tabItems.map(tab => tab.value));
-    const customCategories = new Set();
-    
-    types.forEach(type => {
-      if (type.category) {
-        // Check if this database category maps to an existing tab
-        const mappedCategory = dbCategoryToTabCategory[type.category];
-        if (!mappedCategory && !existingCategories.has(type.category)) {
-          customCategories.add(type.category);
-        }
-      }
-    });
-
-    // Add any custom categories at the end
-    customCategories.forEach(category => {
-      tabItems.push({ value: category, label: category });
-    });
-  }
-
-  return tabItems.sort((a, b) => {
-    const indexA = DESIRED_TAB_ORDER.indexOf(a.label);
-    const indexB = DESIRED_TAB_ORDER.indexOf(b.label);
-    if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-    if (indexA !== -1) return -1;
-    if (indexB !== -1) return 1;
-    return a.label.localeCompare(b.label);
-  });
+  return tabItems;
 };
 
 const MembershipsPage = () => {
@@ -437,8 +397,8 @@ const MembershipsPage = () => {
     // Map tab categories to database categories
     const categoryMap = {
       'Membership': 'Membership',
-      'Add-on': 'Add-ons',
-      'Guest': 'Guest Plans',
+      'Add-on': 'Add-On',        // Use the actual database category
+      'Guest': 'Guest',
       'Staff': 'Staff'
     };
     const defaultCategory = category && category !== 'All' ? (categoryMap[category] || category) : 'Membership';
@@ -522,7 +482,7 @@ const MembershipsPage = () => {
     }
   }, [toast, fetchMembershipTypes]);
   
-  const uniqueCategoriesForTabs = useMemo(() => getUniqueCategoriesForTabs(membershipTypes), [membershipTypes]);  const filteredMembershipTypes = useMemo(() => {
+  const uniqueCategoriesForTabs = useMemo(() => getUniqueCategoriesForTabs(), []);  const filteredMembershipTypes = useMemo(() => {
     // First filter the data
     const filtered = membershipTypes.filter(type => {
       const nameMatch = type.name?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ?? false;
@@ -535,19 +495,20 @@ const MembershipsPage = () => {
       let matchesCategory;
       if (activeTabCategory === 'All') {
         matchesCategory = true;
-      } else {        // Map the tab categories to database categories
+      } else {
+        // Map the tab categories to database categories
         const categoryMap = {
-          'Membership': 'Membership',
-          'Add-on': 'Add-ons',
-          'Guest': 'Guest Plans',
-          'Staff': ['Staff', 'Staff Plans'] // Support both variants
+          'Membership': ['Membership', 'Member Plans'],
+          'Add-on': ['Add-On', 'Add-on', 'Add-ons'],  // Handle all variants
+          'Guest': ['Guest', 'Guest Plans'],
+          'Staff': ['Staff', 'Staff Plans']
         };
-        
-        const dbCategory = categoryMap[activeTabCategory];
-        if (Array.isArray(dbCategory)) {
-          matchesCategory = dbCategory.includes(type.category);
+
+        const dbCategories = categoryMap[activeTabCategory];
+        if (Array.isArray(dbCategories)) {
+          matchesCategory = dbCategories.includes(type.category);
         } else {
-          matchesCategory = type.category === (dbCategory || activeTabCategory);
+          matchesCategory = type.category === activeTabCategory;
         }
       }      const result = matchesSearch && matchesCategory;
       return result;

@@ -290,14 +290,14 @@ const AdminPanelPage = () => {
         <CardContent className="p-0">
           <Tabs defaultValue="adminSettings" className="w-full">
             <TabsList className="grid w-full grid-cols-2 rounded-none border-b dark:border-slate-700">
-              <TabsTrigger 
-                value="adminSettings" 
+              <TabsTrigger
+                value="adminSettings"
                 className="py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none"
               >
                 <SlidersHorizontal className="mr-2 h-4 w-4" /> General Admin Settings
               </TabsTrigger>
-              <TabsTrigger 
-                value="staffRoles" 
+              <TabsTrigger
+                value="staffRoles"
                 className="py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none"
               >
                 <Shield className="mr-2 h-4 w-4" /> Staff Roles & Permissions

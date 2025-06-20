@@ -110,22 +110,29 @@ export async function createProfileSafe(profileData) {
     }
     
     console.log('[ProfileValidation] ✅ Validation passed, creating profile...');
-    
-    // Use the database function for safe creation
-    const { data, error } = await supabase.rpc('create_profile_safe', {
-      p_user_id: profileData.id,
-      p_email: profileData.email,
-      p_role: profileData.role || 'nonmember',
-      p_first_name: profileData.first_name || '',
-      p_last_name: profileData.last_name || '',
-      p_phone: profileData.phone || null
-    });
-    
+
+    // Create profile with direct insert since RPC function doesn't exist
+    const { data, error } = await supabase
+      .from('profiles')
+      .insert([{
+        id: profileData.id,
+        email: profileData.email,
+        role: profileData.role || 'nonmember',
+        first_name: profileData.first_name || '',
+        last_name: profileData.last_name || '',
+        display_name: profileData.display_name || `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim(),
+        phone: profileData.phone || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
     if (error) {
       console.error('[ProfileValidation] ❌ Profile creation failed:', error);
       throw error;
     }
-    
+
     console.log('[ProfileValidation] ✅ Profile created successfully:', data);
     return data;
     

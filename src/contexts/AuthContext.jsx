@@ -333,11 +333,11 @@ export const AuthProvider = ({ children }) => {
       if (error) {
         console.error('[AuthContext] ❌ Auth signup failed:', error);
         throw error;
-      }
-
-      // Only create profile if auth user was created successfully
+      }      // Only create profile if auth user was created successfully
       if (data.user) {
         console.log('[AuthContext] 👤 Auth user created successfully, now creating profile...');
+
+        let normalizedUser;
 
         try {
           const profileData = {
@@ -345,7 +345,7 @@ export const AuthProvider = ({ children }) => {
             role: 'nonmember', // All app signups are nonmembers - admins created at DB level
             first_name: userData.firstName || '',
             last_name: userData.lastName || '',
-            name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+            display_name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
             email: email,
             phone: userData.phone || null
           };
@@ -374,10 +374,8 @@ export const AuthProvider = ({ children }) => {
 
             if (error) throw error;
             createdProfile = data;
-          }          console.log('[AuthContext] ✅ Profile created successfully with foreign key validation:', createdProfile);
-
-          // ⚠️ FIX: Normalize and cache user data like in login()
-          const normalizedUser = {
+          }          console.log('[AuthContext] ✅ Profile created successfully with foreign key validation:', createdProfile);          // ⚠️ FIX: Normalize and cache user data like in login()
+          normalizedUser = {
             ...createdProfile,
             role: normalizeRole(createdProfile.role || 'nonmember')
           };
@@ -386,22 +384,27 @@ export const AuthProvider = ({ children }) => {
           storage.local.set('cached_user', normalizedUser);
           storage.local.set('cached_user_timestamp', Date.now());
           
-          console.log('[AuthContext] 💾 User data normalized and cached:', normalizedUser);
+          // ⭐ FIX: Set user state immediately so signup component can show success
+          setUser(normalizedUser);
+          
+          console.log('[AuthContext] 💾 User data normalized, cached, and state updated:', normalizedUser);
 
         } catch (profileCreationError) {
           console.error('[AuthContext] ❌ Profile creation process failed:', profileCreationError);
           throw profileCreationError;
-        }
-
-        showToast.success(
+        }        showToast.success(
           'Account Created!',
           'Please check your email to verify your account.'
         );
+
+        // Return both auth user and profile data
+        return { 
+          user: data.user, 
+          profile: normalizedUser 
+        };
       } else {
         throw new Error('User creation failed - no user data returned.');
       }
-
-      return { user: data.user };
       
     } catch (error) {
       console.error('[AuthContext] ❌ Signup error:', error);

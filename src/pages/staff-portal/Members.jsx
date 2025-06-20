@@ -23,7 +23,7 @@ const memberService = {
             id,
             status,
             start_date,
-            end_date,
+            next_payment_date,
             membership_type:membership_types(
               id,
               name,
@@ -181,7 +181,7 @@ const MembersPage = () => {
   const handleNavigateToProfile = (member) => {
     // Use system_member_id for the profile route
     const profileId = member.system_member_id || member.id;
-    navigate(`/profile=${profileId}`);
+    navigate(`/staff-portal/member/${profileId}`);
   };
 
   const handleAssignMembership = (member) => {

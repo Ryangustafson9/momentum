@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 import AdminSidebar from '@/components/admin/AdminSidebar.jsx';
 import TopNavbar from '@/components/admin/TopNavbar.jsx';
 import { supabase } from '@/lib/supabaseClient';
@@ -25,6 +26,7 @@ const getPageTitle = (pathname) => {
 };
 
 const AdminDashboardLayout = ({ children }) => {
+  const location = useLocation();
   const { user, logout } = useAuth();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(() => {
     const storedSidebarState = localStorage.getItem('sidebarExpanded');
@@ -107,7 +109,7 @@ const AdminDashboardLayout = ({ children }) => {
         />
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8 bg-background dark:bg-slate-900">
           <div className="w-full">
-            {children}
+            {children ? children : <Outlet key={location.pathname} />}
           </div>
         </main>
       </div>

@@ -27,6 +27,39 @@ const Login = () => {
   // Get club name
   const clubName = getGymName();
 
+  // Dev login function for quick testing
+  const handleDevLogin = async (userType) => {
+    const credentials = {
+      admin: { email: 'admin@momentumtest.com', password: 'password405' },
+      staff: { email: 'staff@momentumtest.com', password: 'password405' },
+      member: { email: 'alex.johnson@testgym.com', password: 'password405' }
+    };
+
+    const { email: devEmail, password: devPassword } = credentials[userType];
+
+    await withLoading(async () => {
+      try {
+        console.log(`🔧 Dev login as ${userType}:`, devEmail);
+        const { user } = await login(devEmail, devPassword);
+
+        if (!user) {
+          setLoginError(`Dev ${userType} account not found.`);
+          return;
+        }
+
+        const normalizedRole = normalizeRole(user.role || 'member');
+        const defaultRoute = getDefaultRoute(normalizedRole);
+
+        showToast.success(`Dev Login Success!`, `Logged in as ${userType}`);
+        navigate(defaultRoute);
+
+      } catch (error) {
+        console.error(`Dev ${userType} login error:`, error);
+        setLoginError(`Dev ${userType} login failed: ${error.message}`);
+      }
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log('🔄 Login form submitted with:', { email, hasPassword: !!password });
@@ -224,18 +257,51 @@ const Login = () => {
             </Button>
           </form>
 
-          {/* Additional Links */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <button
-                onClick={() => navigate('/signup')}
-                className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
-              >
-                Sign up here
-              </button>
-            </p>
-          </div>
+
+
+          {/* Dev Login Buttons - Only show in development */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <div className="text-center mb-4">
+                <p className="text-sm font-medium text-gray-700 mb-3">🔧 Development Quick Login</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleDevLogin('admin')}
+                    disabled={isLoading()}
+                    className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100 hover:border-red-300 transition-colors"
+                  >
+                    {isLoading() ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                    ) : (
+                      <>
+                        🛡️ Admin
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleDevLogin('member')}
+                    disabled={isLoading()}
+                    className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-colors"
+                  >
+                    {isLoading() ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    ) : (
+                      <>
+                        👤 Member
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Quick login for testing purposes
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Powered by Momentum Footer */}
           <div className="mt-8 pt-6 border-t border-gray-200">

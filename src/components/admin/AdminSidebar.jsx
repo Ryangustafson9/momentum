@@ -1,14 +1,14 @@
 
 import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Settings, ArrowLeft, ChevronLeft, ChevronRight
+  LogOut, ChevronLeft, ChevronRight, Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 import { navLinks } from '@/config/adminNavLinks.js';
-import { hasStaffAccess } from '@/utils/roleUtils.js';
 
 const SidebarNavLink = ({ to, label, icon: Icon, currentPath, isExpanded, location }) => {
   // Determine if we're in staff or admin context and build the correct path
@@ -38,8 +38,8 @@ const SidebarNavLink = ({ to, label, icon: Icon, currentPath, isExpanded, locati
       className={({ isActive: navIsActive }) =>
         cn(
           "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out",
-          "hover:bg-primary/10 hover:text-primary dark:hover:bg-primary/20",
-          (isActive || navIsActive) ? "bg-primary/10 text-primary dark:bg-primary/20" : "text-muted-foreground",
+          "hover:bg-indigo-50 hover:text-indigo-700",
+          (isActive || navIsActive) ? "bg-indigo-50 text-indigo-700 shadow-sm" : "text-gray-600",
           !isExpanded && "justify-center"
         )
       }
@@ -57,80 +57,50 @@ const AdminSidebar = ({ onLogout, isExpanded, toggleSidebar }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
-    const handleSettingsNavigation = () => {
+
+  const handleSettingsNavigation = () => {
     navigate('/staff-portal/settings');
   };
 
-  const UserDropdownContent = () => (
-    <>
-      <DropdownMenuItem onClick={() => navigate('/staff-portal/settings')}>
-        <UserCircle className="mr-2 h-4 w-4" />
-        Profile
-      </DropdownMenuItem>
-      {startRoleImpersonation && hasStaffAccess(user?.role) && (
-        <DropdownMenuItem onClick={() => startRoleImpersonation('member')}>
-          <Eye className="mr-2 h-4 w-4" />
-          Impersonate Member
-        </DropdownMenuItem>
-      )}
-      <DropdownMenuSub>
-        <DropdownMenuSubTrigger>
-          {theme === 'light' && <Sun className="mr-2 h-4 w-4" />}
-          {theme === 'dark' && <Moon className="mr-2 h-4 w-4" />}
-          {theme === 'system' && <Laptop className="mr-2 h-4 w-4" />}
-          Theme
-        </DropdownMenuSubTrigger>
-        <DropdownMenuPortal>
-          <DropdownMenuSubContent>
-            <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
-              <DropdownMenuRadioItem value="light">
-                <Sun className="mr-2 h-4 w-4" /> Light
-              </DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="dark">
-                <Moon className="mr-2 h-4 w-4" /> Dark
-              </DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="system">
-                <Laptop className="mr-2 h-4 w-4" /> System
-              </DropdownMenuRadioItem>
-            </DropdownMenuRadioGroup>
-          </DropdownMenuSubContent>
-        </DropdownMenuPortal>
-      </DropdownMenuSub>
-      <DropdownMenuSeparator />
-      <DropdownMenuItem onClick={onLogout}>
-        <LogOut className="mr-2 h-4 w-4 text-destructive" />
-        <span className="text-destructive">Logout</span>
-      </DropdownMenuItem>
-    </>
-  );
-
   return (
     <aside className={cn(
-      "fixed inset-y-0 left-0 z-40 flex flex-col bg-card border-r border-border transition-all duration-300 ease-in-out shadow-lg print:hidden",
+      "fixed inset-y-0 left-0 z-40 flex flex-col bg-white border-r border-gray-200 transition-all duration-300 ease-in-out shadow-xl print:hidden",
       isExpanded ? "w-64" : "w-20"
     )}>
       
-      <div className="flex items-center justify-between p-4 h-20 border-b border-border">
-        <div className="flex items-center justify-center w-full">
-          <img
-            src="/assets/momentum-logo.svg"
-            alt="Momentum Gym"
-            className="w-24 h-16 object-contain"
-          />
-        </div>
+      <div className={`flex items-center justify-between h-16 px-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50 ${!isExpanded ? 'px-2' : ''}`}>
+        <AnimatePresence mode="wait">
+          {isExpanded && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex items-center justify-center w-full"
+            >
+              <img
+                src="/assets/momentum-logo.svg"
+                alt="Momentum Gym"
+                className="w-28 h-20 object-contain"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleSidebar}
-          className="text-muted-foreground hover:text-foreground h-8 w-8"
-        >
-          {isExpanded ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-          <span className="sr-only">Toggle sidebar</span>
-        </Button>
+        {/* Toggle Buttons */}
+        <div className="flex items-center space-x-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleSidebar}
+            className="hidden lg:flex hover:bg-white/50 p-2"
+            title={isExpanded ? "Collapse sidebar" : "Expand sidebar"}
+          >
+            {isExpanded ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          </Button>
+        </div>
       </div>
       
-      <nav className="flex-grow px-3 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-grow px-3 py-4 space-y-1 overflow-y-auto bg-white">
         {navLinks.map((link) => (
           <SidebarNavLink
             key={link.to}
@@ -144,33 +114,37 @@ const AdminSidebar = ({ onLogout, isExpanded, toggleSidebar }) => {
         ))}
       </nav>
 
-      <div className="px-3 py-3 border-t border-border mt-auto">
-        <div className={cn("flex items-center", isExpanded ? "justify-between" : "flex-col space-y-2")}>
-          <Button 
-            variant="ghost" 
-            onClick={onLogout} 
+      {/* Bottom Section - Settings and Sign Out */}
+      <div className="p-3 border-t border-gray-200 bg-gray-50/50">
+        <div className={cn("flex items-center gap-2", isExpanded ? "justify-between" : "flex-col space-y-2")}>
+          {/* Sign Out Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onLogout}
             className={cn(
-              "flex items-center text-muted-foreground hover:text-destructive", 
-              isExpanded ? "w-auto" : "w-full justify-center"
+              "text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors duration-200",
+              isExpanded ? "flex items-center" : "w-full p-2"
             )}
-            title="Logout"
+            title="Sign Out"
           >
-            <ArrowLeft className={cn("h-5 w-5", isExpanded ? "mr-2" : "mr-0")} />
-            {isExpanded && <span className="text-sm">Logout</span>}
-            {!isExpanded && <span className="sr-only">Logout</span>}
+            <LogOut className={cn("h-4 w-4", isExpanded ? "mr-2" : "")} />
+            {isExpanded && <span className="text-sm">Sign Out</span>}
           </Button>
-          <Button 
-            variant="ghost" 
-            onClick={handleSettingsNavigation} 
+
+          {/* Settings Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSettingsNavigation}
             className={cn(
-              "flex items-center text-muted-foreground hover:text-primary",
-              isExpanded ? "w-auto" : "w-full justify-center"
+              "text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 transition-colors duration-200",
+              isExpanded ? "flex items-center" : "w-full p-2"
             )}
             title="Settings"
           >
-            <Settings className={cn("h-5 w-5", isExpanded ? "mr-2" : "mr-0")} />
+            <Settings className={cn("h-4 w-4", isExpanded ? "mr-2" : "")} />
             {isExpanded && <span className="text-sm">Settings</span>}
-            {!isExpanded && <span className="sr-only">Settings</span>}
           </Button>
         </div>
       </div>

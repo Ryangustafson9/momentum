@@ -174,26 +174,24 @@ const MemberFormDialog = ({ isOpen, onOpenChange, editingMember, onSubmit, membe
     // Handle default membership ID separately to avoid infinite loops
   useEffect(() => {
     if (isOpen && defaultMembershipId && !defaultMembershipSetRef.current) {
-      if (!formData.current_membership_type_id) {
-        if (!editingMember || !editingMember.current_membership_type_id) {
-          setFormData(prev => ({
-            ...prev,
-            current_membership_type_id: defaultMembershipId
-          }));
-          defaultMembershipSetRef.current = true;
-        } else if (editingMember && editingMember.current_membership_type_id) {
-          setFormData(prev => ({
-            ...prev,
-            current_membership_type_id: editingMember.current_membership_type_id
-          }));
-          defaultMembershipSetRef.current = true;
-        }
+      if (!editingMember || !editingMember.current_membership_type_id) {
+        setFormData(prev => ({
+          ...prev,
+          current_membership_type_id: defaultMembershipId
+        }));
+        defaultMembershipSetRef.current = true;
+      } else if (editingMember && editingMember.current_membership_type_id) {
+        setFormData(prev => ({
+          ...prev,
+          current_membership_type_id: editingMember.current_membership_type_id
+        }));
+        defaultMembershipSetRef.current = true;
       }
     } else if (!isOpen) {
       // Reset when dialog closes
       defaultMembershipSetRef.current = false;
     }
-  }, [isOpen, defaultMembershipId, editingMember?.current_membership_type_id, formData.current_membership_type_id]); // Remove setFormData from dependencies
+  }, [isOpen, defaultMembershipId, editingMember?.current_membership_type_id, setFormData]);
 
   const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;

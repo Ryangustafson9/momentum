@@ -17,9 +17,29 @@ const Signup = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   
-  // Simple success state from URL
-  const showSuccess = searchParams.get('success') === 'true';
+  // Local success state that doesn't rely on URL params
+  const [localSuccess, setLocalSuccess] = useState(false);
+  const [successUserName, setSuccessUserName] = useState('');
+  
+  // Simple success state from URL (fallback)
+  const urlSuccess = searchParams.get('success') === 'true';
   const createdUserName = searchParams.get('name') || '';
+  
+  // Combined success state
+  const showSuccess = localSuccess || urlSuccess;
+  const displayName = successUserName || createdUserName;
+  // Debug URL parameters
+  useEffect(() => {
+    console.log('🔍 URL parameters changed:', {
+      allParams: Object.fromEntries(searchParams.entries()),
+      success: searchParams.get('success'),
+      urlSuccess,
+      localSuccess,
+      showSuccess,
+      name: searchParams.get('name'),
+      displayName
+    });
+  }, [searchParams, urlSuccess, localSuccess, showSuccess, displayName]);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -105,11 +125,13 @@ const Signup = () => {
       return false;
     }
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     console.log('🔍 Form submission started:', formData);
+    console.log('🔍 Current user state before signup:', user);
+    console.log('🔍 Current showSuccess state:', showSuccess);
+    console.log('🔍 Current localSuccess state:', localSuccess);
 
     // Clear previous errors
     setDuplicateEmailError(false);
@@ -221,20 +243,25 @@ const Signup = () => {
       const result = await signup(formData.email, formData.password, {
         firstName: formData.firstName,
         lastName: formData.lastName
-      });
+      });      console.log('✅ Registration completed:', result);
 
-      console.log('✅ Registration completed:', result);
-
-      if (result) {
-        console.log('🎯 Setting success state in URL...');
+      if (result && (result.user || result.profile)) {
+        console.log('🎯 Setting success state locally and in URL...');
         
-        // Set success state immediately
+        // Set local success state immediately
+        setLocalSuccess(true);
+        setSuccessUserName(formData.firstName);
+        
+        // Also set URL params as backup
         setSearchParams({ 
           success: 'true', 
           name: formData.firstName 
         });
         
-        console.log('✨ Success state set in URL!');
+        console.log('✨ Success state set locally and in URL!');
+        console.log('🔍 URL should now be:', `${window.location.pathname}?success=true&name=${encodeURIComponent(formData.firstName)}`);
+      } else {
+        console.log('❌ No user in result, signup may have failed silently:', result);
       }
 
     } catch (error) {
@@ -263,23 +290,25 @@ const Signup = () => {
     }
   };
 
-  // ⭐ REMOVED: Auto-clear URL params - let user control when to leave success page
-
-  // Add this useEffect to handle authenticated users
+  // ⭐ REMOVED: Auto-clear URL params - let user control when to leave success page  // Add this useEffect to handle authenticated users
   useEffect(() => {
     // Only redirect if user is authenticated, we're not showing success,
     // and we're not in the middle of a signup flow
-    if (user && !showSuccess && !searchParams.get('success')) {
+    if (user && !showSuccess && !searchParams.get('success') && !localSuccess) {
       console.log('🔄 User is authenticated and not in signup flow, redirecting...', {
         userRole: user.role,
         showSuccess,
-        hasSuccessParam: !!searchParams.get('success')
+        localSuccess,
+        hasSuccessParam: !!searchParams.get('success'),
+        currentURL: window.location.href
       });
 
-      // Add a small delay to ensure success state has time to be set
+      // Add a longer delay to ensure success state has time to be set
       const redirectTimer = setTimeout(() => {
         // Double-check we're still not showing success
-        if (!searchParams.get('success')) {
+        const currentSuccess = new URLSearchParams(window.location.search).get('success');
+        if (!currentSuccess && !localSuccess) {
+          console.log('🎯 No success state found, proceeding with redirect...');
           // Determine redirect based on user role
           if (user.role === 'admin' || user.role === 'staff') {
             console.log('🎯 Redirecting admin/staff to staff dashboard');
@@ -291,14 +320,23 @@ const Signup = () => {
             // Non-members should not be auto-redirected to dashboards
             console.log('🎯 Non-member user, staying on current page');
           }
+        } else {
+          console.log('🎯 Success state found, not redirecting');
         }
-      }, 100); // Small delay to allow success state to be processed
+      }, 2000); // Increased to 2 seconds to allow success state to be processed
 
       return () => clearTimeout(redirectTimer);
     }
-  }, [user, showSuccess, navigate, searchParams]);
-
+  }, [user, showSuccess, localSuccess, navigate, searchParams]);
   const gymColors = getGymColors();
+
+  console.log('🔍 Signup component render:', {
+    showSuccess,
+    localSuccess,
+    urlSuccess,
+    displayName,
+    user: user ? { id: user.id, role: user.role, name: user.name } : null
+  });
 
   // ⭐ FIXED: Define passwordStrength first
   const passwordStrength = useMemo(() => {
@@ -339,9 +377,7 @@ const Signup = () => {
               <span className="text-white text-3xl font-bold">{gymColors.fallback}</span>
             </div>
           )}
-        </div>
-
-        {/* SUCCESS STATE */}
+        </div>        {/* SUCCESS STATE */}
         {showSuccess ? (
           <div className="flex-grow flex flex-col justify-center items-center text-center">
             <motion.div
@@ -351,10 +387,9 @@ const Signup = () => {
             >
               <CheckCircle className="w-24 h-24 text-green-500 mx-auto mb-6" />
             </motion.div>
-            
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Success!</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">Success!</h1>
             <p className="text-lg text-gray-700 mb-2">
-              Welcome to Nordic Fitness, {createdUserName}!
+              Welcome to Nordic Fitness, {displayName}!
             </p>
             <p className="text-gray-600 mb-8">
               Your account has been created successfully.
@@ -422,9 +457,7 @@ const Signup = () => {
                  user?.role === 'member' ? 'Go to Member Dashboard' : 'Go to Profile'}
               </Button>
             </div>
-          </div>
-        ) : (
-          /* FORM STATE */
+          </div>        ) : (          /* FORM STATE */
           <>
             <div className="text-center mb-6">
               <h1 className="text-2xl font-bold text-gray-900">Join Nordic Fitness</h1>

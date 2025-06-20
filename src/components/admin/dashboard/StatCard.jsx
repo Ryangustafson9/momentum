@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { GripVertical } from 'lucide-react';
 
 const StatCard = ({
   cardConfig,
@@ -10,7 +11,8 @@ const StatCard = ({
   description,
   badgeCount,
   isEditMode,
-  onRemoveCard
+  onRemoveCard,
+  isDragging = false
 }) => {
   const navigate = useNavigate();
 
@@ -28,15 +30,20 @@ const StatCard = ({
       onClick={handleCardClick}
       className={`bg-card border border-border overflow-hidden shadow-sm hover:shadow-md rounded-xl relative transition-all duration-200 ${
         !isEditMode && navigateTo ? 'cursor-pointer hover:shadow-lg hover:scale-[1.02] hover:border-primary/20' : ''
-      }`}
+      } ${isDragging ? 'shadow-lg scale-105 rotate-2 z-50' : ''} ${isEditMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
     >
       {isEditMode && (
-        <button
-          onClick={() => onRemoveCard(cardConfig.id)}
-          className="absolute top-3 right-3 z-10 bg-destructive text-destructive-foreground rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-destructive/90 transition-colors shadow-sm"
-        >
-          ×
-        </button>
+        <>
+          <button
+            onClick={() => onRemoveCard(cardConfig.id)}
+            className="absolute top-3 right-3 z-10 bg-destructive text-destructive-foreground rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-destructive/90 transition-colors shadow-sm"
+          >
+            ×
+          </button>
+          <div className="absolute top-3 left-3 z-10 text-muted-foreground/50">
+            <GripVertical className="w-4 h-4" />
+          </div>
+        </>
       )}
       
       <div className="p-6">

@@ -2,6 +2,24 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { 
   Calendar, 
   Users, 
@@ -46,6 +64,40 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
+// Sortable StatCard wrapper component
+const SortableStatCard = ({ cardConfig, value, trend, navigateTo, description, badgeCount, isEditMode, onRemoveCard }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: cardConfig.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <StatCard
+        cardConfig={cardConfig}
+        value={value}
+        trend={trend}
+        navigateTo={navigateTo}
+        description={description}
+        badgeCount={badgeCount}
+        isEditMode={isEditMode}
+        onRemoveCard={onRemoveCard}
+        isDragging={isDragging}
+      />
+    </div>
+  );
+};
+
 const QuickActionCard = ({ title, description, icon: Icon, onClick, badge, color = "blue" }) => (
   <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={onClick}>
     <CardContent className="p-6">
@@ -87,6 +139,7 @@ const AlertsCard = ({ alerts }) => (
             <div key={index} className={`p-3 rounded-lg border-l-4 ${
               alert.type === 'urgent' ? 'border-red-500 bg-red-50' :
               alert.type === 'warning' ? 'border-amber-500 bg-amber-50' :
+              alert.type === 'promo' ? 'border-green-500 bg-green-50' :
               'border-blue-500 bg-blue-50'
             }`}>
               <div className="flex items-center justify-between">
@@ -94,8 +147,12 @@ const AlertsCard = ({ alerts }) => (
                   <h4 className="font-medium text-gray-900">{alert.title}</h4>
                   <p className="text-sm text-gray-600">{alert.message}</p>
                 </div>
-                <Badge variant={alert.type === 'urgent' ? 'destructive' : 'outline'}>
-                  {alert.type}
+                <Badge variant={
+                  alert.type === 'urgent' ? 'destructive' :
+                  alert.type === 'promo' ? 'default' :
+                  'outline'
+                }>
+                  {alert.type === 'promo' ? 'PROMO' : alert.type}
                 </Badge>
               </div>
             </div>
@@ -115,6 +172,14 @@ const StaffHomepage = () => {
   const navigate = useNavigate();
   const { withLoading, isLoading } = useLoading();
   const { handleAsyncOperation } = useErrorHandler();
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // React Query hooks for real-time data
   const { data: dashboardStats, isLoading: dashboardLoading } = useDashboardStats();
@@ -235,6 +300,25 @@ const StaffHomepage = () => {
     showToast.success('Card added', 'Dashboard updated successfully');
   }, [visibleCardIds]);
 
+  // Handle drag end for reordering cards
+  const handleDragEnd = useCallback((event) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      setVisibleCardIds((items) => {
+        const oldIndex = items.indexOf(active.id);
+        const newIndex = items.indexOf(over.id);
+        const newOrder = arrayMove(items, oldIndex, newIndex);
+
+        // Save new order to localStorage
+        storage.local.set(STORAGE_KEYS.DASHBOARD_CONFIG, newOrder);
+        showToast.success('Cards reordered', 'Dashboard layout updated');
+
+        return newOrder;
+      });
+    }
+  }, []);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -255,31 +339,42 @@ const StaffHomepage = () => {
         </div>
       )}
 
-      {/* Stats Cards */}
-      <motion.div 
-        layout 
-        className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+      {/* Stats Cards with Drag and Drop */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
       >
-        <AnimatePresence>
-          {displayedCardsConfig.filter(c => c.dataType === 'stat').map(cardConfig => (
-            <StatCard 
-              key={cardConfig.id}
-              cardConfig={cardConfig}
-              value={
-                cardConfig.dataKey === 'monthlyRevenue' 
-                  ? stats[cardConfig.dataKey] 
-                  : formatters.number(stats[cardConfig.dataKey] ?? 0)
-              }
-              trend={stats[cardConfig.trendKey]}
-              navigateTo={cardConfig.navigateTo}
-              description={cardConfig.description}
-              badgeCount={cardConfig.badgeKey ? stats[cardConfig.badgeKey] : 0}
-              isEditMode={isEditMode}
-              onRemoveCard={handleRemoveCard}
-            />
-          ))}
-        </AnimatePresence>
-      </motion.div>
+        <SortableContext
+          items={visibleCardIds.filter(id => displayedCardsConfig.find(c => c.id === id && c.dataType === 'stat'))}
+          strategy={rectSortingStrategy}
+        >
+          <motion.div
+            layout
+            className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          >
+            <AnimatePresence>
+              {displayedCardsConfig.filter(c => c.dataType === 'stat').map(cardConfig => (
+                <SortableStatCard
+                  key={cardConfig.id}
+                  cardConfig={cardConfig}
+                  value={
+                    cardConfig.dataKey === 'monthlyRevenue'
+                      ? stats[cardConfig.dataKey]
+                      : formatters.number(stats[cardConfig.dataKey] ?? 0)
+                  }
+                  trend={stats[cardConfig.trendKey]}
+                  navigateTo={cardConfig.navigateTo}
+                  description={cardConfig.description}
+                  badgeCount={cardConfig.badgeKey ? stats[cardConfig.badgeKey] : 0}
+                  isEditMode={isEditMode}
+                  onRemoveCard={handleRemoveCard}
+                />
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        </SortableContext>
+      </DndContext>
 
       {/* Quick Actions */}
       <div className="space-y-4">

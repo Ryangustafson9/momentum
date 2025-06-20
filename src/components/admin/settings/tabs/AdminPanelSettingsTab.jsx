@@ -27,7 +27,7 @@ import { usePermissions } from '@/hooks/usePermissions.jsx';
 
 const AdminPanelSettingsTabContent = () => {
   const { toast } = useToast();
-  const { isAdmin } = usePermissions();
+  const { isAdmin, user, role } = usePermissions();
   const [settings, setSettings] = useState({
     requireFirstName: true,
     requireLastName: true,

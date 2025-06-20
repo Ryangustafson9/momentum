@@ -42,22 +42,21 @@ import { useNotifications } from '@/contexts/NotificationContext';
 
 const CollapsibleSidebar = ({ sidebarOpen, setSidebarOpen, sidebarCollapsed, setSidebarCollapsed, firstName, user, handleLogout, navigate }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  
-  const sidebarSections = [
+    const sidebarSections = [
     {
       title: "Navigation",
       items: [
-        { icon: Home, label: 'Dashboard', path: '/member/memberdashboard', active: true, badge: null },
-        { icon: Calendar, label: 'My Classes', path: '/member/classes', badge: '3' },
-        { icon: History, label: 'Attendance', path: '/member/attendance' },
+        { icon: Home, label: 'Dashboard', path: '/member-portal/dashboard', active: true, badge: null },
+        { icon: Calendar, label: 'My Classes', path: '/member-portal/classes', badge: '3' },
+        { icon: History, label: 'Attendance', path: '/member-portal/attendance' },
       ]
     },
     {
       title: "Account",
       items: [
-        { icon: CreditCard, label: 'Billing', path: '/member/billing', badge: '!' },
-        { icon: User, label: 'Profile', path: '/member/profile' },
-        { icon: Settings, label: 'Settings', path: '/member/settings' },
+        { icon: CreditCard, label: 'Billing', path: '/member-portal/billing', badge: '!' },
+        { icon: User, label: 'Profile', path: '/member-portal/profile' },
+        { icon: Settings, label: 'Settings', path: '/member-portal/settings' },
       ]
     }
   ];
@@ -687,15 +686,15 @@ const MemberDashboard = () => {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate('/member/profile')}>
+                <DropdownMenuItem onClick={() => navigate('/member-portal/profile')}>
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/member/billing')}>
+                <DropdownMenuItem onClick={() => navigate('/member-portal/billing')}>
                   <CreditCard className="mr-2 h-4 w-4" />
                   <span>Billing</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/member/settings')}>
+                <DropdownMenuItem onClick={() => navigate('/member-portal/settings')}>
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </DropdownMenuItem>
@@ -738,15 +737,15 @@ const MemberDashboard = () => {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate('/member/profile')}>
+              <DropdownMenuItem onClick={() => navigate('/member-portal/profile')}>
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/member/billing')}>
+              <DropdownMenuItem onClick={() => navigate('/member-portal/billing')}>
                 <CreditCard className="mr-2 h-4 w-4" />
                 <span>Billing</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/member/settings')}>
+              <DropdownMenuItem onClick={() => navigate('/member-portal/settings')}>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
@@ -805,7 +804,7 @@ const MemberDashboard = () => {
                 </div>
 
                 <Button
-                  onClick={() => navigate('/member/billing')}
+                  onClick={() => navigate('/member-portal/billing')}
                   className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
                   size="lg"
                 >
@@ -844,7 +843,7 @@ const MemberDashboard = () => {
                             variant="ghost"
                             size="sm"
                             className="w-full justify-start text-gray-600 hover:text-gray-900 p-0 h-auto font-medium hover:bg-transparent group-hover:text-indigo-600"
-                            onClick={() => navigate('/member/profile')}
+                            onClick={() => navigate('/member-portal/profile')}
                           >
                             View Profile <ChevronRight className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-1" />
                           </Button>
@@ -875,7 +874,7 @@ const MemberDashboard = () => {
                       icon={<CreditCard />} 
                       color="from-amber-500 to-orange-500"
                       description={state.billingInfo.nextPaymentDate ? `Due: ${state.billingInfo.nextPaymentDate}` : "Up to date"}
-                      action={{ label: "View Billing", onClick: () => navigate('/member/billing') }}
+                      action={{ label: "View Billing", onClick: () => navigate('/member-portal/billing') }}
                     />
                   </>
                 )}
@@ -980,7 +979,7 @@ const MemberDashboard = () => {
                           <Button
                             variant="outline"
                             className="w-full justify-start"
-                            onClick={() => navigate('/member/billing')}
+                            onClick={() => navigate('/member-portal/billing')}
                           >
                             <CreditCard className="mr-2 h-4 w-4" />
                             Manage Billing
@@ -1051,7 +1050,7 @@ const MemberDashboard = () => {
                             <Button 
                               variant="outline" 
                               size="sm" 
-                              onClick={() => navigate(`/member/classes#${cls.id}`)}
+                              onClick={() => navigate(`/member-portal/classes#${cls.id}`)}
                             >
                               View
                             </Button>
@@ -1070,7 +1069,7 @@ const MemberDashboard = () => {
                           </div>
                         ) : (
                           <Button
-                            onClick={() => navigate('/member/classes')}
+                            onClick={() => navigate('/member-portal/classes')}
                             className="bg-indigo-600 hover:bg-indigo-700"
                             size="lg"
                           >
@@ -1135,7 +1134,7 @@ const MemberDashboard = () => {
                         </p>
                         <Button 
                           variant="outline" 
-                          onClick={() => navigate('/member/attendance')}
+                          onClick={() => navigate('/member-portal/attendance')}
                         >
                           View Full History
                         </Button>
@@ -1154,16 +1153,16 @@ const MemberDashboard = () => {
                   </CardHeader>
                   <CardContent className="p-6">
                     <div className="space-y-4">
-                      <motion.div 
+                      <motion.div
                         whileHover={{ scale: 1.02 }}
-                        className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl cursor-pointer"
+                        className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl cursor-pointer"
                       >
                         <div className="flex items-start space-x-3">
-                          <span className="text-2xl">🎉</span>
+                          <span className="text-2xl">🎁</span>
                           <div>
-                            <span className="font-semibold text-blue-900">Special Offer:</span>
-                            <p className="text-blue-800 text-sm mt-1">
-                              Bring a friend this week and get 10% off your next month!
+                            <span className="font-semibold text-green-900">Referral Promotion:</span>
+                            <p className="text-green-800 text-sm mt-1">
+                              Refer a member and get a free shaker bottle! Limited time offer.
                             </p>
                           </div>
                         </div>
