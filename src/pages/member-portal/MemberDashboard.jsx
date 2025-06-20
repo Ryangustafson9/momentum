@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,6 +43,33 @@ import { useNotifications } from '@/contexts/NotificationContext';
 
 const CollapsibleSidebar = ({ sidebarOpen, setSidebarOpen, sidebarCollapsed, setSidebarCollapsed, firstName, user, handleLogout, navigate }) => {
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Generate user initials and display name
+  const getInitials = () => {
+    if (user?.first_name && user?.last_name) {
+      return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase();
+    }
+    if (firstName) {
+      return firstName[0].toUpperCase();
+    }
+    if (user?.email) {
+      return user.email[0].toUpperCase();
+    }
+    return 'M';
+  };
+
+  const getDisplayName = () => {
+    if (user?.first_name && user?.last_name) {
+      return `${user.first_name} ${user.last_name}`;
+    }
+    if (firstName) {
+      return firstName;
+    }
+    if (user?.email) {
+      return user.email.split('@')[0];
+    }
+    return 'Member';
+  };
     const sidebarSections = [
     {
       title: "Navigation",
@@ -75,7 +103,7 @@ const CollapsibleSidebar = ({ sidebarOpen, setSidebarOpen, sidebarCollapsed, set
         {/* Header */}
         <div className={`flex items-center justify-between h-16 px-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50`}>
           <AnimatePresence mode="wait">
-            {!sidebarCollapsed && (
+            {!sidebarCollapsed ? (
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -85,8 +113,25 @@ const CollapsibleSidebar = ({ sidebarOpen, setSidebarOpen, sidebarCollapsed, set
                 <img
                   src="/assets/momentum-logo.svg"
                   alt="Momentum Gym"
-                  className="w-28 h-20 object-contain"
+                  className="w-32 h-24 object-contain"
                 />
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className="flex items-center justify-center w-full"
+              >
+                <Avatar className="h-8 w-8">
+                  <AvatarImage
+                    src={user?.profile_picture_url || user?.avatar_url || `/assets/momentum-avatar.svg`}
+                    alt={getDisplayName()}
+                  />
+                  <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-medium text-xs">
+                    {getInitials()}
+                  </AvatarFallback>
+                </Avatar>
               </motion.div>
             )}
           </AnimatePresence>

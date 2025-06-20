@@ -5,6 +5,7 @@ import { storage, STORAGE_KEYS } from '@/utils/storageUtils';
 import { normalizeRole } from '@/utils/roleUtils';
 import { createProfileSafe, validateAuthUserExists } from '@/utils/profileValidation';
 import { useProfileFetcher } from '@/hooks/useProfileFetcher';
+import { PermissionsService } from '@/services/permissionsService';
 
 /**
  * 🔐 AuthContext - Centralized Authentication Management
@@ -55,15 +56,16 @@ export const AuthProvider = ({ children }) => {
         }
       }
 
-      return null;
-    } catch (error) {
+      return null;    } catch (error) {
       console.warn('[AuthContext] ⚠️ Failed to load cached user:', error);
       return null;
     }
   });
   const [authReady, setAuthReady] = useState(false);
   const [loading, setLoading] = useState(false);
-
+  // 🔐 PERMISSIONS: State for user permissions
+  const [userPermissions, setUserPermissions] = useState([]);
+  const [permissionsLoading, setPermissionsLoading] = useState(false);
   // ⭐ REFACTORED: Use dedicated profile fetcher hook
   const { 
     fetchUserProfile, 
@@ -71,6 +73,42 @@ export const AuthProvider = ({ children }) => {
     clearProfileCache 
   } = useProfileFetcher();
 
+  // 🔐 PERMISSIONS: Fetch user permissions based on staff role
+  const fetchUserPermissions = async (userId) => {
+    setPermissionsLoading(true);
+    try {
+      console.log('[AuthContext] 🔐 Fetching permissions for user:', userId);
+      const permissions = await PermissionsService.getUserPermissions(userId);
+      setUserPermissions(permissions);
+      console.log('[AuthContext] ✅ Permissions loaded:', permissions);
+      return permissions;
+    } catch (error) {
+      console.error('[AuthContext] ❌ Failed to fetch permissions:', error);
+      setUserPermissions([]);
+      return [];
+    } finally {
+      setPermissionsLoading(false);
+    }
+  };
+
+  // 🔐 PERMISSIONS: Check if user has specific permission
+  const hasPermission = (permissionName) => {
+    if (!user?.id || !permissionName) return false;
+    return userPermissions.some(permission => 
+      permission.permission_name === permissionName || permission === permissionName
+    );
+  };
+
+  // 🔐 PERMISSIONS: Check permission async (for real-time checks)
+  const checkPermissionAsync = async (permissionName) => {
+    if (!user?.id || !permissionName) return false;
+    try {
+      return await PermissionsService.userHasPermission(user.id, permissionName);
+    } catch (error) {
+      console.error('[AuthContext] ❌ Failed to check permission:', error);
+      return false;
+    }
+  };
   // ⭐ ENHANCED: Profile fetcher with user state management
   const fetchAndSetProfile = async (userId, options = {}) => {
     try {
@@ -83,11 +121,20 @@ export const AuthProvider = ({ children }) => {
       });
       
       setUser(profile);
+      
+      // 🔐 PERMISSIONS: Fetch permissions after profile is set
+      if (profile?.id) {
+        fetchUserPermissions(profile.id).catch(error => {
+          console.warn('[AuthContext] ⚠️ Background permissions fetch failed:', error);
+        });
+      }
+      
       return profile;
     } catch (error) {
       console.error('[AuthContext] ❌ Failed to fetch and set profile:', error);
       throw error;
-    }  };
+    }
+  };
 
   // ⭐ SIMPLIFIED: Auth state listener with faster timeout
   useEffect(() => {
@@ -168,9 +215,9 @@ export const AuthProvider = ({ children }) => {
               });
           }
           break;
-          
-        case 'SIGNED_OUT':
+            case 'SIGNED_OUT':
           setUser(null);
+          setUserPermissions([]); // 🔐 Clear permissions on logout
           // 💾 PERSISTENCE: Clear cached user on logout
           storage.local.remove('cached_user');
           storage.local.remove('cached_user_timestamp');
@@ -451,7 +498,6 @@ export const AuthProvider = ({ children }) => {
       }
     }
   };
-
   const logout = async () => {
     try {
       console.log('[AuthContext] 🚪 Logging out...');
@@ -467,6 +513,7 @@ export const AuthProvider = ({ children }) => {
       if (error) throw error;
 
       setUser(null);
+      setUserPermissions([]); // 🔐 Clear permissions
 
       showToast.success('Logged Out', 'You have been successfully logged out');
 
@@ -479,19 +526,23 @@ export const AuthProvider = ({ children }) => {
       // ⭐ FALLBACK: Even if logout fails, redirect to login
       window.location.href = '/login';
     }
-  };
-  // ⚡ PERFORMANCE FIX: Memoize context value to prevent unnecessary re-renders
+  };  // ⚡ PERFORMANCE FIX: Memoize context value to prevent unnecessary re-renders
   const value = useMemo(() => ({
     user,
     authReady,
     loading,
+    userPermissions,
+    permissionsLoading,
     login,
     signup,
     logout,
     resetPassword,
     fetchAndSetProfile,
     clearProfileCache,
-  }), [user, authReady, loading, fetchAndSetProfile, clearProfileCache]);
+    fetchUserPermissions,
+    hasPermission,
+    checkPermissionAsync,
+  }), [user, authReady, loading, userPermissions, permissionsLoading, fetchAndSetProfile, clearProfileCache]);
 
   return (
     <AuthContext.Provider value={value}>

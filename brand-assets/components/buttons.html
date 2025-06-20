@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Momentum Gym - Button Components</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../colors/color-palette.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--momentum-font-sans);
+            background: var(--momentum-gradient-light-gray);
+            min-height: 100vh;
+            padding: 2rem;
+            color: var(--momentum-gray-900);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: var(--momentum-text-4xl);
+            font-weight: 700;
+            color: var(--momentum-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: var(--momentum-text-lg);
+            color: var(--momentum-gray-600);
+        }
+
+        .section {
+            background: white;
+            border-radius: var(--momentum-radius-2xl);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--momentum-shadow-md);
+            border: 1px solid var(--momentum-gray-100);
+        }
+
+        .section h2 {
+            font-size: var(--momentum-text-2xl);
+            font-weight: 600;
+            color: var(--momentum-gray-900);
+            margin-bottom: 1rem;
+        }
+
+        .section p {
+            color: var(--momentum-gray-600);
+            margin-bottom: 1.5rem;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .button-example {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .button-label {
+            font-size: var(--momentum-text-sm);
+            color: var(--momentum-gray-500);
+            font-weight: 500;
+        }
+
+        /* Button Base Styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--momentum-radius-md);
+            font-size: var(--momentum-text-base);
+            font-weight: 500;
+            font-family: inherit;
+            border: none;
+            cursor: pointer;
+            transition: var(--momentum-transition-all);
+            text-decoration: none;
+            min-width: 120px;
+        }
+
+        /* Primary Button */
+        .btn-primary {
+            background: var(--momentum-gradient-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--momentum-shadow-primary-lg);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        /* Secondary Button */
+        .btn-secondary {
+            background: transparent;
+            color: var(--momentum-primary);
+            border: 1px solid var(--momentum-gray-300);
+        }
+
+        .btn-secondary:hover {
+            background: var(--momentum-indigo-50);
+            border-color: var(--momentum-primary);
+        }
+
+        /* Ghost Button */
+        .btn-ghost {
+            background: transparent;
+            color: var(--momentum-gray-600);
+        }
+
+        .btn-ghost:hover {
+            background: var(--momentum-gray-100);
+            color: var(--momentum-gray-900);
+        }
+
+        /* Accent Button */
+        .btn-accent {
+            background: var(--momentum-accent);
+            color: white;
+        }
+
+        .btn-accent:hover {
+            background: var(--momentum-pink-600);
+            box-shadow: var(--momentum-shadow-accent);
+        }
+
+        /* Success Button */
+        .btn-success {
+            background: var(--momentum-success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: var(--momentum-success-600);
+        }
+
+        /* Warning Button */
+        .btn-warning {
+            background: var(--momentum-warning);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: var(--momentum-warning-600);
+        }
+
+        /* Error Button */
+        .btn-error {
+            background: var(--momentum-error);
+            color: white;
+        }
+
+        .btn-error:hover {
+            background: var(--momentum-error-600);
+        }
+
+        /* Button Sizes */
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: var(--momentum-text-sm);
+            min-width: 80px;
+        }
+
+        .btn-lg {
+            padding: 1rem 2rem;
+            font-size: var(--momentum-text-lg);
+            min-width: 160px;
+        }
+
+        .btn-xl {
+            padding: 1.25rem 2.5rem;
+            font-size: var(--momentum-text-xl);
+            min-width: 200px;
+        }
+
+        /* Disabled State */
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Icon Buttons */
+        .btn-icon {
+            padding: 0.75rem;
+            min-width: auto;
+            width: 44px;
+            height: 44px;
+        }
+
+        .icon {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .code-block {
+            background: var(--momentum-gray-900);
+            color: var(--momentum-gray-100);
+            padding: 1rem;
+            border-radius: var(--momentum-radius-lg);
+            font-family: var(--momentum-font-mono);
+            font-size: var(--momentum-text-sm);
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Momentum Gym Button Components</h1>
+            <p>Complete button system with brand colors and interactions</p>
+        </div>
+
+        <!-- Primary Buttons -->
+        <div class="section">
+            <h2>Primary Buttons</h2>
+            <p>Main action buttons using the primary brand gradient</p>
+            <div class="button-grid">
+                <div class="button-example">
+                    <button class="btn btn-primary">Get Started</button>
+                    <span class="button-label">Primary</span>
+                </div>
+                <div class="button-example">
+                    <button class="btn btn-primary btn-sm">Small</button>
+                    <span class="button-label">Small</span>
+                </div>
+                <div class="button-example">
+                    <button class="btn btn-primary btn-lg">Large</button>
+                    <span class="button-label">Large</span>
+                </div>
+                <div class="button-example">
+                    <button class="btn btn-primary" disabled>Disabled</button>
+                    <span class="button-label">Disabled</span>
+                </div>
+            </div>
+            <div class="code-block">
+&lt;button class="btn btn-primary"&gt;Get Started&lt;/button&gt;
+&lt;button class="btn btn-primary btn-sm"&gt;Small&lt;/button&gt;
+&lt;button class="btn btn-primary btn-lg"&gt;Large&lt;/button&gt;
+            </div>
+        </div>
+
+        <!-- Secondary Buttons -->
+        <div class="section">
+            <h2>Secondary Buttons</h2>
+            <p>Secondary actions with outline styling</p>
+            <div class="button-grid">
+                <div class="button-example">
+                    <button class="btn btn-secondary">Learn More</button>
+                    <span class="button-label">Secondary</span>
+                </div>
+                <div class="button-example">
+                    <button class="btn btn-ghost">Cancel</button>
+                    <span class="button-label">Ghost</span>
+                </div>
+                <div class="button-example">
+                    <button class="btn btn-accent">Special</button>
+                    <span class="button-label">Accent</span>
+                </div>
+                <div class="button-example">
+                    <button class="btn btn-secondary" disabled>Disabled</button>
+                    <span class="button-label">Disabled</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Semantic Buttons -->
+        <div class="section">
+            <h2>Semantic Buttons</h2>
+            <p>Buttons with semantic meaning for different states</p>
+            <div class="button-grid">
+                <div class="button-example">
+                    <button class="btn btn-success">Save Changes</button>
+                    <span class="button-label">Success</span>
+                </div>
+                <div class="button-example">
+                    <button class="btn btn-warning">Warning</button>
+                    <span class="button-label">Warning</span>
+                </div>
+                <div class="button-example">
+                    <button class="btn btn-error">Delete</button>
+                    <span class="button-label">Error</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Icon Buttons -->
+        <div class="section">
+            <h2>Icon Buttons</h2>
+            <p>Compact buttons with icons for actions</p>
+            <div class="button-grid">
+                <div class="button-example">
+                    <button class="btn btn-primary btn-icon">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M12 5v14m-7-7h14"/>
+                        </svg>
+                    </button>
+                    <span class="button-label">Add</span>
+                </div>
+                <div class="button-example">
+                    <button class="btn btn-secondary btn-icon">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                    </button>
+                    <span class="button-label">Edit</span>
+                </div>
+                <div class="button-example">
+                    <button class="btn btn-error btn-icon">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                    </button>
+                    <span class="button-label">Delete</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

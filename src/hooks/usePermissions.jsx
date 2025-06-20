@@ -1,89 +1,45 @@
 /**
  * 🔐 USE PERMISSIONS HOOK
  * Enhanced React hook for checking user permissions throughout the application
+ * Now integrated with AuthContext and Staff Plans system
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  getUserPermissions,
-  hasPermission,
-  hasAnyPermission,
-  hasAllPermissions
-} from '@/lib/services/permissionService';
 import { normalizeRole } from '@/utils/accessControl';
 import { Lock } from 'lucide-react';
 
 export const usePermissions = () => {
-  const { user } = useAuth();
-  const [permissions, setPermissions] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // ==================== FETCH PERMISSIONS ====================
-
-  const fetchPermissions = useCallback(async () => {
-    if (!user?.id) {
-      setPermissions({});
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-      const userPermissions = await getUserPermissions(user.id);
-      setPermissions(userPermissions);
-    } catch (err) {
-      console.error('Error fetching permissions:', err);
-      setError(err.message);
-      setPermissions({});
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id]);
-
-  useEffect(() => {
-    fetchPermissions();
-  }, [fetchPermissions]);
-
+  const { 
+    user, 
+    userPermissions, 
+    permissionsLoading, 
+    hasPermission: authHasPermission,
+    checkPermissionAsync,
+    fetchUserPermissions
+  } = useAuth();
   // ==================== PERMISSION CHECKERS ====================
 
   /**
    * Check if user has a specific permission
    */
   const can = useCallback((permission) => {
-    if (!user) return false;
-
-    // Admin users have all permissions
-    if (user.role === 'admin') return true;
-
-    return permissions[permission] === true;
-  }, [user, permissions]);
+    return authHasPermission(permission);
+  }, [authHasPermission]);
 
   /**
    * Check if user has any of the specified permissions
    */
   const canAny = useCallback((permissionList) => {
-    if (!user) return false;
-
-    // Admin users have all permissions
-    if (user.role === 'admin') return true;
-
-    return permissionList.some(permission => permissions[permission] === true);
-  }, [user, permissions]);
+    return permissionList.some(permission => authHasPermission(permission));
+  }, [authHasPermission]);
 
   /**
    * Check if user has all of the specified permissions
    */
   const canAll = useCallback((permissionList) => {
-    if (!user) return false;
-
-    // Admin users have all permissions
-    if (user.role === 'admin') return true;
-
-    return permissionList.every(permission => permissions[permission] === true);
-  }, [user, permissions]);
+    return permissionList.every(permission => authHasPermission(permission));
+  }, [authHasPermission]);
 
   // ==================== LEGACY COMPATIBILITY ====================
 
@@ -104,16 +60,17 @@ export const usePermissions = () => {
    * Refresh permissions (useful after role changes)
    */
   const refreshPermissions = useCallback(() => {
-    fetchPermissions();
-  }, [fetchPermissions]);
-
+    if (fetchUserPermissions && user?.id) {
+      fetchUserPermissions(user.id);
+    }
+  }, [fetchUserPermissions, user?.id]);
   // ==================== RETURN VALUES ====================
 
   return {
-    // Permission data
-    permissions,
-    loading,
-    error,
+    // Permission data from AuthContext
+    permissions: userPermissions,
+    loading: permissionsLoading,
+    error: null,
 
     // New permission checkers
     can,
@@ -135,6 +92,7 @@ export const usePermissions = () => {
 
     // Utilities
     refreshPermissions,
+    checkPermissionAsync,
 
     // Enhanced permission shortcuts
     canManageMembers: can('manage_members'),

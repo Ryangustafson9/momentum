@@ -7,7 +7,7 @@ import {
   Plus, Minus, X, Check, Calculator, Receipt, Barcode,
   Tag, Percent, Gift, Clock, AlertCircle, CheckCircle, UserCog,
   Coffee, Shirt, Glasses, UserCheck, Zap, Apple, Ticket,
-  Calendar, UserPlus, Watch
+  Calendar, UserPlus, Watch, Settings
 } from 'lucide-react';
 
 // UI Components
@@ -64,6 +64,7 @@ const PointOfSale = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [customer, setCustomer] = useState(null);
   const [showCustomerSearch, setShowCustomerSearch] = useState(false);
+  const [guestInfo, setGuestInfo] = useState({ name: '', email: '', phone: '' });
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [cashReceived, setCashReceived] = useState('');
@@ -82,22 +83,41 @@ const PointOfSale = () => {
         .eq('is_active', true)
         .order('display_order');
 
-      if (categoriesError) throw categoriesError;
+      if (categoriesError) {
+        console.error('Categories error:', categoriesError);
+        throw categoriesError;
+      }
 
-      // Fetch products with category info
+      // Fetch products first
       const { data: productsData, error: productsError } = await supabase
         .from('pos_inventory')
-        .select(`
-          *,
-          category:pos_categories(name, slug, icon_name, color)
-        `)
+        .select('*')
         .eq('is_active', true)
         .order('name');
 
-      if (productsError) throw productsError;
+      // Then fetch categories and match them
+      let enrichedProducts = productsData || [];
+      if (productsData && categoriesData) {
+        enrichedProducts = productsData.map(product => {
+          const category = categoriesData.find(cat => cat.id === product.category_id);
+          return {
+            ...product,
+            category: category || null
+          };
+        });
+      }
+
+      if (productsError) {
+        console.error('Products error:', productsError);
+        throw productsError;
+      }
+
+      console.log('Fetched categories:', categoriesData);
+      console.log('Fetched products:', productsData);
+      console.log('Enriched products:', enrichedProducts);
 
       setCategories([{ name: 'All', slug: 'all' }, ...(categoriesData || [])]);
-      setProducts(productsData || []);
+      setProducts(enrichedProducts);
 
     } catch (error) {
       console.error('Error fetching POS data:', error);
@@ -111,23 +131,45 @@ const PointOfSale = () => {
     }
   };
 
+  // Test database connection
+  const testConnection = async () => {
+    try {
+      console.log('Testing database connection...');
+      const { data, error } = await supabase.from('pos_categories').select('count');
+      console.log('Test query result:', { data, error });
+    } catch (err) {
+      console.error('Test connection error:', err);
+    }
+  };
+
   // Load data on component mount
   useEffect(() => {
+    console.log('POS - Component mounted, fetching data...');
+    testConnection();
     fetchData();
   }, []);
 
   // Filtered products
   const filteredProducts = products.filter(product => {
     const categoryMatch = selectedCategory === 'All' ||
-                         (product.category && product.category.slug === selectedCategory.toLowerCase());
+                         (product.category && product.category.name === selectedCategory);
     const searchMatch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                        (product.barcode && product.barcode.includes(searchQuery)) ||
                        (product.sku && product.sku.includes(searchQuery));
     return categoryMatch && searchMatch;
   });
 
+  // Debug logging
+  console.log('POS - Current state:', {
+    products: products.length,
+    categories: categories.length,
+    filteredProducts: filteredProducts.length,
+    selectedCategory,
+    loading
+  });
+
   // Cart calculations
-  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotal = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
   const tax = subtotal * 0.08; // 8% tax
   const total = subtotal + tax;
 
@@ -223,6 +265,9 @@ const PointOfSale = () => {
       const transactionData = {
         staff_id: user.id,
         customer_id: customer?.id || null,
+        guest_name: !customer && guestInfo.name ? guestInfo.name : null,
+        guest_email: !customer && guestInfo.email ? guestInfo.email : null,
+        guest_phone: !customer && guestInfo.phone ? guestInfo.phone : null,
         items: cart,
         subtotal: subtotal,
         tax_amount: tax,
@@ -246,11 +291,12 @@ const PointOfSale = () => {
 
       // Update inventory for physical products
       for (const item of cart) {
-        if (!item.is_service) {
+        if (!item.is_service && item.stock_quantity !== undefined) {
+          const newStock = Math.max(0, item.stock_quantity - item.quantity);
           const { error: inventoryError } = await supabase
             .from('pos_inventory')
             .update({
-              stock_quantity: item.stock_quantity - item.quantity
+              stock_quantity: newStock
             })
             .eq('id', item.id);
 
@@ -265,7 +311,7 @@ const PointOfSale = () => {
 
       toast({
         title: "Payment successful!",
-        description: `Transaction completed for $${total.toFixed(2)}`,
+        description: `Transaction completed for $${total.toFixed(2)}. Receipt: ${transaction.receipt_number}`,
       });
 
       // Clear cart and close dialog
@@ -291,9 +337,19 @@ const PointOfSale = () => {
         {/* Left Panel - Products */}
         <div className="flex-1 flex flex-col">
           {/* Header */}
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Point of Sale</h1>
-            <p className="text-gray-600">Process sales and manage transactions</p>
+          <div className="mb-6 flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Point of Sale</h1>
+              <p className="text-gray-600">Process sales and manage transactions</p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => navigate('/staff-portal/pos/manage')}
+              className="flex items-center gap-2"
+            >
+              <Settings className="h-4 w-4" />
+              Manage
+            </Button>
           </div>
 
           {/* Search and Categories */}
@@ -423,7 +479,7 @@ const PointOfSale = () => {
                           <h3 className="font-semibold text-sm mb-1 line-clamp-2">{product.name}</h3>
                           <p className="text-xs text-gray-500 mb-2">{product.category?.name || 'Uncategorized'}</p>
                           <div className="flex justify-between items-center">
-                            <span className="font-bold text-green-600">${product.price}</span>
+                            <span className="font-bold text-green-600">${parseFloat(product.price).toFixed(2)}</span>
                             {product.is_service ? (
                               <Badge variant="secondary" className="text-xs">
                                 Service
@@ -482,15 +538,44 @@ const PointOfSale = () => {
                     </Button>
                   </div>
                 ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => setShowCustomerSearch(true)}
-                  >
-                    <Users className="mr-2 h-4 w-4" />
-                    Select Customer (Optional)
-                  </Button>
+                  <div className="space-y-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => setShowCustomerSearch(true)}
+                    >
+                      <Users className="mr-2 h-4 w-4" />
+                      Select Customer
+                    </Button>
+
+                    <div className="text-center text-xs text-gray-500">or</div>
+
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="Guest name (optional)"
+                        value={guestInfo.name}
+                        onChange={(e) => setGuestInfo(prev => ({ ...prev, name: e.target.value }))}
+                        className="text-sm"
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input
+                          placeholder="Email"
+                          type="email"
+                          value={guestInfo.email}
+                          onChange={(e) => setGuestInfo(prev => ({ ...prev, email: e.target.value }))}
+                          className="text-sm"
+                        />
+                        <Input
+                          placeholder="Phone"
+                          type="tel"
+                          value={guestInfo.phone}
+                          onChange={(e) => setGuestInfo(prev => ({ ...prev, phone: e.target.value }))}
+                          className="text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
 
@@ -508,7 +593,7 @@ const PointOfSale = () => {
                       <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div className="flex-1">
                           <h4 className="font-medium text-sm">{item.name}</h4>
-                          <p className="text-xs text-gray-500">${item.price} each</p>
+                          <p className="text-xs text-gray-500">${parseFloat(item.price).toFixed(2)} each</p>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Button

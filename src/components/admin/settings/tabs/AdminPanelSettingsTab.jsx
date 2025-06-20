@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast.js';
 import { supabase } from '@/lib/supabaseClient';
 import SettingsCardItem from '@/components/admin/settings/SettingsCardItem.jsx';
-import StaffPermissionsManager from '@/components/admin/permissions/StaffPermissionsManager';
+
 import {
   Settings,
   Shield,
@@ -140,38 +140,24 @@ const AdminPanelSettingsTabContent = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+    <div className="space-y-6">      {/* Header */}
+      <div>        <div>
           <h2 className="text-2xl font-bold text-gray-900 flex items-center">
             <Settings className="w-6 h-6 mr-3 text-indigo-600" />
             Master Admin Panel
           </h2>
           <p className="text-gray-600 mt-1">Backend settings and administrative controls</p>
         </div>
-        <div className="flex items-center space-x-2">
-          <CheckCircle className="w-5 h-5 text-green-500" />
-          <span className="text-sm text-green-600 font-medium">Admin Access Verified</span>
-        </div>
       </div>
 
       {/* Admin Panel Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 bg-gray-100">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">        <TabsList className="grid w-full grid-cols-3 bg-gray-100">
           <TabsTrigger
             value="data-requirements"
             className="flex items-center space-x-2 data-[state=active]:bg-white"
           >
             <Database className="w-4 h-4" />
             <span>Data Requirements</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="permissions"
-            className="flex items-center space-x-2 data-[state=active]:bg-white"
-          >
-            <Shield className="w-4 h-4" />
-            <span>Permissions</span>
           </TabsTrigger>
           <TabsTrigger
             value="system-health"
@@ -255,14 +241,7 @@ const AdminPanelSettingsTabContent = () => {
               </Button>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        {/* Permissions Tab */}
-        <TabsContent value="permissions" className="space-y-4">
-          <StaffPermissionsManager />
-        </TabsContent>
-
-        {/* System Health Tab */}
+        </TabsContent>        {/* System Health Tab */}
         <TabsContent value="system-health" className="space-y-4">
           <Card className="shadow-lg border-none">
             <CardHeader className="border-b">

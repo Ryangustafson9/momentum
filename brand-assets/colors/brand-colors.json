@@ -1,0 +1,282 @@
+{
+  "brand": {
+    "name": "Momentum Gym",
+    "version": "1.0.0",
+    "description": "Official brand color palette for Momentum Gym Management System"
+  },
+  "colors": {
+    "primary": {
+      "name": "Indigo",
+      "description": "Primary brand color used for main actions and branding",
+      "hex": "#4f46e5",
+      "rgb": "79, 70, 229",
+      "hsl": "245, 79%, 59%",
+      "variants": {
+        "50": "#eef2ff",
+        "100": "#e0e7ff",
+        "200": "#c7d2fe",
+        "300": "#a5b4fc",
+        "400": "#818cf8",
+        "500": "#6366f1",
+        "600": "#4f46e5",
+        "700": "#4338ca",
+        "800": "#3730a3",
+        "900": "#312e81",
+        "950": "#1e1b4b"
+      }
+    },
+    "secondary": {
+      "name": "Purple",
+      "description": "Secondary brand color for accents and secondary actions",
+      "hex": "#7c3aed",
+      "rgb": "124, 58, 237",
+      "hsl": "262, 83%, 58%",
+      "variants": {
+        "50": "#faf5ff",
+        "100": "#f3e8ff",
+        "200": "#e9d5ff",
+        "300": "#d8b4fe",
+        "400": "#c084fc",
+        "500": "#a855f7",
+        "600": "#9333ea",
+        "700": "#7c3aed",
+        "800": "#6b21a8",
+        "900": "#581c87",
+        "950": "#3b0764"
+      }
+    },
+    "accent": {
+      "name": "Pink",
+      "description": "Accent color for highlights and call-to-action elements",
+      "hex": "#ec4899",
+      "rgb": "236, 72, 153",
+      "hsl": "330, 81%, 60%",
+      "variants": {
+        "50": "#fdf2f8",
+        "100": "#fce7f3",
+        "200": "#fbcfe8",
+        "300": "#f9a8d4",
+        "400": "#f472b6",
+        "500": "#ec4899",
+        "600": "#db2777",
+        "700": "#be185d",
+        "800": "#9d174d",
+        "900": "#831843",
+        "950": "#500724"
+      }
+    }
+  },
+  "semantic": {
+    "success": {
+      "name": "Green",
+      "description": "Success states and positive feedback",
+      "hex": "#10b981",
+      "rgb": "16, 185, 129",
+      "hsl": "160, 84%, 39%"
+    },
+    "warning": {
+      "name": "Amber",
+      "description": "Warning states and caution indicators",
+      "hex": "#f59e0b",
+      "rgb": "245, 158, 11",
+      "hsl": "38, 92%, 50%"
+    },
+    "error": {
+      "name": "Red",
+      "description": "Error states and destructive actions",
+      "hex": "#ef4444",
+      "rgb": "239, 68, 68",
+      "hsl": "0, 84%, 60%"
+    },
+    "info": {
+      "name": "Blue",
+      "description": "Informational content and neutral actions",
+      "hex": "#3b82f6",
+      "rgb": "59, 130, 246",
+      "hsl": "221, 91%, 60%"
+    }
+  },
+  "neutrals": {
+    "gray": {
+      "name": "Gray",
+      "description": "Neutral colors for text, backgrounds, and borders",
+      "variants": {
+        "50": "#f9fafb",
+        "100": "#f3f4f6",
+        "200": "#e5e7eb",
+        "300": "#d1d5db",
+        "400": "#9ca3af",
+        "500": "#6b7280",
+        "600": "#4b5563",
+        "700": "#374151",
+        "800": "#1f2937",
+        "900": "#111827",
+        "950": "#030712"
+      }
+    },
+    "white": {
+      "name": "White",
+      "hex": "#ffffff",
+      "rgb": "255, 255, 255",
+      "hsl": "0, 0%, 100%"
+    },
+    "black": {
+      "name": "Black",
+      "hex": "#000000",
+      "rgb": "0, 0, 0",
+      "hsl": "0, 0%, 0%"
+    }
+  },
+  "gradients": {
+    "primary": {
+      "name": "Primary Gradient",
+      "description": "Main brand gradient from indigo to purple",
+      "css": "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
+      "stops": [
+        { "color": "#4f46e5", "position": "0%" },
+        { "color": "#7c3aed", "position": "100%" }
+      ]
+    },
+    "login": {
+      "name": "Login Background",
+      "description": "Three-color gradient for login pages",
+      "css": "linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #ec4899 100%)",
+      "stops": [
+        { "color": "#4f46e5", "position": "0%" },
+        { "color": "#7c3aed", "position": "50%" },
+        { "color": "#ec4899", "position": "100%" }
+      ]
+    },
+    "avatar": {
+      "name": "Avatar Fallback",
+      "description": "Gradient for user avatar backgrounds",
+      "css": "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
+      "stops": [
+        { "color": "#6366f1", "position": "0%" },
+        { "color": "#a855f7", "position": "100%" }
+      ]
+    },
+    "light": {
+      "name": "Light Background",
+      "description": "Subtle gradient for page backgrounds",
+      "css": "linear-gradient(135deg, #f0f9ff 0%, #e0e7ff 100%)",
+      "stops": [
+        { "color": "#f0f9ff", "position": "0%" },
+        { "color": "#e0e7ff", "position": "100%" }
+      ]
+    }
+  },
+  "typography": {
+    "fontFamily": {
+      "primary": "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      "mono": "JetBrains Mono, Fira Code, Consolas, monospace"
+    },
+    "fontSize": {
+      "xs": "0.75rem",
+      "sm": "0.875rem",
+      "base": "1rem",
+      "lg": "1.125rem",
+      "xl": "1.25rem",
+      "2xl": "1.5rem",
+      "3xl": "1.875rem",
+      "4xl": "2.25rem"
+    },
+    "fontWeight": {
+      "light": "300",
+      "normal": "400",
+      "medium": "500",
+      "semibold": "600",
+      "bold": "700"
+    },
+    "lineHeight": {
+      "tight": "1.25",
+      "normal": "1.5",
+      "relaxed": "1.625"
+    }
+  },
+  "spacing": {
+    "xs": "0.25rem",
+    "sm": "0.5rem",
+    "md": "1rem",
+    "lg": "1.5rem",
+    "xl": "2rem",
+    "2xl": "3rem",
+    "3xl": "4rem"
+  },
+  "borderRadius": {
+    "xs": "0.125rem",
+    "sm": "0.25rem",
+    "md": "0.5rem",
+    "lg": "0.75rem",
+    "xl": "1rem",
+    "2xl": "1.5rem",
+    "3xl": "2rem",
+    "full": "9999px"
+  },
+  "shadows": {
+    "xs": "0 1px 2px rgba(0, 0, 0, 0.05)",
+    "sm": "0 1px 3px rgba(0, 0, 0, 0.1)",
+    "md": "0 4px 6px rgba(0, 0, 0, 0.1)",
+    "lg": "0 10px 15px rgba(0, 0, 0, 0.1)",
+    "xl": "0 20px 25px rgba(0, 0, 0, 0.1)",
+    "primary": "0 4px 12px rgba(79, 70, 229, 0.15)",
+    "secondary": "0 4px 12px rgba(124, 58, 237, 0.15)",
+    "accent": "0 4px 12px rgba(236, 72, 153, 0.15)"
+  },
+  "usage": {
+    "primary": {
+      "use": ["Main buttons", "Primary navigation", "Brand elements", "Links"],
+      "avoid": ["Large backgrounds", "Text on light backgrounds"]
+    },
+    "secondary": {
+      "use": ["Secondary buttons", "Accents", "Highlights", "Icons"],
+      "avoid": ["Primary text", "Large text blocks"]
+    },
+    "accent": {
+      "use": ["Call-to-action", "Highlights", "Special elements", "Notifications"],
+      "avoid": ["Body text", "Subtle elements"]
+    },
+    "gradients": {
+      "use": ["Backgrounds", "Cards", "Buttons", "Headers"],
+      "avoid": ["Text", "Small elements", "Icons"]
+    }
+  },
+  "accessibility": {
+    "contrastRatios": {
+      "primary_on_white": "4.5:1",
+      "secondary_on_white": "4.5:1",
+      "accent_on_white": "4.5:1",
+      "white_on_primary": "12.6:1",
+      "white_on_secondary": "8.2:1",
+      "white_on_accent": "4.8:1"
+    },
+    "guidelines": [
+      "Maintain minimum 4.5:1 contrast ratio for normal text",
+      "Maintain minimum 3:1 contrast ratio for large text",
+      "Use color plus additional indicators (icons, text) for important information",
+      "Test with color blindness simulators",
+      "Ensure interactive elements have sufficient color contrast"
+    ]
+  },
+  "assets": {
+    "logos": {
+      "primary": {
+        "file": "momentum-logo.svg",
+        "dimensions": "1587x230",
+        "format": "SVG",
+        "color": "#203D49"
+      },
+      "avatar": {
+        "file": "momentum-avatar.svg",
+        "dimensions": "1024x1024",
+        "format": "SVG",
+        "gradient": true
+      }
+    },
+    "icons": {
+      "library": "Lucide React",
+      "sizes": ["16px", "20px", "24px", "32px"],
+      "style": "Outline"
+    }
+  }
+}

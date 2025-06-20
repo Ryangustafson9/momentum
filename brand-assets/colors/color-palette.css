@@ -1,0 +1,252 @@
+/* 
+ * Momentum Gym Brand Color Palette
+ * Complete CSS custom properties for consistent brand colors
+ */
+
+:root {
+  /* ==================== PRIMARY BRAND COLORS ==================== */
+  
+  /* Indigo Series - Primary Brand Color */
+  --momentum-indigo-50: #eef2ff;
+  --momentum-indigo-100: #e0e7ff;
+  --momentum-indigo-200: #c7d2fe;
+  --momentum-indigo-300: #a5b4fc;
+  --momentum-indigo-400: #818cf8;
+  --momentum-indigo-500: #6366f1;
+  --momentum-indigo-600: #4f46e5;  /* Primary */
+  --momentum-indigo-700: #4338ca;
+  --momentum-indigo-800: #3730a3;
+  --momentum-indigo-900: #312e81;
+  --momentum-indigo-950: #1e1b4b;
+
+  /* Purple Series - Secondary Brand Color */
+  --momentum-purple-50: #faf5ff;
+  --momentum-purple-100: #f3e8ff;
+  --momentum-purple-200: #e9d5ff;
+  --momentum-purple-300: #d8b4fe;
+  --momentum-purple-400: #c084fc;
+  --momentum-purple-500: #a855f7;
+  --momentum-purple-600: #9333ea;
+  --momentum-purple-700: #7c3aed;  /* Secondary */
+  --momentum-purple-800: #6b21a8;
+  --momentum-purple-900: #581c87;
+  --momentum-purple-950: #3b0764;
+
+  /* Pink Series - Accent Color */
+  --momentum-pink-50: #fdf2f8;
+  --momentum-pink-100: #fce7f3;
+  --momentum-pink-200: #fbcfe8;
+  --momentum-pink-300: #f9a8d4;
+  --momentum-pink-400: #f472b6;
+  --momentum-pink-500: #ec4899;  /* Accent */
+  --momentum-pink-600: #db2777;
+  --momentum-pink-700: #be185d;
+  --momentum-pink-800: #9d174d;
+  --momentum-pink-900: #831843;
+  --momentum-pink-950: #500724;
+
+  /* ==================== SEMANTIC COLORS ==================== */
+  
+  /* Success - Green */
+  --momentum-success-50: #ecfdf5;
+  --momentum-success-100: #d1fae5;
+  --momentum-success-200: #a7f3d0;
+  --momentum-success-300: #6ee7b7;
+  --momentum-success-400: #34d399;
+  --momentum-success-500: #10b981;  /* Success */
+  --momentum-success-600: #059669;
+  --momentum-success-700: #047857;
+  --momentum-success-800: #065f46;
+  --momentum-success-900: #064e3b;
+
+  /* Warning - Amber */
+  --momentum-warning-50: #fffbeb;
+  --momentum-warning-100: #fef3c7;
+  --momentum-warning-200: #fde68a;
+  --momentum-warning-300: #fcd34d;
+  --momentum-warning-400: #fbbf24;
+  --momentum-warning-500: #f59e0b;  /* Warning */
+  --momentum-warning-600: #d97706;
+  --momentum-warning-700: #b45309;
+  --momentum-warning-800: #92400e;
+  --momentum-warning-900: #78350f;
+
+  /* Error - Red */
+  --momentum-error-50: #fef2f2;
+  --momentum-error-100: #fee2e2;
+  --momentum-error-200: #fecaca;
+  --momentum-error-300: #fca5a5;
+  --momentum-error-400: #f87171;
+  --momentum-error-500: #ef4444;  /* Error */
+  --momentum-error-600: #dc2626;
+  --momentum-error-700: #b91c1c;
+  --momentum-error-800: #991b1b;
+  --momentum-error-900: #7f1d1d;
+
+  /* Info - Blue */
+  --momentum-info-50: #eff6ff;
+  --momentum-info-100: #dbeafe;
+  --momentum-info-200: #bfdbfe;
+  --momentum-info-300: #93c5fd;
+  --momentum-info-400: #60a5fa;
+  --momentum-info-500: #3b82f6;  /* Info */
+  --momentum-info-600: #2563eb;
+  --momentum-info-700: #1d4ed8;
+  --momentum-info-800: #1e40af;
+  --momentum-info-900: #1e3a8a;
+
+  /* ==================== NEUTRAL COLORS ==================== */
+  
+  /* Gray Scale */
+  --momentum-gray-50: #f9fafb;
+  --momentum-gray-100: #f3f4f6;
+  --momentum-gray-200: #e5e7eb;
+  --momentum-gray-300: #d1d5db;
+  --momentum-gray-400: #9ca3af;
+  --momentum-gray-500: #6b7280;
+  --momentum-gray-600: #4b5563;
+  --momentum-gray-700: #374151;
+  --momentum-gray-800: #1f2937;
+  --momentum-gray-900: #111827;
+  --momentum-gray-950: #030712;
+
+  /* ==================== BRAND SHORTCUTS ==================== */
+  
+  /* Primary Brand Colors */
+  --momentum-primary: var(--momentum-indigo-600);
+  --momentum-primary-light: var(--momentum-indigo-500);
+  --momentum-primary-dark: var(--momentum-indigo-700);
+  
+  --momentum-secondary: var(--momentum-purple-700);
+  --momentum-secondary-light: var(--momentum-purple-600);
+  --momentum-secondary-dark: var(--momentum-purple-800);
+  
+  --momentum-accent: var(--momentum-pink-500);
+  --momentum-accent-light: var(--momentum-pink-400);
+  --momentum-accent-dark: var(--momentum-pink-600);
+
+  /* Semantic Shortcuts */
+  --momentum-success: var(--momentum-success-500);
+  --momentum-warning: var(--momentum-warning-500);
+  --momentum-error: var(--momentum-error-500);
+  --momentum-info: var(--momentum-info-500);
+
+  /* ==================== GRADIENTS ==================== */
+  
+  /* Primary Gradients */
+  --momentum-gradient-primary: linear-gradient(135deg, var(--momentum-primary) 0%, var(--momentum-secondary) 100%);
+  --momentum-gradient-primary-light: linear-gradient(135deg, var(--momentum-primary-light) 0%, var(--momentum-secondary-light) 100%);
+  --momentum-gradient-primary-dark: linear-gradient(135deg, var(--momentum-primary-dark) 0%, var(--momentum-secondary-dark) 100%);
+
+  /* Login Background Gradient */
+  --momentum-gradient-login: linear-gradient(135deg, var(--momentum-primary) 0%, var(--momentum-secondary) 50%, var(--momentum-accent) 100%);
+
+  /* Avatar Fallback Gradient */
+  --momentum-gradient-avatar: linear-gradient(135deg, var(--momentum-indigo-500) 0%, var(--momentum-purple-500) 100%);
+
+  /* Light Background Gradients */
+  --momentum-gradient-light-blue: linear-gradient(135deg, var(--momentum-indigo-50) 0%, var(--momentum-purple-50) 100%);
+  --momentum-gradient-light-gray: linear-gradient(135deg, var(--momentum-gray-50) 0%, var(--momentum-gray-100) 100%);
+
+  /* Success/Error Gradients */
+  --momentum-gradient-success: linear-gradient(135deg, var(--momentum-success-400) 0%, var(--momentum-success-600) 100%);
+  --momentum-gradient-warning: linear-gradient(135deg, var(--momentum-warning-400) 0%, var(--momentum-warning-600) 100%);
+  --momentum-gradient-error: linear-gradient(135deg, var(--momentum-error-400) 0%, var(--momentum-error-600) 100%);
+
+  /* ==================== SHADOWS ==================== */
+  
+  /* Brand-colored shadows */
+  --momentum-shadow-primary: 0 4px 12px rgba(79, 70, 229, 0.15);
+  --momentum-shadow-primary-lg: 0 8px 24px rgba(79, 70, 229, 0.2);
+  --momentum-shadow-secondary: 0 4px 12px rgba(124, 58, 237, 0.15);
+  --momentum-shadow-accent: 0 4px 12px rgba(236, 72, 153, 0.15);
+
+  /* Standard shadows */
+  --momentum-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --momentum-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --momentum-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --momentum-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --momentum-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+
+  /* ==================== SPACING ==================== */
+  
+  --momentum-spacing-xs: 0.25rem;   /* 4px */
+  --momentum-spacing-sm: 0.5rem;    /* 8px */
+  --momentum-spacing-md: 1rem;      /* 16px */
+  --momentum-spacing-lg: 1.5rem;    /* 24px */
+  --momentum-spacing-xl: 2rem;      /* 32px */
+  --momentum-spacing-2xl: 3rem;     /* 48px */
+  --momentum-spacing-3xl: 4rem;     /* 64px */
+
+  /* ==================== BORDER RADIUS ==================== */
+  
+  --momentum-radius-xs: 0.125rem;   /* 2px */
+  --momentum-radius-sm: 0.25rem;    /* 4px */
+  --momentum-radius-md: 0.5rem;     /* 8px */
+  --momentum-radius-lg: 0.75rem;    /* 12px */
+  --momentum-radius-xl: 1rem;       /* 16px */
+  --momentum-radius-2xl: 1.5rem;    /* 24px */
+  --momentum-radius-3xl: 2rem;      /* 32px */
+  --momentum-radius-full: 9999px;   /* Full circle */
+
+  /* ==================== TYPOGRAPHY ==================== */
+  
+  /* Font Families */
+  --momentum-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --momentum-font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+  /* Font Sizes */
+  --momentum-text-xs: 0.75rem;      /* 12px */
+  --momentum-text-sm: 0.875rem;     /* 14px */
+  --momentum-text-base: 1rem;       /* 16px */
+  --momentum-text-lg: 1.125rem;     /* 18px */
+  --momentum-text-xl: 1.25rem;      /* 20px */
+  --momentum-text-2xl: 1.5rem;      /* 24px */
+  --momentum-text-3xl: 1.875rem;    /* 30px */
+  --momentum-text-4xl: 2.25rem;     /* 36px */
+
+  /* Line Heights */
+  --momentum-leading-tight: 1.25;
+  --momentum-leading-normal: 1.5;
+  --momentum-leading-relaxed: 1.625;
+
+  /* ==================== TRANSITIONS ==================== */
+  
+  --momentum-transition-fast: 0.15s ease;
+  --momentum-transition-normal: 0.2s ease;
+  --momentum-transition-slow: 0.3s ease;
+  --momentum-transition-all: all 0.2s ease;
+}
+
+/* ==================== UTILITY CLASSES ==================== */
+
+/* Background Colors */
+.bg-momentum-primary { background-color: var(--momentum-primary); }
+.bg-momentum-secondary { background-color: var(--momentum-secondary); }
+.bg-momentum-accent { background-color: var(--momentum-accent); }
+.bg-momentum-success { background-color: var(--momentum-success); }
+.bg-momentum-warning { background-color: var(--momentum-warning); }
+.bg-momentum-error { background-color: var(--momentum-error); }
+
+/* Text Colors */
+.text-momentum-primary { color: var(--momentum-primary); }
+.text-momentum-secondary { color: var(--momentum-secondary); }
+.text-momentum-accent { color: var(--momentum-accent); }
+.text-momentum-success { color: var(--momentum-success); }
+.text-momentum-warning { color: var(--momentum-warning); }
+.text-momentum-error { color: var(--momentum-error); }
+
+/* Gradient Backgrounds */
+.bg-momentum-gradient-primary { background: var(--momentum-gradient-primary); }
+.bg-momentum-gradient-login { background: var(--momentum-gradient-login); }
+.bg-momentum-gradient-avatar { background: var(--momentum-gradient-avatar); }
+
+/* Border Colors */
+.border-momentum-primary { border-color: var(--momentum-primary); }
+.border-momentum-secondary { border-color: var(--momentum-secondary); }
+.border-momentum-accent { border-color: var(--momentum-accent); }
+
+/* Shadows */
+.shadow-momentum-primary { box-shadow: var(--momentum-shadow-primary); }
+.shadow-momentum-secondary { box-shadow: var(--momentum-shadow-secondary); }
+.shadow-momentum-accent { box-shadow: var(--momentum-shadow-accent); }

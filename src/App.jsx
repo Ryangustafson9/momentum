@@ -34,13 +34,13 @@ import Reports from '@/pages/staff-portal/Reports';
 import Settings from '@/pages/staff-portal/Settings';
 import Trainers from '@/pages/staff-portal/Trainers';
 import PointOfSale from '@/pages/staff-portal/PointOfSale';
+import POSManagement from '@/pages/staff-portal/POSManagement';
 import StaffMemberProfile from '@/pages/staff-portal/MemberProfile';
 import MemberRegistration from '@/pages/staff-portal/MemberRegistration';
 
 // Admin pages
 import AdminPanelPage from '@/pages/staff-portal/AdminPanelPage';
 import SuperAdminPanel from '@/pages/staff-portal/SuperAdminPanel';
-import StaffRolesPermissionsPage from '@/pages/staff-portal/StaffRolesPermissionsPage';
 
 // Layout components
 import StaffDashboardLayout from '@/layouts/StaffDashboardLayout';
@@ -240,6 +240,7 @@ function App() {
                   <Route path="settings" element={<Settings />} />
                   <Route path="trainers" element={<Trainers />} />
                   <Route path="pos" element={<PointOfSale />} />
+                  <Route path="pos/manage" element={<POSManagement />} />
                   <Route path="member/:id" element={<StaffMemberProfile />} />
                   <Route path="register-member" element={<MemberRegistration />} />
                   <Route index element={<Navigate to="/staff-portal/dashboard" replace />} />
@@ -274,18 +275,8 @@ function App() {
                       <StaffDashboardLayout>
                         <SuperAdminPanel />
                       </StaffDashboardLayout>
-                    </PrivateRoute>
-                  } 
+                    </PrivateRoute>                  } 
                 />
-                <Route 
-                  path="/admin/roles" 
-                  element={
-                    <PrivateRoute allowedRoles={['admin']}>
-                      <StaffDashboardLayout>
-                        <StaffRolesPermissionsPage />
-                      </StaffDashboardLayout>
-                    </PrivateRoute>
-                  }                />
                 
                 {/* Legacy staff routes - redirect to new staff-portal paths */}
                 <Route 

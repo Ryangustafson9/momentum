@@ -6,8 +6,6 @@ import GeneralSettingsTab from '@/components/admin/settings/tabs/GeneralSettings
 import NotificationSettingsTab from '@/components/admin/settings/tabs/NotificationSettingsTab.jsx';
 import SecuritySettingsTab from '@/components/admin/settings/tabs/SecuritySettingsTab.jsx';
 import BillingSettingsTab from '@/components/admin/settings/tabs/BillingSettingsTab.jsx';
-import UserRolesSettingsTab from '@/components/admin/settings/tabs/UserRolesSettingsTab.jsx';
-import AdminPanelSettingsTab from '@/components/admin/settings/tabs/AdminPanelSettingsTab.jsx';
 import ReportingSettingsTab from '@/components/admin/settings/tabs/ReportingSettingsTab.jsx';
 import AppearanceSettingsTab from '@/components/admin/settings/tabs/AppearanceSettingsTab.jsx';
 import { TabsContent } from '@/components/ui/tabs';
@@ -27,22 +25,7 @@ const settingsTabsConfig = [
     label: "Notifications", 
     Icon: Bell, 
     component: <NotificationSettingsTab />,
-    description: "Configure email and app notification preferences."
-  },
-  { 
-    value: "admin_panel", 
-    label: "Admin Panel", 
-    Icon: LayoutDashboard, 
-    component: <AdminPanelSettingsTab />,
-    description: "Customize data fields and requirements for admin operations."
-  },
-  { 
-    value: "user_roles", 
-    label: "User Roles", 
-    Icon: Users, 
-    component: <UserRolesSettingsTab />,
-    description: "Define staff roles and manage their permissions."
-  },
+    description: "Configure email and app notification preferences."  },
   { 
     value: "security", 
     label: "Security", 
