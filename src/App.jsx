@@ -3,8 +3,10 @@ import { useEffect, useState, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
+import { LocationProvider } from '@/contexts/LocationContext';
 import PrivateRoute from '@/components/PrivateRoute'; // ✅ FIXED: This file exists
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary'; // ✅ FIXED: Correct path
+import { JoinOnlineRoute } from '@/components/ClubSettingsRoute.jsx';
 
 // Import pages
 import Login from '@/pages/Login';
@@ -13,15 +15,15 @@ import Dashboard from '@/pages/Dashboard';
 import NotFound from '@/pages/NotFound';
 
 // Member pages - ✅ FIXED: Updated to correct paths
-import MemberDashboard from '@/pages/member-portal/MemberDashboard';
+import MemberDashboard from '@/pages/member-portal/Dashboard';
 import MemberProfilePage from '@/pages/member-portal/MemberProfilePage';
-import MemberClasses from '@/pages/member-portal/MemberClasses';
-import MemberBilling from '@/pages/member-portal/MemberBilling';
+import MemberClassesPage from '@/pages/member-portal/MemberClasses';
+import MemberBillingPage from '@/pages/member-portal/MemberBilling';
 import AdvancedFeatures from '@/pages/member-portal/AdvancedFeatures';
 
 // Staff pages - Updated to correct staff-portal paths
 import StaffDashboard from '@/pages/staff-portal/Dashboard';
-import Members from '@/pages/staff-portal/Members';
+// import Members from '@/pages/staff-portal/Members'; // DEACTIVATED: Member search available in navbar
 import Classes from '@/pages/staff-portal/Classes';
 import CheckIn from '@/pages/staff-portal/CheckIn';
 import Memberships from '@/pages/staff-portal/Memberships';
@@ -40,10 +42,10 @@ import MemberRegistration from '@/pages/staff-portal/MemberRegistration';
 
 // Admin pages
 import AdminPanelPage from '@/pages/staff-portal/AdminPanelPage';
-import SuperAdminPanel from '@/pages/staff-portal/SuperAdminPanel';
 
 // Layout components
 import StaffDashboardLayout from '@/layouts/StaffDashboardLayout';
+import MemberDashboardLayout from '@/layouts/MemberDashboardLayout';
 
 // Public pages
 import JoinOnline from '@/pages/joinOnline';
@@ -116,65 +118,52 @@ function App() {
       </div>
     );
   }
+  logger.info('✅ App loading complete, rendering main app...');
 
-  logger.info('✅ App loading complete, rendering main app...');  return (
+  return (
     <ErrorBoundary>
       <NotificationProvider>
-        <div className="App min-h-screen bg-gray-50">
-          <Suspense fallback={<SuspenseFallback />}>
-            <Routes>
+        <LocationProvider>
+          <div className="App min-h-screen bg-gray-50">
+            <Suspense fallback={<SuspenseFallback />}>
+              <Routes>
               {/* Public routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
-              <Route path="/dashboard" element={<Dashboard />} />              <Route path="/join-online" element={<JoinOnline />} />
-              <Route path="/join-online/customize" element={<JoinOnlineCustomize />} />
-              <Route path="/join-online/checkout" element={<JoinOnlineCheckout />} />
-              <Route path="/nonmember-prompt" element={<NonmemberPrompt />} />                {/* Member routes */}
-                <Route 
-                  path="/member-portal/dashboard" 
+              <Route path="/dashboard" element={<Dashboard />} />              <Route path="/join-online" element={
+                <JoinOnlineRoute>
+                  <JoinOnline />
+                </JoinOnlineRoute>
+              } />
+              <Route path="/join-online/customize" element={
+                <JoinOnlineRoute>
+                  <JoinOnlineCustomize />
+                </JoinOnlineRoute>
+              } />
+              <Route path="/join-online/checkout" element={
+                <JoinOnlineRoute>
+                  <JoinOnlineCheckout />
+                </JoinOnlineRoute>
+              } />
+              <Route path="/nonmember-prompt" element={<NonmemberPrompt />} />                {/* Member routes - using proper nested routing with Outlet */}
+                <Route
+                  path="/member-portal"
                   element={
                     <PrivateRoute allowedRoles={['member', 'staff', 'admin']}>
-                      <MemberDashboard />
+                      <MemberDashboardLayout />
                     </PrivateRoute>
-                  } 
-                />
-                <Route 
-                  path="/member-portal/profile" 
-                  element={
-                    <PrivateRoute allowedRoles={['member', 'staff', 'admin']}>
-                      <MemberProfilePage />
-                    </PrivateRoute>
-                  } 
-                />
-                <Route 
-                  path="/member-portal/classes" 
-                  element={
-                    <PrivateRoute allowedRoles={['member', 'staff', 'admin']}>
-                      <MemberClasses />
-                    </PrivateRoute>
-                  } 
-                />
-                <Route 
-                  path="/member-portal/billing" 
-                  element={
-                    <PrivateRoute allowedRoles={['member', 'staff', 'admin']}>
-                      <MemberBilling />
-                    </PrivateRoute>
-                  } 
-                />
-                <Route 
-                  path="/member-portal/advanced" 
-                  element={
-                    <PrivateRoute allowedRoles={['member', 'staff', 'admin']}>
-                      <AdvancedFeatures />
-                    </PrivateRoute>
-                  } 
-                />
-                <Route 
+                  }
+                >                  <Route path="dashboard" element={<MemberDashboard />} />
+                  <Route path="profile" element={<MemberProfilePage />} />
+                  <Route path="classes" element={<MemberClassesPage />} />
+                  <Route path="billing" element={<MemberBillingPage />} />
+                  <Route path="advanced" element={<AdvancedFeatures />} />
+                  <Route index element={<Navigate to="/member-portal/dashboard" replace />} />
+                </Route>                <Route 
                   path="/member-portal/attendance" 
                   element={
                     <PrivateRoute allowedRoles={['member', 'staff', 'admin']}>
-                      <MemberClasses />
+                      <MemberClassesPage />
                     </PrivateRoute>
                   } 
                 />
@@ -225,9 +214,8 @@ function App() {
                       <StaffDashboardLayout />
                     </PrivateRoute>
                   }
-                >
-                  <Route path="dashboard" element={<StaffDashboard />} />
-                  <Route path="members" element={<Members />} />
+                >                  <Route path="dashboard" element={<StaffDashboard />} />
+                  {/* <Route path="members" element={<Members />} /> */} {/* DEACTIVATED: Member search available in navbar */}
                   <Route path="classes" element={<Classes />} />
                   <Route path="checkin" element={<CheckIn />} />
                   <Route path="memberships" element={<Memberships />} />
@@ -267,15 +255,9 @@ function App() {
                       </StaffDashboardLayout>
                     </PrivateRoute>
                   }
-                />
-                <Route 
+                />                <Route 
                   path="/admin/super-admin" 
-                  element={
-                    <PrivateRoute allowedRoles={['admin']}>
-                      <StaffDashboardLayout>
-                        <SuperAdminPanel />
-                      </StaffDashboardLayout>
-                    </PrivateRoute>                  } 
+                  element={<Navigate to="/staff-portal/settings/admin-panel" replace />}
                 />
                 
                 {/* Legacy staff routes - redirect to new staff-portal paths */}
@@ -314,9 +296,10 @@ function App() {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>              {/* ⭐ NEW: Mobile enhancements - Temporarily disabled due to hook issues */}
-            {/* <MobileBottomNavigation /> */}
-            {/* <PWAInstallPrompt /> */}
-          </div>
+              {/* <MobileBottomNavigation /> */}
+              {/* <PWAInstallPrompt /> */}
+            </div>
+          </LocationProvider>
         </NotificationProvider>
     </ErrorBoundary>
   );

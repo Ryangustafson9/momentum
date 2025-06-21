@@ -13,12 +13,15 @@ import AssignPlanDialog from '@/components/member/AssignPlanDialog';
 // Member Profile Service Functions
 const memberProfileService = {
   async getMemberProfile(userId) {
-    try {
-      const { data, error } = await supabase
+    try {      const { data, error } = await supabase
         .from('profiles')
         .select(`
           *,
-          membership_types(name, category)
+          memberships(
+            id,
+            status,
+            membership_types(name, category)
+          )
         `)
         .eq('id', userId)
         .single();
@@ -237,14 +240,13 @@ const MemberProfilePage = () => {
               Membership
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <div>
+          <CardContent className="space-y-2">            <div>
               <p className="text-sm font-medium text-muted-foreground">Current Plan</p>
-              <p>{memberData.membership_types?.name || 'No active membership'}</p>
+              <p>{memberData.memberships?.[0]?.membership_types?.name || 'No active membership'}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Category</p>
-              <p>{memberData.membership_types?.category || 'N/A'}</p>
+              <p>{memberData.memberships?.[0]?.membership_types?.category || 'N/A'}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Member Since</p>

@@ -82,18 +82,25 @@ const SortableStatCard = ({ cardConfig, value, trend, navigateTo, description, b
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <StatCard
-        cardConfig={cardConfig}
-        value={value}
-        trend={trend}
-        navigateTo={navigateTo}
-        description={description}
-        badgeCount={badgeCount}
-        isEditMode={isEditMode}
-        onRemoveCard={onRemoveCard}
-        isDragging={isDragging}
-      />
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      className={isDragging ? 'z-50' : ''}
+    >
+      <div {...listeners} className={isEditMode ? 'cursor-grab active:cursor-grabbing' : ''}>
+        <StatCard
+          cardConfig={cardConfig}
+          value={value}
+          trend={trend}
+          navigateTo={navigateTo}
+          description={description}
+          badgeCount={badgeCount}
+          isEditMode={isEditMode}
+          onRemoveCard={onRemoveCard}
+          isDragging={isDragging}
+        />
+      </div>
     </div>
   );
 };
@@ -173,9 +180,13 @@ const StaffHomepage = () => {
   const { withLoading, isLoading } = useLoading();
   const { handleAsyncOperation } = useErrorHandler();
 
-  // Drag and drop sensors
+  // Drag and drop sensors with better configuration
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px movement before drag starts
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -336,6 +347,30 @@ const StaffHomepage = () => {
       {isLoadingDashboard && (
         <div className="text-center py-2">
           <div className="text-sm text-gray-500">Loading dashboard data...</div>
+        </div>
+      )}
+
+      {/* Edit Mode Indicator */}
+      {isEditMode && (
+        <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-blue-700">
+                Dashboard Edit Mode
+              </p>
+              <p className="text-xs text-blue-600">
+                Drag cards to reorder them or click the × to remove them
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditMode(false)}
+              className="text-blue-700 border-blue-300 hover:bg-blue-100"
+            >
+              Done
+            </Button>
+          </div>
         </div>
       )}
 

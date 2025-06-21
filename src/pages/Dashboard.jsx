@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Users,
   MapPin,
@@ -17,11 +17,22 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useClubFeature } from '@/components/ClubSettingsRoute.jsx';
 
 const Dashboard = () => {
   const { user, authReady, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [clubInfo, setClubInfo] = useState(null);
+
+  // Check if user was redirected from a disabled feature
+  const redirectState = location.state;
+  const isFeatureDisabled = redirectState?.reason === 'feature_disabled';
+  const disabledFeatureMessage = redirectState?.message;
+  const contactInfo = redirectState?.contactInfo;
+
+  // Check if online joining is enabled
+  const { loading: joiningLoading, isEnabled: joiningEnabled } = useClubFeature('joining');
 
   const handleLogout = async () => {
     try {
@@ -163,6 +174,40 @@ const Dashboard = () => {
         </div>
       </header>
 
+      {/* Feature Disabled Notification */}
+      {isFeatureDisabled && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="bg-amber-50 border-l-4 border-amber-400 p-4 mx-4 mt-4 rounded-r-lg"
+        >
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-amber-800">
+                Feature Currently Unavailable
+              </h3>
+              <div className="mt-2 text-sm text-amber-700">
+                <p>{disabledFeatureMessage}</p>
+                {contactInfo && (
+                  <div className="mt-3 space-y-1">
+                    <p className="font-medium">Contact us:</p>
+                    <p>📞 {contactInfo.phone}</p>
+                    <p>✉️ {contactInfo.email}</p>
+                    <p>🕒 {contactInfo.hours}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         <motion.div
@@ -267,16 +312,31 @@ const Dashboard = () => {
                     user.role === 'nonmember' ? (
                       <>
                         <p className="mb-4 text-blue-100">
-                          Ready to take your fitness to the next level? Choose from our flexible membership plans and start your journey today!
+                          {joiningEnabled
+                            ? "Ready to take your fitness to the next level? Choose from our flexible membership plans and start your journey today!"
+                            : "Ready to take your fitness to the next level? Contact us to learn about our membership options and start your journey today!"
+                          }
                         </p>
-                        <Button
-                          onClick={() => navigate('/join-online')}
-                          className="w-full bg-white text-blue-600 hover:bg-blue-50 font-semibold flex items-center justify-center gap-2"
-                        >
-                          <CreditCard className="h-4 w-4" />
-                          View Membership Plans
-                          <ArrowRight className="h-4 w-4" />
-                        </Button>
+                        {joiningEnabled ? (
+                          <Button
+                            onClick={() => navigate('/join-online')}
+                            className="w-full bg-white text-blue-600 hover:bg-blue-50 font-semibold flex items-center justify-center gap-2"
+                          >
+                            <CreditCard className="h-4 w-4" />
+                            View Membership Plans
+                            <ArrowRight className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <div className="space-y-2">
+                            <p className="text-sm text-blue-200">
+                              Contact us to get started:
+                            </p>
+                            <div className="text-sm text-blue-100 space-y-1">
+                              <p>📞 (555) 123-4567</p>
+                              <p>✉️ info@nordicfitness.com</p>
+                            </div>
+                          </div>
+                        )}
                       </>
                     ) : (
                       <>

@@ -11,6 +11,7 @@ import { CheckCircle, AlertCircle } from 'lucide-react';
 import { getGymLogo, getGymName, getGymColors } from '@/utils/gymBranding';
 import { supabase } from '@/lib/supabaseClient';
 import { capitalizeName, calculatePasswordStrength } from '@/utils/formHelpers.js';
+import { isOnlineJoiningAllowed, clubSettingsUtils } from '@/services/clubSettingsService';
 import { normalizeRole, getDefaultRoute } from '@/utils/roleUtils.js';
 
 const Signup = () => {
@@ -52,6 +53,8 @@ const Signup = () => {
   const [momentumLogoError, setMomentumLogoError] = useState(false);
   const [passwordsMatch, setPasswordsMatch] = useState(null);
   const [duplicateEmailError, setDuplicateEmailError] = useState(false);
+  const [allowOnlineJoining, setAllowOnlineJoining] = useState(true);
+  const [clubSettingsLoading, setClubSettingsLoading] = useState(true);
 
   // Get loading state and user from useAuth hook
   const { signup, loading, user } = useAuth(); // Use signup instead of register
@@ -290,7 +293,26 @@ const Signup = () => {
     }
   };
 
-  // ⭐ REMOVED: Auto-clear URL params - let user control when to leave success page  // Add this useEffect to handle authenticated users
+  // ⭐ REMOVED: Auto-clear URL params - let user control when to leave success page  // Load club settings on component mount
+  useEffect(() => {
+    const loadClubSettings = async () => {
+      try {
+        setClubSettingsLoading(true);
+        const joiningAllowed = await isOnlineJoiningAllowed();
+        setAllowOnlineJoining(joiningAllowed);
+      } catch (error) {
+        console.error('Failed to load club settings:', error);
+        // Default to allowing online joining if settings can't be loaded
+        setAllowOnlineJoining(true);
+      } finally {
+        setClubSettingsLoading(false);
+      }
+    };
+
+    loadClubSettings();
+  }, []);
+
+  // Add this useEffect to handle authenticated users
   useEffect(() => {
     // Only redirect if user is authenticated, we're not showing success,
     // and we're not in the middle of a signup flow
@@ -399,38 +421,46 @@ const Signup = () => {
               <h2 className="text-xl font-semibold text-gray-900 mb-3">
                 Ready to start your fitness journey?
               </h2>
-              <p className="text-gray-700 mb-4">
-                Would you like to sign up for a membership and unlock full access to our facilities?
-              </p>
+              {allowOnlineJoining ? (
+                <p className="text-gray-700 mb-4">
+                  Would you like to sign up for a membership and unlock full access to our facilities?
+                </p>
+              ) : (
+                <p className="text-gray-700 mb-4">
+                  Contact {getGymName()} at <strong>(555) 123-4567</strong> or <strong>info@nordicfitness.com</strong> to set up your membership and unlock full access to our facilities.
+                </p>
+              )}
             </div>
 
             <div className="space-y-3 w-full">
-              <Button 
-                onClick={async () => {
-                  console.log('🔍 Membership button clicked');
-                  console.log('🔍 Current user state:', user);
-                  
-                  // If user is null, wait a bit for auth to update
-                  if (!user) {
-                    console.log('🔄 User is null, waiting for auth state...');
-                    
-                    // Wait up to 3 seconds for user state to update
-                    let attempts = 0;
-                    while (!user && attempts < 6) {
-                      await new Promise(resolve => setTimeout(resolve, 500));
-                      attempts++;
-                      console.log(`🔄 Waiting attempt ${attempts}, user:`, user);
+              {allowOnlineJoining && (
+                <Button
+                  onClick={async () => {
+                    console.log('🔍 Membership button clicked');
+                    console.log('🔍 Current user state:', user);
+
+                    // If user is null, wait a bit for auth to update
+                    if (!user) {
+                      console.log('🔄 User is null, waiting for auth state...');
+
+                      // Wait up to 3 seconds for user state to update
+                      let attempts = 0;
+                      while (!user && attempts < 6) {
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        attempts++;
+                        console.log(`🔄 Waiting attempt ${attempts}, user:`, user);
+                      }
                     }
-                  }
-                  
-                  // Navigate regardless (JoinOnline will handle auth)
-                  navigate('/join-online');
-                }}
-                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-lg font-semibold"
-                size="lg"
-              >
-                Yes, Sign Up for Membership
-              </Button>
+
+                    // Navigate regardless (JoinOnline will handle auth)
+                    navigate('/join-online');
+                  }}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-lg font-semibold"
+                  size="lg"
+                >
+                  Yes, Sign Up for Membership
+                </Button>
+              )}
               
               <Button
                 variant="outline"
@@ -453,8 +483,12 @@ const Signup = () => {
                 className="w-full py-3 text-lg"
                 size="lg"
               >
-                {user?.role === 'admin' || user?.role === 'staff' ? 'Go to Staff Dashboard' :
-                 user?.role === 'member' ? 'Go to Member Dashboard' : 'Go to Profile'}
+                {allowOnlineJoining ? (
+                  user?.role === 'admin' || user?.role === 'staff' ? 'Go to Staff Dashboard' :
+                  user?.role === 'member' ? 'Go to Member Dashboard' : 'Go to Profile'
+                ) : (
+                  'Go to Dashboard'
+                )}
               </Button>
             </div>
           </div>        ) : (          /* FORM STATE */

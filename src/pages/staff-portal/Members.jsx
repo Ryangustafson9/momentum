@@ -1,3 +1,18 @@
+/**
+ * 🚫 DEACTIVATED PAGE - Members.jsx
+ * 
+ * This page has been temporarily deactivated in favor of:
+ * - Basic member search in top navbar
+ * - Advanced search modal (planned feature)
+ * - Individual member profiles via direct navigation
+ * 
+ * The page code is preserved for potential future reactivation.
+ * To reactivate:
+ * 1. Uncomment the route in App.jsx 
+ * 2. Uncomment the nav link in adminNavLinks.js
+ * 3. Remove this deactivation note
+ */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';

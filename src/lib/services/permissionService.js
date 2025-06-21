@@ -395,6 +395,7 @@ export const getAllStaffRoles = async () => {
       .order('name');
 
     console.log('📊 Staff plans query result:', { staffPlans, plansError });
+    console.log('📋 Raw staff plans data:', staffPlans);
 
     if (plansError) {
       console.warn('❌ Error fetching staff plans:', plansError);
@@ -409,6 +410,9 @@ export const getAllStaffRoles = async () => {
       console.log('🔗 Processing staff plans:', staffPlans);
       staffPlans.forEach(plan => {
         console.log('🔍 Processing plan:', plan);
+        console.log('🔍 Plan role_id:', plan.role_id);
+        console.log('🔍 Plan staff_roles:', plan.staff_roles);
+        
         if (plan.staff_roles) {
           console.log('✅ Plan has associated role:', plan.staff_roles);
           // Check if this role is already in our list
@@ -433,7 +437,7 @@ export const getAllStaffRoles = async () => {
             console.log('🔄 Updated existing role:', existingRole);
           }
         } else {
-          console.log('❌ Plan has no associated role:', plan);
+          console.log('❌ Plan has no associated role_id or staff_roles relation. Plan role_id:', plan.role_id);
           // Create a temporary role for staff plans without role_id
           const tempRole = {
             id: `temp_${plan.id}`,
@@ -455,6 +459,7 @@ export const getAllStaffRoles = async () => {
     }
 
     console.log('🎯 Final combined roles:', allRoles);
+    console.log('🎯 Staff plans in final roles:', allRoles.filter(role => role.is_staff_plan));
     return allRoles;
   } catch (error) {
     console.error('Error fetching staff roles:', error);

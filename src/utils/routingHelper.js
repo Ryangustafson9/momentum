@@ -14,14 +14,14 @@ export const getDashboardRoute = (user) => {
   const role = normalizeRole(user.role);
     switch (role) {
     case 'admin':
-      console.log('🔍 Routing admin to /staff/dashboard');
-      return '/staff/dashboard';
+      console.log('🔍 Routing admin to /staff-portal/dashboard');
+      return '/staff-portal/dashboard';
     case 'staff':
-      console.log('🔍 Routing staff to /staff/dashboard');
-      return '/staff/dashboard';
+      console.log('🔍 Routing staff to /staff-portal/dashboard');
+      return '/staff-portal/dashboard';
     case 'member':
-      console.log('🔍 Routing member to /member-portal/memberdashboard');
-      return '/member-portal/memberdashboard';
+      console.log('🔍 Routing member to /member-portal/dashboard');
+      return '/member-portal/dashboard';
     case 'nonmember':
       console.log('🔍 Routing nonmember to /dashboard');
       return '/dashboard';
@@ -109,18 +109,18 @@ export const getRedirectRoute = (user, currentRoute) => {
  */
 export const roleRouteConfig = {
   admin: {
-    dashboard: '/staff/dashboard',
-    defaultRedirect: '/staff/dashboard',
+    dashboard: '/staff-portal/dashboard',
+    defaultRedirect: '/staff-portal/dashboard',
     allowedRoles: ['admin'],
   },
   staff: {
-    dashboard: '/staff/dashboard',
-    defaultRedirect: '/staff/dashboard',
+    dashboard: '/staff-portal/dashboard',
+    defaultRedirect: '/staff-portal/dashboard',
     allowedRoles: ['staff', 'admin'],
   },
   member: {
-    dashboard: '/member-portal/memberdashboard',
-    defaultRedirect: '/member-portal/memberdashboard',
+    dashboard: '/member-portal/dashboard',
+    defaultRedirect: '/member-portal/dashboard',
     allowedRoles: ['member', 'staff', 'admin'],
   },
 };
@@ -147,10 +147,10 @@ export const getNavigationItems = (user) => {
       { path: '/staff-portal/reports', label: 'Reports', icon: 'BarChart' },
     ],
     member: [
-      { path: '/member/memberdashboard', label: 'Dashboard', icon: 'Home' },
-      { path: '/member/classes', label: 'My Classes', icon: 'Calendar' },
-      { path: '/member/profile', label: 'Profile', icon: 'User' },
-      { path: '/member/billing', label: 'Billing', icon: 'CreditCard' },
+      { path: '/member-portal/dashboard', label: 'Dashboard', icon: 'Home' },
+      { path: '/member-portal/classes', label: 'My Classes', icon: 'Calendar' },
+      { path: '/member-portal/profile', label: 'Profile', icon: 'User' },
+      { path: '/member-portal/billing', label: 'Billing', icon: 'CreditCard' },
     ],
   };
 

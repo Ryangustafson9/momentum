@@ -1,127 +1,496 @@
 
-import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Home,
+  Calendar,
+  History,
+  CreditCard,
+  User,
+  Settings,
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+  Edit3,
+  Dumbbell,
+  Star,
+  Users,
+  GripVertical
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
-const MemberSidebar = () => {
+// Member navigation links
+const memberNavLinks = [
+  { to: '/member-portal/dashboard', label: 'Dashboard', icon: 'Home' },
+  { to: '/member-portal/classes', label: 'My Classes', icon: 'Calendar' },
+  { to: '/member-portal/profile', label: 'Profile', icon: 'User' },
+  { to: '/member-portal/billing', label: 'Billing', icon: 'CreditCard' },
+  { to: '/member-portal/advanced', label: 'Advanced Features', icon: 'Star' },
+];
+
+// Icon mapping for safe rendering
+const iconMap = {
+  Home,
+  Calendar,
+  History,
+  CreditCard,
+  User,
+  Settings,
+  LogOut,
+  Edit3,
+  Dumbbell,
+  Star,
+  Users,
+  GripVertical
+};
+
+// Safe icon renderer using iconMap
+const renderIcon = (iconName, className = "h-4 w-4") => {
+  const IconComponent = iconMap[iconName];
+
+  if (IconComponent) {
+    return <IconComponent className={className} />;
+  }
+
+  // Fallback for unknown icons
+  return <div className={`${className} bg-gray-400 rounded`} />;
+};
+
+// Sortable wrapper for nav links
+const SortableMemberNavLink = ({ link, currentPath, isExpanded, location, isEditMode }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: link.to });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className={isDragging ? 'z-50' : ''}>
+      <div 
+        className="relative group"
+        {...attributes}
+        {...listeners}
+      >
+        {isEditMode && (
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <GripVertical className="h-4 w-4 text-gray-400" />
+          </div>
+        )}
+        <MemberSidebarNavLink
+          to={link.to}
+          label={link.label}
+          icon={link.icon}
+          currentPath={currentPath}
+          isExpanded={isExpanded}
+          location={location}
+          isEditMode={isEditMode}
+        />
+      </div>
+    </div>
+  );
+};
+
+const MemberSidebarNavLink = ({ to, label, icon, currentPath, isExpanded, location, isEditMode }) => {
+  // More precise active state logic to avoid false matches
+  const isActive = currentPath === to ||
+    (to !== "/" && (currentPath.startsWith(to + "/") || currentPath === to));
+
+  // If in edit mode, render as a div instead of NavLink to disable navigation
+  if (isEditMode) {
+    return (
+      <div
+        className={cn(
+          "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out",
+          "cursor-grab active:cursor-grabbing select-none",
+          isActive ? "bg-indigo-50 text-indigo-700 shadow-sm" : "text-gray-600",
+          !isExpanded && "justify-center"
+        )}
+        title={isExpanded ? "" : label}
+      >
+        {renderIcon(icon, cn("h-5 w-5", isExpanded ? "mr-3" : "mr-0"))}
+        {isExpanded && <span>{label}</span>}
+        {!isExpanded && <span className="sr-only">{label}</span>}
+      </div>
+    );
+  }
+
+  return (
+    <NavLink
+      to={to}
+      className={({ isActive: navIsActive }) =>
+        cn(
+          "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out",
+          "hover:bg-indigo-50 hover:text-indigo-700",
+          (isActive || navIsActive) ? "bg-indigo-50 text-indigo-700 shadow-sm" : "text-gray-600",
+          !isExpanded && "justify-center"
+        )
+      }
+      title={isExpanded ? "" : label}
+    >
+      {renderIcon(icon, cn("h-5 w-5", isExpanded ? "mr-3" : "mr-0"))}
+      {isExpanded && <span>{label}</span>}
+      {!isExpanded && <span className="sr-only">{label}</span>}
+    </NavLink>
+  );
+};
+
+const MemberSidebar = ({ isExpanded, toggleSidebar, onLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const currentPath = location.pathname;
 
-  const navigationItems = [
-    { 
-      name: 'Dashboard', 
-      href: '/member/dashboard',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-        </svg>
-      )
-    },
-    { 
-      name: 'Profile', 
-      href: '/member/profile',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-      )
-    },
-    { 
-      name: 'Classes', 
-      href: '/member/classes',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-      )
-    },
-    { 
-      name: 'Billing', 
-      href: '/member/billing',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-        </svg>
-      )
-    },
-  ];
+  // Initialize sidebar state from localStorage or default to true
+  const [sidebarExpanded, setSidebarExpanded] = useState(() => {
+    if (isExpanded !== undefined) return isExpanded;
+    const stored = localStorage.getItem('memberSidebarExpanded');
+    return stored ? JSON.parse(stored) : true;
+  });
 
-  const handleSignOut = async () => {
-    try {
-      await logout();
-      navigate('/login');
-    } catch (error) {
-      console.error('Sign out error:', error);
+  // Sidebar organization state
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [orderedNavLinks, setOrderedNavLinks] = useState(() => {
+    const saved = localStorage.getItem('memberSidebarOrder');
+    return saved ? JSON.parse(saved) : memberNavLinks;
+  });
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Save order to localStorage
+  useEffect(() => {
+    localStorage.setItem('memberSidebarOrder', JSON.stringify(orderedNavLinks));
+  }, [orderedNavLinks]);
+
+  // Use prop if provided, otherwise use internal state
+  const actualIsExpanded = isExpanded !== undefined ? isExpanded : sidebarExpanded;
+  // Save to localStorage when state changes
+  useEffect(() => {
+    if (isExpanded === undefined) {
+      localStorage.setItem('memberSidebarExpanded', JSON.stringify(sidebarExpanded));
+    }
+  }, [sidebarExpanded, isExpanded]);
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      setOrderedNavLinks((items) => {
+        const oldIndex = items.findIndex(item => item.to === active.id);
+        const newIndex = items.findIndex(item => item.to === over.id);
+        const newOrder = arrayMove(items, oldIndex, newIndex);
+
+        // Show success toast
+        toast({
+          title: "Sidebar Updated",
+          description: "Navigation items have been reordered successfully.",
+          duration: 2000,
+        });
+
+        return newOrder;
+      });
+    }
+  };
+
+  const handleToggle = () => {
+    if (toggleSidebar) {
+      toggleSidebar();
+    } else {
+      setSidebarExpanded(!sidebarExpanded);
+    }
+  };
+
+  // Get user display information
+  const getInitials = () => {
+    if (user?.first_name && user?.last_name) {
+      return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase();
+    }
+    if (user?.email) {
+      return user.email[0].toUpperCase();
+    }
+    return 'M';
+  };
+
+  const getDisplayName = () => {
+    if (user?.first_name && user?.last_name) {
+      return `${user.first_name} ${user.last_name}`;
+    }
+    if (user?.email) {
+      return user.email.split('@')[0];
+    }
+    return 'Member';
+  };
+
+  const handleSettingsNavigation = () => {
+    navigate('/member-portal/profile');
+  };
+
+  const handleLogout = async () => {
+    if (onLogout) {
+      onLogout();
+    } else {
+      try {
+        const { logout } = useAuth();
+        await logout();
+        navigate('/login');
+      } catch (error) {
+        console.error('Sign out error:', error);
+      }
     }
   };
 
   return (
-    <div className="w-64 bg-white shadow-lg border-r border-gray-200 min-h-screen">
-      <div className="p-6">
-        {/* Logo/Brand */}
-        <div className="mb-8 flex items-center justify-center">
-          <img
-            src="/assets/momentum-logo.svg"
-            alt="Momentum Gym"
-            className="w-24 h-16 object-contain"
-          />
-        </div>
+    <aside className={cn(
+      "fixed inset-y-0 left-0 z-40 flex flex-col bg-white border-r border-gray-200 transition-all duration-300 ease-in-out shadow-xl print:hidden",
+      actualIsExpanded ? "w-64" : "w-20"
+    )}>
+      {/* Sidebar Toggle Tab - Blended seamlessly into sidebar */}
+      <div
+        className="absolute top-20 -right-6 w-6 h-16 z-50 hidden lg:flex items-center justify-center bg-white
+          border-t border-b border-r border-gray-200 transition-colors duration-300 rounded-r-full"
+      >
+        <button
+          onClick={handleToggle}
+          title={actualIsExpanded ? "Collapse sidebar" : "Expand sidebar"}
+          className="w-full h-full flex items-center justify-center text-gray-500 hover:text-indigo-600 transition-colors duration-300"
+          style={{
+            borderRadius: '0 9999px 9999px 0', // fully round right side
+          }}
+        >
+          {actualIsExpanded ? (
+            <ChevronLeft className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+        </button>
+      </div>
 
-        {/* User Info */}
-        <div className="mb-8 p-4 bg-gray-50 rounded-lg">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-md">
-              <span className="text-white font-semibold text-lg">
-                {user?.first_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
-              </span>
+      {/* Header with Logo/Avatar */}
+      <div className={`relative flex items-center justify-between h-16 px-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50 ${!actualIsExpanded ? 'px-2' : ''}`}>
+        <AnimatePresence mode="wait">
+          {actualIsExpanded ? (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex items-center justify-center w-full"
+            >
+              <img
+                src="/assets/momentum-logo.svg"
+                alt="Momentum Gym"
+                className="w-32 h-24 object-contain"
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="flex items-center justify-center w-full"
+            >
+              <Avatar className="h-10 w-10">
+                <AvatarImage
+                  src={user?.profile_picture_url || user?.avatar_url || `/assets/momentum-avatar.svg`}
+                  alt={getDisplayName()}
+                  className="object-contain p-1"
+                />
+                <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-medium text-xs">
+                  {getInitials()}
+                </AvatarFallback>
+              </Avatar>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>      {/* Navigation */}
+      <nav className="flex-grow px-3 py-4 overflow-y-auto bg-white">
+        {isEditMode ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={orderedNavLinks.map(link => link.to)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-1">
+                {orderedNavLinks.map((link) => (
+                  <SortableMemberNavLink
+                    key={link.to}
+                    link={link}
+                    currentPath={currentPath}
+                    isExpanded={actualIsExpanded}
+                    location={location}
+                    isEditMode={isEditMode}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        ) : (
+          <div className="space-y-1">
+            {orderedNavLinks.map((link) => (
+              <MemberSidebarNavLink
+                key={link.to}
+                to={link.to}
+                label={link.label}
+                icon={link.icon}
+                currentPath={currentPath}
+                isExpanded={actualIsExpanded}
+                location={location}
+                isEditMode={isEditMode}
+              />
+            ))}
+          </div>
+        )}      </nav>
+
+      {/* Edit Sidebar Button and Controls */}
+      {actualIsExpanded && (
+        <div className="p-2 justify-start">
+          {isEditMode ? (
+            <div className="space-y-2">
+              {/* Edit controls panel */}
+              <div className="p-2 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-blue-700 font-medium">
+                    Organize Sidebar
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setOrderedNavLinks(memberNavLinks);
+                        localStorage.removeItem('memberSidebarOrder');
+                      }}
+                      className="text-xs text-blue-600 hover:text-blue-700 h-auto p-1"
+                    >
+                      Reset
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditMode(false)}
+                      className="text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors duration-200 font-medium h-auto p-1"
+                      title="Save changes"
+                    >
+                      Save
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-xs text-blue-600">
+                  Drag items to reorder your navigation
+                </p>
+              </div>
+              {/* Pencil button below the edit controls - left justified */}
+              <div className="flex justify-start">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsEditMode(false)}
+                  className="text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors duration-300 opacity-70 hover:opacity-90"
+                  title="Cancel edits"
+                >
+                  {renderIcon("Edit3", "h-4 w-4")}
+                </Button>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-gray-900 truncate">
-                {user?.first_name && user?.last_name 
-                  ? `${user.first_name} ${user.last_name}`
-                  : user?.email?.split('@')[0] || 'Member'
-                }
-              </p>
-              <p className="text-sm text-gray-500">Member</p>
+          ) : (
+            <div className="flex items-center justify-start">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditMode(!isEditMode)}
+                className="text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors duration-300 opacity-70 hover:opacity-90"
+                title="Organize sidebar"
+              >
+                {renderIcon("Edit3", "h-4 w-4")}
+              </Button>
             </div>
+          )}
+        </div>
+      )}
+
+      {/* Bottom Section */}
+      <div className="bg-gray-50/50 border-t border-b border-gray-200">
+        {/* Settings and Sign Out - Horizontal */}
+        <div className="p-3">
+          <div className={cn("flex items-center gap-2", actualIsExpanded ? "justify-between" : "flex-col space-y-2")}>
+            {/* Sign Out Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className={cn(
+                "text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors duration-200",
+                actualIsExpanded ? "flex items-center" : "w-full p-2"
+              )}
+              title="Sign Out"
+            >
+              {renderIcon("LogOut", cn("h-4 w-4", actualIsExpanded ? "mr-2" : ""))}
+              {actualIsExpanded && <span className="text-sm">Sign Out</span>}
+            </Button>
+
+            {/* Settings Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSettingsNavigation}
+              className={cn(
+                "text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 transition-colors duration-200",
+                actualIsExpanded ? "flex items-center" : "w-full p-2"
+              )}
+              title="Settings"
+            >
+              {renderIcon("Settings", cn("h-4 w-4", actualIsExpanded ? "mr-2" : ""))}
+              {actualIsExpanded && <span className="text-sm">Settings</span>}
+            </Button>
           </div>
         </div>
-
-        {/* Navigation */}
-        <nav className="space-y-2">
-          {navigationItems.map((item) => {
-            const isActive = location.pathname === item.href;
-            
-            return (
-              <button
-                key={item.name}
-                onClick={() => navigate(item.href)}
-                className={`sidebar-nav-item ${
-                  isActive ? 'sidebar-nav-item-active' : 'sidebar-nav-item-inactive'
-                }`}
-              >
-                <span className="mr-3">{item.icon}</span>
-                {item.name}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Sign Out */}
-        <div className="mt-8 pt-8 border-t border-gray-200">
-          <button
-            onClick={handleSignOut}
-            className="sidebar-nav-item text-red-600 hover:bg-red-50 hover:text-red-700"
-          >
-            <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Sign Out
-          </button>
-        </div>
       </div>
-    </div>
+    </aside>
   );
 };
 

@@ -2,7 +2,7 @@ import React, { Suspense } from 'react';
 import { Navigate } from 'react-router-dom';
 
 // ⭐ DIRECT: Member components (updated folder structure)
-import MemberDashboard from '@/pages/member-portal/MemberDashboard.jsx';
+import MemberDashboard from '@/pages/member-portal/Dashboard.jsx';
 import MemberProfilePage from '@/pages/member-portal/MemberProfilePage.jsx';
 import MemberClassesPage from '@/pages/member-portal/MemberClasses.jsx';
 import MemberBillingPage from '@/pages/member-portal/MemberBilling.jsx';
@@ -27,7 +27,7 @@ const MemberLazyWrapper = ({ Component }) => (
 
 export const memberRoutes = [
   {
-    path: 'memberdashboard',
+    path: 'dashboard',
     element: <MemberDashboard />,
     title: 'Member Dashboard',
     description: 'Member dashboard with personal overview and quick actions',
@@ -65,7 +65,7 @@ export const memberRoutes = [
   },
   {
     path: '*',
-    element: <Navigate to="/member-portal/memberdashboard" replace />,
+    element: <Navigate to="/member-portal/dashboard" replace />,
     title: 'Redirect',
     description: 'Redirect to member dashboard'
   }

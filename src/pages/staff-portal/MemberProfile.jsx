@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   User, Mail, Phone, Shield, Edit3, Save, CreditCard, CalendarCheck, AlertTriangle, LifeBuoy, Image as ImageIcon, 
   Fingerprint, Settings as SettingsIcon, MessageSquare, CalendarDays, FileText, Users, LogOut, MoreVertical, 
-  PauseCircle, XCircle, Repeat, Trash2, Briefcase, Home, DollarSign, CheckSquare, Eye, Info, PlusCircle, ChevronDown, ChevronUp, UserCog, UserX, UserCheck
+  PauseCircle, XCircle, Repeat, Trash2, Briefcase, Home, DollarSign, CheckSquare, Info, PlusCircle, ChevronDown, ChevronUp, UserCog, UserX, UserCheck
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,7 +23,6 @@ import { LoadingSpinner } from '@/shared/components/LoadingStates';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import AssignMembershipDialog from '@/components/admin/members/AssignMembershipDialog';
-import ImpersonationConfirmationDialog from '@/components/admin/members/ImpersonationConfirmationDialog';
 
 const getInitials = (name) => {
   if (!name || typeof name !== 'string') return "?";
@@ -284,15 +282,19 @@ const StaffMemberProfilePage = () => {
   const { id: systemMemberId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Add debugging
+  console.log('🚀 StaffMemberProfilePage component mounted');
+  console.log('📋 systemMemberId from useParams:', systemMemberId);
+  console.log('🌐 Current location:', window.location.href);
+  
   const [memberData, setMemberData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [membershipTypes, setMembershipTypes] = useState([]);
   const [checkIns, setCheckIns] = useState([]);
-  const [bookings, setBookings] = useState([]);
-  const [membershipLog, setMembershipLog] = useState([]);
+  const [bookings, setBookings] = useState([]);  const [membershipLog, setMembershipLog] = useState([]);
   const [isAssignMembershipDialogOpen, setIsAssignMembershipDialogOpen] = useState(false);
-  const [isImpersonationDialogOpen, setIsImpersonationDialogOpen] = useState(false);
   const [loggedInStaff, setLoggedInStaff] = useState(null);
 
   const fetchProfileData = useCallback(async () => {
@@ -322,36 +324,59 @@ const StaffMemberProfilePage = () => {
       toast({ title: "Error", description: "No member ID provided.", variant: "destructive" });
       navigate('/staff-portal/members');
       return;
-    }
+    }    console.log('🔍 Fetching member data for ID:', systemMemberId);
+    try {      // Fetch member profile first
+      const { data: memberDetails, error: memberError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('system_member_id', systemMemberId)
+        .single();
 
-    console.log('🔍 Fetching member data for ID:', systemMemberId);
-    try {
-      const [memberDetails, types, attendanceRecordsData, logData] = await Promise.all([
-        // Get member by system_member_id or id
-        supabase
-          .from('profiles')
+      if (memberError) {
+        console.error('❌ Error fetching member:', memberError);
+        throw memberError;
+      }
+
+      console.log('✅ Member data fetched:', memberDetails);
+
+      // Fetch membership data separately if member exists
+      let membershipData = null;
+      if (memberDetails) {
+        const { data: membership, error: membershipError } = await supabase
+          .from('memberships')
           .select(`
-            *,
-            membership:memberships(
-              id,
-              membership_type_id,
-              start_date,
-              end_date,
-              status,
-              membership_type:membership_types(*)
-            )
+            id,
+            current_membership_type_id,
+            join_date,
+            status
           `)
-          .or(`system_member_id.eq.${systemMemberId},id.eq.${systemMemberId}`)
-          .single()
-          .then(({ data, error }) => {
-            if (error) {
-              console.error('❌ Error fetching member:', error);
-              throw error;
-            }
-            console.log('✅ Member data fetched:', data);
-            return data;
-          }),
+          .eq('user_id', memberDetails.id)
+          .maybeSingle();
 
+        if (membership && !membershipError) {
+          // Fetch membership type details if membership exists
+          if (membership.current_membership_type_id) {
+            const { data: membershipType, error: typeError } = await supabase
+              .from('membership_types')
+              .select('*')
+              .eq('id', membership.current_membership_type_id)
+              .single();
+
+            if (membershipType && !typeError) {
+              membership.membership_type = membershipType;
+            }
+          }
+          membershipData = membership;
+        }
+      }
+
+      // Combine the data
+      const combinedData = {
+        ...memberDetails,
+        membership: membershipData
+      };
+
+      const [types, attendanceRecordsData, logData] = await Promise.all([
         // Get membership types
         supabase
           .from('membership_types')
@@ -367,30 +392,26 @@ const StaffMemberProfilePage = () => {
 
         // Get membership log (will be updated after we get the member data)
         Promise.resolve([])
-      ]);
-      
-      if (memberDetails) {
-        console.log('✅ Setting member data:', memberDetails);
-        setMemberData(memberDetails);
+      ]);      
+      if (combinedData) {
+        console.log('✅ Setting member data:', combinedData);
+        setMemberData(combinedData);
         setMembershipTypes(types || []);
 
         // Now fetch attendance and membership log using the actual member ID
         try {
-          const [attendanceData, membershipLogData] = await Promise.all([
-            supabase
+          const [attendanceData, membershipLogData] = await Promise.all([            supabase
               .from('attendance')
               .select('*')
-              .eq('member_id', memberDetails.id)
+              .eq('member_id', combinedData.id)
               .order('check_in_time', { ascending: false })
               .then(({ data, error }) => {
                 if (error) throw error;
                 return data || [];
-              }),
-
-            supabase
+              }),            supabase
               .from('membership_log')
               .select('*')
-              .eq('member_id', memberDetails.id)
+              .eq('member_id', combinedData.id)
               .order('created_at', { ascending: false })
               .then(({ data, error }) => {
                 if (error) throw error;
@@ -480,14 +501,8 @@ const StaffMemberProfilePage = () => {
   const handleQuickAction = (actionType) => {
      toast({ title: "Feature Coming Soon", description: `"${actionType}" functionality is under development.`, variant: "info" });
   };
-
   const handleMembershipAssigned = () => {
     fetchProfileData(); 
-  };
-
-  const handleConfirmImpersonation = () => {
-    setIsImpersonationDialogOpen(false);
-    toast({ title: "Impersonation (Conceptual)", description: `Would start impersonating ${memberData?.name}. This is a UI demonstration.`, duration: 5000 });
   };
 
   if (isLoading || !memberData) {
@@ -541,9 +556,7 @@ const StaffMemberProfilePage = () => {
         <div className="p-4 sm:p-6 border-t grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
           <Button variant="outline" size="sm" onClick={handleEditProfile}><Edit3 className="mr-2 h-4 w-4" /> Edit Profile</Button>
           <Button variant="outline" size="sm" onClick={() => setIsAssignMembershipDialogOpen(true)}><Briefcase className="mr-2 h-4 w-4" /> Manage Plan</Button>
-          <Button variant="outline" size="sm" onClick={() => handleQuickAction('Manage Family')}><Users className="mr-2 h-4 w-4" /> Family</Button>
-          <Button variant="outline" size="sm" onClick={() => handleQuickAction('Payment Methods')}><DollarSign className="mr-2 h-4 w-4" /> Payments</Button>
-          <Button variant="outline" size="sm" onClick={() => setIsImpersonationDialogOpen(true)}><Eye className="mr-2 h-4 w-4" /> Impersonate</Button>
+          <Button variant="outline" size="sm" onClick={() => handleQuickAction('Manage Family')}><Users className="mr-2 h-4 w-4" /> Family</Button>          <Button variant="outline" size="sm" onClick={() => handleQuickAction('Payment Methods')}><DollarSign className="mr-2 h-4 w-4" /> Payments</Button>
         </div>
       </Card>
 
@@ -633,14 +646,7 @@ const StaffMemberProfilePage = () => {
         memberName={memberData.name}
         currentMembershipTypeId={memberData.current_membership_type_id}
         onMembershipAssigned={handleMembershipAssigned}
-      />
-      <ImpersonationConfirmationDialog
-        isOpen={isImpersonationDialogOpen}
-        onClose={() => setIsImpersonationDialogOpen(false)}
-        memberName={memberData.name}
-        onConfirm={handleConfirmImpersonation}
-      />
-    </motion.div>
+      />    </motion.div>
   );
 };
 

@@ -11,7 +11,6 @@ const ReportsPage = React.lazy(() => import('@/pages/staff/Reports.jsx'));
 const SchedulePage = React.lazy(() => import('@/pages/staff/Schedule.jsx'));
 const MembershipsPage = React.lazy(() => import('@/pages/staff/Memberships.jsx'));
 const TrainersPage = React.lazy(() => import('@/pages/staff/Trainers.jsx'));
-const SuperAdminDashboard = React.lazy(() => import('@/pages/admin/SuperAdminDashboard.jsx'));
 const AdminPanel = React.lazy(() => import('@/pages/admin/AdminPanel.jsx'));
 
 // ⭐ LOADING: Enhanced loading for admin pages
@@ -33,14 +32,6 @@ const AdminLazyWrapper = ({ Component }) => (
 );
 
 export const adminRoutes = [
-  {
-    path: 'super-admin',
-    element: <AdminLazyWrapper Component={SuperAdminDashboard} />,
-    title: 'Super Admin Dashboard',
-    description: 'Multi-tenant billing configuration and analytics',
-    lazy: true,
-    heavy: true // Super admin dashboard is heavy
-  },
   {
     path: 'dashboard',
     element: <AdminLazyWrapper Component={AdminPanelPage} />,

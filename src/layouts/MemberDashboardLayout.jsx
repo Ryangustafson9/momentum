@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Bell, Trash2 } from 'lucide-react';
+import { MessageSquare, Bell, Trash2, CreditCard } from 'lucide-react';
 import { useNotifications } from '@/contexts/NotificationContext.jsx';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge.jsx';
@@ -10,7 +10,6 @@ import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from "@/hooks/use-toast.js";
-import MemberTopNavbar from '@/components/member/MemberTopNavbar';
 import MemberSidebar from '@/components/member/MemberSidebar';
 
 const FloatingNotificationButton = () => {
@@ -80,28 +79,21 @@ const FloatingNotificationButton = () => {
 };
 
 const MemberDashboardLayout = ({ onLogout, children }) => {
-  const { isImpersonating, impersonatedRoleName, stopImpersonation } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(() => {
+    const storedSidebarState = localStorage.getItem('memberSidebarExpanded');
+    return storedSidebarState ? JSON.parse(storedSidebarState) : true;
+  });
   const location = useLocation();
   const { user, loading } = useAuth(); // UPDATED: Use useAuth hook
 
   useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [location]);
+    localStorage.setItem('memberSidebarExpanded', JSON.stringify(isSidebarExpanded));
+  }, [isSidebarExpanded]);
 
-  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
-  const closeMobileMenu = () => setIsMobileMenuOpen(false);
-
-  const handleStopImpersonation = async () => {
-    try {
-      await stopImpersonation();
-      navigate('/'); 
-      toast({ title: "Impersonation Ended", description: "You have returned to your original account."});
-    } catch (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    }
+  const toggleSidebar = () => {
+    setIsSidebarExpanded(!isSidebarExpanded);
   };
 
   if (loading) {
@@ -127,24 +119,35 @@ const MemberDashboardLayout = ({ onLogout, children }) => {
   }
 
   return (
-    <div className={`flex flex-col min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 dark:from-slate-900 dark:to-sky-900 ${isImpersonating ? 'pt-10' : ''}`}>
-      <MemberTopNavbar 
-        onLogout={onLogout} 
-        isMobileMenuOpen={isMobileMenuOpen}
-        toggleMobileMenu={toggleMobileMenu}
-        closeMobileMenu={closeMobileMenu}
-        isImpersonating={isImpersonating}
-        impersonatedUserName={impersonatedRoleName}
-        stopImpersonation={handleStopImpersonation}
+    <div className="flex h-screen bg-muted/40 dark:bg-slate-950 overflow-hidden">
+      <MemberSidebar
+        onLogout={onLogout}
+        user={user}
+        isExpanded={isSidebarExpanded}
+        toggleSidebar={toggleSidebar}
       />
-      <div className="flex">
-        {/* Sidebar */}
-        <MemberSidebar />
-        
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 pt-2 md:pt-4">
-          <div className="max-w-7xl mx-auto">
-            {children}
+      <div className={cn(
+        "flex flex-col flex-1 transition-all duration-300 ease-in-out",
+        isSidebarExpanded ? "md:ml-64" : "md:ml-20"
+      )}>        {/* Top Navigation Bar */}
+        <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900">Member Portal</h1>
+            <p className="text-sm text-gray-500">Welcome back, {user?.first_name || 'Member'}!</p>
+          </div>          <div className="flex items-center gap-3">            {/* View My Bill Button */}
+            <Button
+              onClick={() => navigate('/member-portal/billing')}
+              className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+              size="sm"
+            >
+              <CreditCard className="h-4 w-4" />
+              View My Bill
+            </Button>
+          </div>
+        </header>{/* Main Content */}
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8 bg-background dark:bg-slate-900">
+          <div className="w-full max-w-7xl mx-auto">
+            <Outlet />
           </div>
         </main>
       </div>

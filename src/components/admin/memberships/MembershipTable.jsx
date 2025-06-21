@@ -75,6 +75,7 @@ const MembershipsTableStructure = ({ columnVisibility, children, sortConfig, onS
           )}
           {columnVisibility.duration_months && <TableHead className="whitespace-nowrap text-left">Duration</TableHead>}
           {columnVisibility.features && <TableHead className="whitespace-nowrap text-left">Features</TableHead>}
+          {columnVisibility.role_id && <TableHead className="whitespace-nowrap text-left">Staff Role</TableHead>}
           {columnVisibility.available_for_sale && <TableHead className="text-center whitespace-nowrap">Available for Sale</TableHead>}
           {columnVisibility.available_online && <TableHead className="text-center whitespace-nowrap">Online Sale</TableHead>}
           {columnVisibility.actions && <TableHead className="text-right whitespace-nowrap">Actions</TableHead>}
@@ -85,7 +86,7 @@ const MembershipsTableStructure = ({ columnVisibility, children, sortConfig, onS
   </div>
 );
 
-const MembershipTable = ({ types, columnVisibility, onEdit, onDelete, searchTerm, sortConfig, onSort }) => {
+const MembershipTable = ({ types, columnVisibility, onEdit, onDelete, onViewBilling, searchTerm, sortConfig, onSort }) => {
   return (
     <MembershipsTableStructure
       columnVisibility={columnVisibility}
@@ -97,6 +98,7 @@ const MembershipTable = ({ types, columnVisibility, onEdit, onDelete, searchTerm
         visibleColumns={columnVisibility}
         onEdit={onEdit}
         onDelete={onDelete}
+        onViewBilling={onViewBilling}
         searchTerm={searchTerm}
       />
     </MembershipsTableStructure>

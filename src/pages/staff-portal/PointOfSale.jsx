@@ -505,15 +505,15 @@ const PointOfSale = () => {
 
         {/* Right Panel - Cart */}
         <div className="w-full lg:w-96 flex flex-col">
-          <Card className="flex-1 flex flex-col">
-            <CardHeader className="border-b">
-              <CardTitle className="flex items-center justify-between">
+          <Card className="flex-1 flex flex-col border-2 border-indigo-200 shadow-lg bg-gradient-to-b from-indigo-50/30 to-white">
+            <CardHeader className="border-b-2 border-indigo-100 bg-gradient-to-r from-indigo-100 to-purple-100">
+              <CardTitle className="flex items-center justify-between text-indigo-900">
                 <span className="flex items-center">
-                  <ShoppingCart className="mr-2 h-5 w-5" />
-                  Cart ({cart.length})
+                  <ShoppingCart className="mr-2 h-6 w-6 text-indigo-600" />
+                  <span className="text-lg font-bold">Cart ({cart.length})</span>
                 </span>
                 {cart.length > 0 && (
-                  <Button variant="ghost" size="sm" onClick={clearCart}>
+                  <Button variant="ghost" size="sm" onClick={clearCart} className="hover:bg-red-100 text-red-600 hover:text-red-700">
                     <X className="h-4 w-4" />
                   </Button>
                 )}
@@ -522,17 +522,18 @@ const PointOfSale = () => {
             
             <CardContent className="flex-1 flex flex-col p-0">
               {/* Customer Selection */}
-              <div className="p-4 border-b bg-gray-50">
+              <div className="p-4 border-b-2 border-indigo-100 bg-gradient-to-r from-blue-50 to-indigo-50">
                 {customer ? (
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-indigo-200 shadow-sm">
                     <div>
-                      <p className="font-medium text-sm">{customer.first_name} {customer.last_name}</p>
-                      <p className="text-xs text-gray-500">{customer.email}</p>
+                      <p className="font-semibold text-sm text-indigo-900">{customer.first_name} {customer.last_name}</p>
+                      <p className="text-xs text-indigo-600">{customer.email}</p>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setCustomer(null)}
+                      className="hover:bg-red-100 text-red-600 hover:text-red-700"
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -580,20 +581,22 @@ const PointOfSale = () => {
               </div>
 
               {/* Cart Items */}
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto p-4 bg-gradient-to-b from-white to-indigo-50/20">
                 {cart.length === 0 ? (
                   <div className="text-center py-8">
-                    <ShoppingCart className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">Cart is empty</p>
-                    <p className="text-sm text-gray-400">Add products to get started</p>
+                    <div className="bg-indigo-100 rounded-full p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                      <ShoppingCart className="h-10 w-10 text-indigo-400" />
+                    </div>
+                    <p className="text-indigo-600 font-medium">Cart is empty</p>
+                    <p className="text-sm text-indigo-400">Add products to get started</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {cart.map(item => (
-                      <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div key={item.id} className="flex items-center justify-between p-4 bg-white rounded-lg border border-indigo-200 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex-1">
-                          <h4 className="font-medium text-sm">{item.name}</h4>
-                          <p className="text-xs text-gray-500">${parseFloat(item.price).toFixed(2)} each</p>
+                          <h4 className="font-semibold text-sm text-gray-900">{item.name}</h4>
+                          <p className="text-xs text-indigo-600 font-medium">${parseFloat(item.price).toFixed(2)} each</p>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Button
@@ -627,28 +630,28 @@ const PointOfSale = () => {
 
               {/* Cart Summary */}
               {cart.length > 0 && (
-                <div className="border-t p-4 space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
+                <div className="border-t-2 border-indigo-200 p-4 space-y-4 bg-gradient-to-r from-indigo-50 to-purple-50">
+                  <div className="space-y-3 p-4 bg-white rounded-lg border border-indigo-200 shadow-sm">
+                    <div className="flex justify-between text-sm font-medium text-gray-700">
                       <span>Subtotal:</span>
-                      <span>${subtotal.toFixed(2)}</span>
+                      <span className="text-indigo-600">${subtotal.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-sm font-medium text-gray-700">
                       <span>Tax (8%):</span>
-                      <span>${tax.toFixed(2)}</span>
+                      <span className="text-indigo-600">${tax.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between font-bold text-lg border-t pt-2">
-                      <span>Total:</span>
-                      <span>${total.toFixed(2)}</span>
+                    <div className="flex justify-between font-bold text-xl border-t-2 border-indigo-100 pt-3">
+                      <span className="text-indigo-900">Total:</span>
+                      <span className="text-indigo-900">${total.toFixed(2)}</span>
                     </div>
                   </div>
 
-                  <Button 
-                    className="w-full" 
+                  <Button
+                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                     size="lg"
                     onClick={() => setShowPaymentDialog(true)}
                   >
-                    <CreditCard className="mr-2 h-4 w-4" />
+                    <CreditCard className="mr-2 h-5 w-5" />
                     Process Payment
                   </Button>
                 </div>

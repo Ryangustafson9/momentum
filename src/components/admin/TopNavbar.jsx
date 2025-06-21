@@ -10,7 +10,8 @@ import {
   Moon,
   Laptop,
   ArrowLeft,
-  ChevronDown
+  ChevronDown,
+  Filter
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -30,12 +31,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import MemberSearch from '@/components/admin/topnav_parts/MemberSearch.jsx';
+import AdvancedMemberSearchModal from '@/components/admin/topnav_parts/AdvancedMemberSearchModal.jsx';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/hooks/useTheme.jsx';
 
 const pageTitles = {
   '/': 'Dashboard',
-  '/super-admin': 'Super Admin Dashboard',
   '/dashboard': 'Admin Panel',
   '/members': 'Members Management',
   '/check-in': 'Member Check-In',
@@ -160,14 +161,25 @@ const UserProfileDropdown = ({ user, onLogout, startRoleImpersonation }) => {
   );
 };
 
-const StaffSearch = ({ allMembers, navigate }) => (
-  <div className="relative hidden sm:block">
-    <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-    <MemberSearch 
-      allMembers={allMembers} 
-      navigate={navigate} 
-      inputClassName="pl-8 sm:w-[180px] md:w-[220px] lg:w-[280px] rounded-lg h-9" 
-    />
+const StaffSearch = ({ allMembers, navigate, onOpenAdvancedSearch }) => (
+  <div className="relative hidden sm:flex items-center gap-2">
+    <div className="relative">
+      <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <MemberSearch 
+        allMembers={allMembers} 
+        navigate={navigate} 
+        inputClassName="pl-8 sm:w-[180px] md:w-[220px] lg:w-[280px] rounded-lg h-9" 
+      />
+    </div>    <Button
+      variant="outline"
+      size="sm"
+      onClick={onOpenAdvancedSearch}
+      className="h-9 px-3 text-xs font-medium whitespace-nowrap border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+      title="Advanced Search (Ctrl+K)"
+    >
+      <Filter className="h-3.5 w-3.5 mr-1.5" />
+      Advanced
+    </Button>
   </div>
 );
 
@@ -176,7 +188,7 @@ const TopNavbar = ({ user, onLogout, startRoleImpersonation, allMembers = [] }) 
   const location = useLocation();
   const [currentPathTitle, setCurrentPathTitle] = useState(getPageTitle(location.pathname));
   const [isScrolled, setIsScrolled] = useState(false);
-
+  const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
   useEffect(() => {
     setCurrentPathTitle(getPageTitle(location.pathname));
   }, [location.pathname]);
@@ -193,29 +205,70 @@ const TopNavbar = ({ user, onLogout, startRoleImpersonation, allMembers = [] }) 
     return () => mainContentArea?.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Add keyboard shortcut for Advanced Search (Ctrl+K / Cmd+K)
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+        event.preventDefault();
+        setIsAdvancedSearchOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleOpenAdvancedSearch = () => {
+    setIsAdvancedSearchOpen(true);
+  };
+
+  const handleCloseAdvancedSearch = () => {
+    setIsAdvancedSearchOpen(false);
+  };
+
+  const handleSelectMember = (member) => {
+    // Navigate to member profile
+    if (member?.id) {
+      navigate(`/member/${member.id}`);
+    }
+    setIsAdvancedSearchOpen(false);
+  };
 
   return (
-    <header className={cn(
-      "sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-card dark:bg-slate-900 px-4 md:px-6 transition-shadow duration-200 print:hidden",
-      isScrolled ? "shadow-md" : "shadow-sm"
-    )}>
-      <div className="flex items-center">
-        {/* Mobile sidebar toggle button removed as per request */}
-        <h1 className="text-lg md:text-xl font-semibold text-foreground whitespace-nowrap">{currentPathTitle}</h1>
-      </div>
-      
-      <div className="flex-1" />
+    <>
+      <header className={cn(
+        "sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-card dark:bg-slate-900 px-4 md:px-6 transition-shadow duration-200 print:hidden",
+        isScrolled ? "shadow-md" : "shadow-sm"
+      )}>
+        <div className="flex items-center">
+          {/* Mobile sidebar toggle button removed as per request */}
+          <h1 className="text-lg md:text-xl font-semibold text-foreground whitespace-nowrap">{currentPathTitle}</h1>
+        </div>
+        
+        <div className="flex-1" />
 
-      <div className="flex items-center gap-2 md:gap-3">
-        <StaffSearch allMembers={allMembers} navigate={navigate} />
-        <NotificationsButton />
-        <UserProfileDropdown
-          user={user}
-          onLogout={onLogout}
-          startRoleImpersonation={startRoleImpersonation}
-        />
-      </div>
-    </header>
+        <div className="flex items-center gap-2 md:gap-3">
+          <StaffSearch 
+            allMembers={allMembers} 
+            navigate={navigate} 
+            onOpenAdvancedSearch={handleOpenAdvancedSearch}
+          />
+          <NotificationsButton />
+          <UserProfileDropdown
+            user={user}
+            onLogout={onLogout}
+            startRoleImpersonation={startRoleImpersonation}
+          />
+        </div>
+      </header>
+
+      <AdvancedMemberSearchModal
+        isOpen={isAdvancedSearchOpen}
+        onClose={handleCloseAdvancedSearch}
+        onSelectMember={handleSelectMember}
+        navigate={navigate}
+      />
+    </>
   );
 };
 

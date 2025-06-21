@@ -1,664 +1,496 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { PermissionsService } from '@/services/permissionsService';
+import { getAvailablePermissions } from '@/lib/services/permissionService';
 import { supabase } from '@/lib/supabaseClient';
 import { 
   Shield, 
-  Users, 
-  UserPlus, 
-  Settings, 
-  Plus, 
-  Edit, 
-  Trash2, 
   Save, 
-  X,
   CheckCircle,
-  AlertCircle 
+  AlertCircle,
+  Briefcase,
+  Settings 
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-// Permission categories for organization
-const PERMISSION_CATEGORIES = {
-  'Member Management': [
-    { id: 'view_members', label: 'View Members', description: 'View member profiles and information' },
-    { id: 'edit_members', label: 'Edit Members', description: 'Modify member profiles and details' },
-    { id: 'add_members', label: 'Add Members', description: 'Create new member accounts' },
-    { id: 'delete_members', label: 'Delete Members', description: 'Remove members from the system' },
-    { id: 'manage_memberships', label: 'Manage Memberships', description: 'Handle membership plans and subscriptions' },
-  ],
-  'Staff Management': [
-    { id: 'view_staff', label: 'View Staff', description: 'View staff profiles and information' },
-    { id: 'manage_staff', label: 'Manage Staff', description: 'Add, edit, and remove staff members' },
-    { id: 'assign_roles', label: 'Assign Roles', description: 'Assign and modify staff roles' },
-  ],
-  'Class Management': [
-    { id: 'view_classes', label: 'View Classes', description: 'View class schedules and information' },
-    { id: 'manage_classes', label: 'Manage Classes', description: 'Create, edit, and delete classes' },
-    { id: 'manage_schedule', label: 'Manage Schedule', description: 'Modify class schedules and timing' },
-  ],
-  'Billing & Payments': [
-    { id: 'view_billing', label: 'View Billing', description: 'View billing information and history' },
-    { id: 'manage_billing', label: 'Manage Billing', description: 'Process payments and handle billing' },
-    { id: 'process_payments', label: 'Process Payments', description: 'Handle payment processing' },
-  ],
-  'Reports & Analytics': [
-    { id: 'view_reports', label: 'View Reports', description: 'Access reports and analytics' },
-    { id: 'export_data', label: 'Export Data', description: 'Export data and generate reports' },
-  ],
-  'System Administration': [
-    { id: 'manage_settings', label: 'Manage Settings', description: 'Modify system-wide settings' },
-    { id: 'system_admin', label: 'System Admin', description: 'Full system administration access' },
-  ]
-};
+// Get permission categories from the comprehensive permission service
+const PERMISSION_CATEGORIES = (() => {
+  const permissions = getAvailablePermissions();
+  const formatted = {};
+
+  Object.entries(permissions).forEach(([category, perms]) => {
+    formatted[category] = perms.map(perm => ({
+      id: perm.key,
+      label: perm.name,
+      description: perm.description
+    }));
+  });
+
+  return formatted;
+})();
 
 /**
- * 🔐 Comprehensive Staff Permissions Management
+ * 🔐 Staff Plans Permission Management
  * 
- * This component consolidates:
- * 1. Staff Role Management (create/edit roles)
- * 2. Permission Matrix (assign permissions to roles)
- * 3. User Role Assignment (assign roles to users)
+ * This component allows admins to:
+ * 1. View all existing staff plans (from membership_types where category='Staff')
+ * 2. Toggle permissions for each staff plan
+ * 3. Save permission changes
  */
 const StaffPermissionsManagement = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-
   // State management
-  const [activeTab, setActiveTab] = useState('roles');
-  const [roles, setRoles] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [selectedRole, setSelectedRole] = useState(null);
-  const [editingRole, setEditingRole] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [rolesLoading, setRolesLoading] = useState(true);
-  const [usersLoading, setUsersLoading] = useState(true);
+  const [staffPlans, setStaffPlans] = useState([]);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  // Form state
-  const [roleForm, setRoleForm] = useState({
-    name: '',
-    description: '',
-    permissions: {}
-  });
+  // Fetch staff plans from membership_types
+  const fetchStaffPlans = async () => {
+    try {
+      setLoading(true);
+      console.log('🔍 Fetching staff plans...');
+      
+      const { data: plans, error } = await supabase
+        .from('membership_types')
+        .select('*')
+        .eq('category', 'Staff')
+        .order('name');
 
-  // Assignment state
-  const [selectedUser, setSelectedUser] = useState('');
-  const [selectedRoleForAssignment, setSelectedRoleForAssignment] = useState('');
+      if (error) throw error;
 
-  // Fetch data
+      console.log('✅ Staff plans fetched:', plans);
+      
+      // Initialize permissions if they don't exist
+      const plansWithPermissions = plans.map(plan => ({
+        ...plan,
+        permissions: plan.permissions || {}
+      }));
+
+      setStaffPlans(plansWithPermissions);
+      
+      // Auto-select the first plan if available
+      if (plansWithPermissions.length > 0) {
+        setSelectedPlan(plansWithPermissions[0]);
+      }
+    } catch (error) {
+      console.error('❌ Error fetching staff plans:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load staff plans",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
-    fetchRoles();
-    fetchUsers();
+    fetchStaffPlans();
   }, []);
 
-  const fetchRoles = async () => {
-    try {
-      setRolesLoading(true);
-      const fetchedRoles = await PermissionsService.getAllStaffRoles();
-      setRoles(fetchedRoles);
-    } catch (error) {
-      console.error('Error fetching roles:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load staff roles",
-        variant: "destructive"
-      });
-    } finally {
-      setRolesLoading(false);
-    }
-  };
+  // Add keyboard shortcut for saving (Ctrl+S)
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.ctrlKey && event.key === 's' && selectedPlan && !saving) {
+        event.preventDefault();
+        saveStaffPlanPermissions();
+      }
+    };
 
-  const fetchUsers = async () => {
-    try {
-      setUsersLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          email,
-          first_name,
-          last_name,
-          role,
-          staff_role_id,
-          staff_roles (
-            id,
-            name,
-            permissions
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setUsers(data || []);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load users",
-        variant: "destructive"
-      });
-    } finally {
-      setUsersLoading(false);
-    }
-  };
-
-  // Role management functions
-  const handleCreateRole = () => {
-    setEditingRole(null);
-    setRoleForm({
-      name: '',
-      description: '',
-      permissions: {}
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selectedPlan, saving]);
+  // Toggle all permissions in a category
+  const toggleCategoryPermissions = (categoryName, enabled) => {
+    if (!selectedPlan) return;
+    
+    const categoryPermissions = PERMISSION_CATEGORIES[categoryName];
+    const updates = {};
+    
+    categoryPermissions.forEach(permission => {
+      updates[permission.id] = enabled;
     });
-  };
-
-  const handleEditRole = (role) => {
-    setEditingRole(role);
-    setRoleForm({
-      name: role.name || '',
-      description: role.description || '',
-      permissions: role.permissions || {}
-    });
-  };
-
-  const handleSaveRole = async () => {
-    if (!roleForm.name.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Role name is required",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const roleData = {
-        ...roleForm,
-        ...(editingRole && { id: editingRole.id })
-      };
-
-      const { data, error } = await supabase
-        .from('staff_roles')
-        .upsert(roleData)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      await fetchRoles();
-      setEditingRole(null);
-      setRoleForm({ name: '', description: '', permissions: {} });
-
-      toast({
-        title: "Success",
-        description: `Staff role ${editingRole ? 'updated' : 'created'} successfully`,
-        variant: "default"
-      });
-    } catch (error) {
-      console.error('Error saving role:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save staff role",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteRole = async (roleId) => {
-    if (!confirm('Are you sure you want to delete this role? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const { error } = await supabase
-        .from('staff_roles')
-        .delete()
-        .eq('id', roleId);
-
-      if (error) throw error;
-
-      await fetchRoles();
-      toast({
-        title: "Success",
-        description: "Staff role deleted successfully",
-        variant: "default"
-      });
-    } catch (error) {
-      console.error('Error deleting role:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete staff role",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Assignment functions
-  const handleAssignRole = async () => {
-    if (!selectedUser || !selectedRoleForAssignment) {
-      toast({
-        title: "Validation Error",
-        description: "Please select both a user and a role",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      setLoading(true);
-      await PermissionsService.assignStaffRole(selectedUser, selectedRoleForAssignment);
-      
-      await fetchUsers();
-      setSelectedUser('');
-      setSelectedRoleForAssignment('');
-      
-      toast({
-        title: "Success",
-        description: "Staff role assigned successfully",
-        variant: "default"
-      });
-    } catch (error) {
-      console.error('Error assigning role:', error);
-      toast({
-        title: "Error",
-        description: "Failed to assign staff role",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRemoveRole = async (userId) => {
-    try {
-      setLoading(true);
-      await PermissionsService.removeStaffRole(userId);
-      
-      await fetchUsers();
-      
-      toast({
-        title: "Success",
-        description: "Staff role removed successfully",
-        variant: "default"
-      });
-    } catch (error) {
-      console.error('Error removing role:', error);
-      toast({
-        title: "Error",
-        description: "Failed to remove staff role",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Permission utilities
-  const getPermissionCount = (permissions) => {
-    if (!permissions) return 0;
-    if (typeof permissions === 'object') {
-      return Object.values(permissions).filter(Boolean).length;
-    }
-    return 0;
-  };
-
-  const handlePermissionChange = (permissionId, checked) => {
-    setRoleForm(prev => ({
-      ...prev,
+    
+    setSelectedPlan(currentPlan => ({
+      ...currentPlan,
       permissions: {
-        ...prev.permissions,
-        [permissionId]: checked
+        ...currentPlan.permissions,
+        ...updates
       }
     }));
+    
+    // Also update the plan in the staffPlans array
+    setStaffPlans(currentPlans => 
+      currentPlans.map(plan => 
+        plan.id === selectedPlan.id 
+          ? {
+              ...plan,
+              permissions: {
+                ...plan.permissions,
+                ...updates
+              }
+            }
+          : plan
+      )
+    );
   };
 
+  // Check if all permissions in a category are enabled
+  const areCategoryPermissionsEnabled = (categoryName) => {
+    if (!selectedPlan) return false;
+    const categoryPermissions = PERMISSION_CATEGORIES[categoryName];
+    return categoryPermissions.every(permission => 
+      selectedPlan.permissions[permission.id] || false
+    );
+  };
+
+  // Toggle a permission for the selected staff plan
+  const togglePermission = (permissionKey, enabled) => {
+    if (!selectedPlan) return;
+    
+    setSelectedPlan(currentPlan => ({
+      ...currentPlan,
+      permissions: {
+        ...currentPlan.permissions,
+        [permissionKey]: enabled
+      }
+    }));
+    
+    // Also update the plan in the staffPlans array
+    setStaffPlans(currentPlans => 
+      currentPlans.map(plan => 
+        plan.id === selectedPlan.id 
+          ? {
+              ...plan,
+              permissions: {
+                ...plan.permissions,
+                [permissionKey]: enabled
+              }
+            }
+          : plan
+      )
+    );
+  };  // Save permissions for the selected staff plan
+  const saveStaffPlanPermissions = async () => {
+    if (!selectedPlan) return;
+    
+    try {
+      setSaving(true);
+      
+      console.log('💾 Saving permissions for plan:', selectedPlan.name, selectedPlan.permissions);
+
+      const { error } = await supabase
+        .from('membership_types')
+        .update({ 
+          permissions: selectedPlan.permissions,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', selectedPlan.id);
+
+      if (error) throw error;
+
+      // Update the local state to reflect the saved changes
+      setStaffPlans(currentPlans => 
+        currentPlans.map(plan => 
+          plan.id === selectedPlan.id 
+            ? { ...plan, permissions: selectedPlan.permissions }
+            : plan
+        )
+      );
+
+      const permissionCount = getPermissionCount(selectedPlan.permissions);
+      
+      toast({
+        title: "✅ Permissions Saved",
+        description: `${permissionCount} permissions updated for ${selectedPlan.name}`,
+        variant: "default"
+      });
+
+    } catch (error) {
+      console.error('❌ Error saving permissions:', error);
+      toast({
+        title: "❌ Save Failed",
+        description: "Failed to save permissions. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Get permission count for a plan
+  const getPermissionCount = (permissions) => {
+    if (!permissions || typeof permissions !== 'object') return 0;
+    return Object.values(permissions).filter(Boolean).length;
+  };  // Render permission checkbox
+  const PermissionCheckbox = ({ permission }) => {
+    if (!selectedPlan) return null;
+    
+    const isChecked = selectedPlan.permissions[permission.id] || false;
+    
+    return (
+      <div className={`flex items-start space-x-3 p-3 rounded-lg border transition-all duration-200 ${
+        isChecked 
+          ? 'border-blue-200 bg-blue-50 hover:bg-blue-100' 
+          : 'border-gray-200 hover:bg-gray-50'
+      }`}>
+        <Checkbox
+          id={`${selectedPlan.id}-${permission.id}`}
+          checked={isChecked}
+          onCheckedChange={(checked) => togglePermission(permission.id, checked)}
+          className="mt-1"
+        />
+        <div className="flex-1 min-w-0">
+          <label 
+            htmlFor={`${selectedPlan.id}-${permission.id}`}
+            className={`text-sm font-medium cursor-pointer transition-colors ${
+              isChecked ? 'text-blue-900' : 'text-gray-900'
+            }`}
+          >
+            {permission.label}
+          </label>
+          <p className={`text-xs mt-1 transition-colors ${
+            isChecked ? 'text-blue-700' : 'text-gray-500'
+          }`}>
+            {permission.description}
+          </p>
+        </div>
+        {isChecked && (
+          <CheckCircle className="h-4 w-4 text-blue-600 mt-1" />
+        )}
+      </div>
+    );
+  };
+  // Render staff plan list item
+  const StaffPlanListItem = ({ plan }) => {
+    const isSelected = selectedPlan?.id === plan.id;
+    const permissionCount = getPermissionCount(plan.permissions);
+    const totalPermissions = Object.values(PERMISSION_CATEGORIES).flat().length;
+    
+    return (
+      <motion.div
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 ${
+          isSelected 
+            ? 'border-blue-500 bg-blue-50 shadow-md ring-2 ring-blue-200' 
+            : 'border-gray-200 hover:border-blue-300 hover:bg-blue-25 hover:shadow-sm'
+        }`}
+        onClick={() => setSelectedPlan(plan)}
+      >
+        <div className="flex items-center gap-2 mb-2">
+          <Briefcase className={`h-4 w-4 transition-colors ${
+            isSelected ? 'text-blue-600' : 'text-gray-500'
+          }`} />
+          <h3 className={`font-medium transition-colors ${
+            isSelected ? 'text-blue-900' : 'text-gray-900'
+          }`}>
+            {plan.name}
+          </h3>
+        </div>
+        
+        {plan.description && (
+          <p className="text-xs text-gray-600 mb-3 line-clamp-2">{plan.description}</p>
+        )}
+        
+        <div className="flex items-center justify-between">
+          <Badge 
+            variant={isSelected ? "default" : "secondary"} 
+            className="text-xs"
+          >
+            {permissionCount} / {totalPermissions} permissions
+          </Badge>
+          
+          {isSelected && (
+            <div className="flex items-center gap-1 text-blue-600">
+              <CheckCircle className="h-3 w-3" />
+              <span className="text-xs font-medium">Selected</span>
+            </div>
+          )}
+        </div>
+        
+        {/* Progress bar for permissions */}
+        <div className="mt-3">
+          <div className="w-full bg-gray-200 rounded-full h-1.5">
+            <div 
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                isSelected ? 'bg-blue-600' : 'bg-gray-400'
+              }`}
+              style={{ 
+                width: `${totalPermissions > 0 ? (permissionCount / totalPermissions) * 100 : 0}%` 
+              }}
+            />
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading staff plans...</p>
+        </div>
+      </div>
+    );
+  }
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Staff Permissions Management
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="roles" className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                Manage Roles
-              </TabsTrigger>
-              <TabsTrigger value="assignments" className="flex items-center gap-2">
-                <UserPlus className="h-4 w-4" />
-                Assign Roles
-              </TabsTrigger>
-              <TabsTrigger value="matrix" className="flex items-center gap-2">
-                <Shield className="h-4 w-4" />
-                Permission Matrix
-              </TabsTrigger>
-            </TabsList>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="max-w-7xl mx-auto p-6"
+    >
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+          <Shield className="h-8 w-8 text-blue-600" />
+          Staff Plans & Permissions
+        </h1>
+        <p className="text-gray-600 mt-2">
+          Manage permissions for each staff plan. Select a plan on the left to view and edit its permissions.
+        </p>
+      </div>
 
-            {/* Role Management Tab */}
-            <TabsContent value="roles" className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold">Staff Roles</h3>
-                <Button onClick={handleCreateRole}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Role
-                </Button>
-              </div>
+      {staffPlans.length === 0 ? (
+        <Card>
+          <CardContent className="text-center py-12">
+            <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Staff Plans Found</h3>
+            <p className="text-gray-600">
+              No staff plans were found in the system. Staff plans are membership types with category 'Staff'.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-300px)]">
+          {/* Left Panel - Staff Plans List */}
+          <div className="lg:col-span-1">
+            <Card className="h-full">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <Briefcase className="h-5 w-5" />
+                  Staff Plans ({staffPlans.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="overflow-y-auto">
+                <div className="space-y-3">
+                  {staffPlans.map(plan => (
+                    <StaffPlanListItem key={plan.id} plan={plan} />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-              {/* Role Form */}
-              {(editingRole !== null || roleForm.name) && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>
-                      {editingRole ? 'Edit Role' : 'Create New Role'}
+          {/* Right Panel - Selected Plan Permissions */}
+          <div className="lg:col-span-2">
+            <Card className="h-full">
+              <CardHeader className="pb-4 border-b">
+                <div className="flex items-center justify-between">                  <div>
+                    <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                      <Settings className="h-5 w-5" />
+                      {selectedPlan ? `${selectedPlan.name} Permissions` : 'Select a Staff Plan'}
                     </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="roleName">Role Name</Label>
-                        <Input
-                          id="roleName"
-                          value={roleForm.name}
-                          onChange={(e) => setRoleForm(prev => ({ ...prev, name: e.target.value }))}
-                          placeholder="e.g. Front Desk Staff"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="roleDescription">Description</Label>
-                        <Input
-                          id="roleDescription"
-                          value={roleForm.description}
-                          onChange={(e) => setRoleForm(prev => ({ ...prev, description: e.target.value }))}
-                          placeholder="Brief description of this role"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Permissions */}
-                    <div>
-                      <Label>Permissions</Label>
-                      <div className="mt-2 space-y-4">
-                        {Object.entries(PERMISSION_CATEGORIES).map(([category, permissions]) => (
-                          <div key={category} className="border rounded-lg p-4">
-                            <h4 className="font-medium mb-3">{category}</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                              {permissions.map(permission => (
-                                <div key={permission.id} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={permission.id}
-                                    checked={roleForm.permissions[permission.id] || false}
-                                    onCheckedChange={(checked) => handlePermissionChange(permission.id, checked)}
-                                  />
-                                  <Label htmlFor={permission.id} className="text-sm">
-                                    {permission.label}
-                                  </Label>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button onClick={handleSaveRole} disabled={loading}>
-                        <Save className="h-4 w-4 mr-2" />
-                        {loading ? 'Saving...' : 'Save Role'}
-                      </Button>
-                      <Button variant="outline" onClick={() => {
-                        setEditingRole(null);
-                        setRoleForm({ name: '', description: '', permissions: {} });
-                      }}>
-                        <X className="h-4 w-4 mr-2" />
-                        Cancel
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Roles List */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {rolesLoading ? (
-                  <div className="col-span-full flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                  </div>
-                ) : (
-                  roles.map(role => (
-                    <Card key={role.id}>
-                      <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                          <span>{role.name}</span>
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="sm" onClick={() => handleEditRole(role)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDeleteRole(role.id)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-gray-600 mb-2">{role.description}</p>
-                        <Badge variant="outline">
-                          {getPermissionCount(role.permissions)} permissions
+                    {selectedPlan && (
+                      <div className="flex items-center gap-4 mt-2">
+                        <p className="text-sm text-gray-600">{selectedPlan.description}</p>
+                        <Badge variant="outline" className="text-xs">
+                          {getPermissionCount(selectedPlan.permissions)} / {Object.values(PERMISSION_CATEGORIES).flat().length} enabled
                         </Badge>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-              </div>
-            </TabsContent>
-
-            {/* Role Assignment Tab */}
-            <TabsContent value="assignments" className="space-y-6">
-              {/* Assignment Form */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <UserPlus className="h-5 w-5" />
-                    Assign Staff Role
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label>User</Label>
-                      <Select value={selectedUser} onValueChange={setSelectedUser}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select user..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {usersLoading ? (
-                            <SelectItem value="" disabled>Loading users...</SelectItem>
-                          ) : (
-                            users.map(user => (
-                              <SelectItem key={user.id} value={user.id}>
-                                {user.first_name} {user.last_name} ({user.email})
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label>Staff Role</Label>
-                      <Select value={selectedRoleForAssignment} onValueChange={setSelectedRoleForAssignment}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select role..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {rolesLoading ? (
-                            <SelectItem value="" disabled>Loading roles...</SelectItem>
-                          ) : (
-                            roles.map(role => (
-                              <SelectItem key={role.id} value={role.id}>
-                                {role.name} ({getPermissionCount(role.permissions)} permissions)
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="flex items-end">
-                      <Button 
-                        onClick={handleAssignRole}
-                        disabled={loading || !selectedUser || !selectedRoleForAssignment}
-                        className="w-full"
-                      >
-                        {loading ? "Assigning..." : "Assign Role"}
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Current Assignments */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Current Staff Assignments
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {usersLoading ? (
-                    <div className="flex justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {users
-                        .filter(user => user.staff_role_id)
-                        .map(user => (
-                          <motion.div
-                            key={user.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="flex items-center justify-between p-4 border rounded-lg"
-                          >
-                            <div className="flex items-center gap-4">
-                              <div>
-                                <p className="font-medium">
-                                  {user.first_name} {user.last_name}
-                                </p>
-                                <p className="text-sm text-gray-600">{user.email}</p>
-                              </div>
-                              <Badge variant="secondary" className="flex items-center gap-1">
-                                <Shield className="h-3 w-3" />
-                                {user.staff_roles?.name || 'Unknown Role'}
-                              </Badge>
-                              <Badge variant="outline">
-                                {getPermissionCount(user.staff_roles?.permissions)} permissions
+                      </div>
+                    )}
+                  </div>                  {selectedPlan && (
+                    <Button 
+                      onClick={saveStaffPlanPermissions}
+                      disabled={saving}
+                      className="flex items-center gap-2"
+                      title="Save permissions (Ctrl+S)"
+                    >
+                      <Save className="h-4 w-4" />
+                      {saving ? 'Saving...' : 'Save Permissions'}
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="overflow-y-auto">
+                {selectedPlan ? (                  <div className="space-y-6">
+                    {Object.entries(PERMISSION_CATEGORIES).map(([categoryName, permissions]) => {
+                      const allEnabled = areCategoryPermissionsEnabled(categoryName);
+                      const enabledCount = permissions.filter(p => 
+                        selectedPlan.permissions[p.id] || false
+                      ).length;
+                      
+                      return (
+                        <div key={categoryName} className="space-y-3">
+                          <div className="flex items-center justify-between border-b border-gray-200 pb-2">
+                            <div className="flex items-center gap-3">
+                              <h3 className="font-semibold text-gray-900 text-sm uppercase tracking-wide">
+                                {categoryName.replace(/_/g, ' ')}
+                              </h3>
+                              <Badge variant="outline" className="text-xs">
+                                {enabledCount} / {permissions.length}
                               </Badge>
                             </div>
                             <Button
-                              variant="outline"
+                              variant="ghost"
                               size="sm"
-                              onClick={() => handleRemoveRole(user.id)}
-                              disabled={loading}
+                              onClick={() => toggleCategoryPermissions(categoryName, !allEnabled)}
+                              className="text-xs h-6 px-2"
                             >
-                              Remove Role
+                              {allEnabled ? 'Deselect All' : 'Select All'}
                             </Button>
-                          </motion.div>
-                        ))}
-                      
-                      {users.filter(user => user.staff_role_id).length === 0 && (
-                        <div className="text-center py-8 text-gray-500">
-                          <Shield className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                          <p>No staff role assignments yet.</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Permission Matrix Tab */}
-            <TabsContent value="matrix" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
-                    Permission Matrix
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr>
-                          <th className="text-left p-2 border-b">Permission</th>
-                          {roles.map(role => (
-                            <th key={role.id} className="text-center p-2 border-b">
-                              {role.name}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Object.entries(PERMISSION_CATEGORIES).map(([category, permissions]) => (
-                          <React.Fragment key={category}>
-                            <tr>
-                              <td colSpan={roles.length + 1} className="font-semibold p-2 bg-gray-50">
-                                {category}
-                              </td>
-                            </tr>
+                          </div>
+                          <div className="space-y-2">
                             {permissions.map(permission => (
-                              <tr key={permission.id}>
-                                <td className="p-2 border-b">
-                                  <div>
-                                    <div className="font-medium">{permission.label}</div>
-                                    <div className="text-sm text-gray-600">{permission.description}</div>
-                                  </div>
-                                </td>
-                                {roles.map(role => (
-                                  <td key={role.id} className="text-center p-2 border-b">
-                                    {role.permissions?.[permission.id] ? (
-                                      <CheckCircle className="h-5 w-5 text-green-600 mx-auto" />
-                                    ) : (
-                                      <X className="h-5 w-5 text-gray-300 mx-auto" />
-                                    )}
-                                  </td>
-                                ))}
-                              </tr>
+                              <PermissionCheckbox key={permission.id} permission={permission} />
                             ))}
-                          </React.Fragment>
-                        ))}
-                      </tbody>
-                    </table>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-    </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">Select a Staff Plan</h3>
+                      <p className="text-gray-600">
+                        Choose a staff plan from the left panel to view and edit its permissions.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* Help Info */}
+      {staffPlans.length > 0 && (
+        <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="flex items-start gap-3">
+            <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+            <div>
+              <h4 className="font-medium text-blue-900">How Staff Plan Permissions Work</h4>              <ul className="text-sm text-blue-800 mt-2 space-y-1">
+                <li>• Each staff plan represents a role type (e.g., Front Desk, Trainer, Manager)</li>
+                <li>• Select a plan from the left to view and modify its permissions</li>
+                <li>• Toggle permissions individually or use "Select All" for entire categories</li>
+                <li>• Click "Save Permissions" or press Ctrl+S to apply changes</li>
+                <li>• Staff members assigned to these plans inherit the permissions automatically</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+    </motion.div>
   );
 };
 

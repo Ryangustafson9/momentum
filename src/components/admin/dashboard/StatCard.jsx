@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, X } from 'lucide-react';
 
 const StatCard = ({
   cardConfig,
@@ -16,8 +16,13 @@ const StatCard = ({
 }) => {
   const navigate = useNavigate();
 
-  const handleCardClick = () => {
-    if (!isEditMode && navigateTo) {
+  const handleCardClick = (e) => {
+    // Prevent navigation if we're in edit mode or if this is a drag operation
+    if (isEditMode || isDragging) {
+      e.preventDefault();
+      return;
+    }
+    if (navigateTo) {
       navigate(navigateTo);
     }
   };
@@ -34,11 +39,20 @@ const StatCard = ({
     >
       {isEditMode && (
         <>
+          {/* Drag Handle */}
+          <div className="absolute top-2 left-2 opacity-70 hover:opacity-100 transition-opacity">
+            <GripVertical className="h-4 w-4 text-gray-500" />
+          </div>
+
+          {/* Remove Button */}
           <button
-            onClick={() => onRemoveCard(cardConfig.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemoveCard(cardConfig.id);
+            }}
             className="absolute top-3 right-3 z-10 bg-destructive text-destructive-foreground rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-destructive/90 transition-colors shadow-sm"
           >
-            ×
+            <X className="h-3 w-3" />
           </button>
           <div className="absolute top-3 left-3 z-10 text-muted-foreground/50">
             <GripVertical className="w-4 h-4" />

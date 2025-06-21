@@ -3,7 +3,7 @@ import React from 'react';
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Edit, Trash2, CheckCircle, XCircle, Shield, Calendar } from 'lucide-react';
 
 const isValidUUID = (uuid) => {
     if (!uuid || typeof uuid !== 'string') return false;
@@ -11,7 +11,7 @@ const isValidUUID = (uuid) => {
     return uuidRegex.test(uuid);
 };
 
-const MembershipTableContent = ({ types, visibleColumns, onEdit, onDelete, searchTerm }) => {
+const MembershipTableContent = ({ types, visibleColumns, onEdit, onDelete, onViewBilling, searchTerm }) => {
   if (types.length === 0) {
     return (
       <TableBody>
@@ -41,6 +41,25 @@ const MembershipTableContent = ({ types, visibleColumns, onEdit, onDelete, searc
           {visibleColumns.price && <TableCell className="text-right">${type.price ? type.price.toFixed(2) : '0.00'}</TableCell>}
           {visibleColumns.duration_months && <TableCell className="text-left">{type.duration_months ? `${type.duration_months} mos.` : 'N/A'}</TableCell>}
           {visibleColumns.features && <TableCell className="text-xs max-w-xs truncate text-left">{Array.isArray(type.features) ? type.features.join(', ') : ''}</TableCell>}
+          {visibleColumns.role_id && (
+            <TableCell className="text-left">
+              {type.staff_role ? (
+                <Badge
+                  variant="outline"
+                  className="bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100"
+                >
+                  <Shield className="h-3 w-3 mr-1" />
+                  {type.staff_role.name}
+                </Badge>
+              ) : type.category === 'Staff' || type.category === 'Staff Plans' ? (
+                <Badge variant="secondary" className="text-gray-500">
+                  No Role Assigned
+                </Badge>
+              ) : (
+                <span className="text-gray-400 text-sm">—</span>
+              )}
+            </TableCell>
+          )}
           {visibleColumns.available_for_sale && (
             <TableCell className="text-center">
               <Badge
@@ -71,14 +90,27 @@ const MembershipTableContent = ({ types, visibleColumns, onEdit, onDelete, searc
           )}
           {visibleColumns.actions && (
             <TableCell className="text-right">
-              <Button variant="ghost" size="icon" onClick={() => onEdit(type)} className="mr-1 p-1 h-auto w-auto hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md">
-                <Edit className="h-4 w-4 text-slate-600 dark:text-slate-300" />
-              </Button>
-              {isValidUUID(type.id) && type.name !== 'Non-Member Access' && (
-                <Button variant="ghost" size="icon" onClick={() => onDelete(type)} className="text-red-500 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30 p-1 h-auto w-auto rounded-md">
-                  <Trash2 className="h-4 w-4" />
+              <div className="flex items-center justify-end gap-1">
+                {type.billing_type !== 'N/A' && onViewBilling && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onViewBilling(type)}
+                    className="p-1 h-auto w-auto hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-md"
+                    title="View Billing Schedule"
+                  >
+                    <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  </Button>
+                )}
+                <Button variant="ghost" size="icon" onClick={() => onEdit(type)} className="p-1 h-auto w-auto hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md">
+                  <Edit className="h-4 w-4 text-slate-600 dark:text-slate-300" />
                 </Button>
-              )}
+                {isValidUUID(type.id) && type.name !== 'Non-Member Access' && (
+                  <Button variant="ghost" size="icon" onClick={() => onDelete(type)} className="text-red-500 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30 p-1 h-auto w-auto rounded-md">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </TableCell>
           )}
         </TableRow>

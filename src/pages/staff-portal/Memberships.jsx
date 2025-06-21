@@ -14,6 +14,7 @@ import MembershipFormDialog from '@/components/admin/memberships/MembershipFormD
 import MembershipTable from '@/components/admin/memberships/MembershipTable';
 import ColumnVisibilityDropdown from '@/components/admin/memberships/ColumnVisibilityDropdown';
 import DeleteMembershipDialog from '@/components/admin/memberships/DeleteMembershipDialog';
+import BillingScheduleDialog from '@/components/admin/memberships/BillingScheduleDialog';
 import { useDebounce } from '@/hooks/useDebounce.js';
 
 // Loading Spinner Component
@@ -32,6 +33,7 @@ const initialColumnVisibility = {
   features: false,
   category: true,
   color: false,
+  role_id: true,
   available_for_sale: true,
   available_online: true,
   actions: true,
@@ -43,13 +45,31 @@ const initialColumnVisibility = {
 const membershipService = {
   async getMembershipTypes() {
     try {
-      const { data, error } = await supabase
+      // First get all membership types
+      const { data: membershipTypes, error: membershipError } = await supabase
         .from('membership_types')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data || [];
+      if (membershipError) throw membershipError;
+
+      // Then get staff roles for those that have role_id
+      const { data: staffRoles, error: rolesError } = await supabase
+        .from('staff_roles')
+        .select('id, name, description');
+
+      if (rolesError) throw rolesError;
+
+      // Map staff roles to membership types
+      const mappedData = membershipTypes?.map(item => {
+        const staffRole = staffRoles?.find(role => role.id === item.role_id);
+        return {
+          ...item,
+          staff_role: staffRole || null
+        };
+      }) || [];
+
+      return mappedData;
     } catch (error) {
       console.error('Error fetching membership types:', error);
       throw error;
@@ -358,8 +378,10 @@ const MembershipsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isBillingDialogOpen, setIsBillingDialogOpen] = useState(false);
   const [selectedMembership, setSelectedMembership] = useState(null);
   const [membershipToDelete, setMembershipToDelete] = useState(null);
+  const [membershipForBilling, setMembershipForBilling] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTabCategory, setActiveTabCategory] = useState('All');
   const [sortConfig, setSortConfig] = useState({ key: 'category', direction: 'asc' });
@@ -414,6 +436,11 @@ const MembershipsPage = () => {
   const handleDeleteRequest = useCallback((type) => {
     setMembershipToDelete(type);
     setIsDeleteDialogOpen(true);
+  }, []);
+
+  const handleViewBilling = useCallback((type) => {
+    setMembershipForBilling(type);
+    setIsBillingDialogOpen(true);
   }, []);
 
   const handleSort = useCallback((key) => {
@@ -608,6 +635,7 @@ const MembershipsPage = () => {
               columnVisibility={columnVisibility}
               onEdit={handleEdit}
               onDelete={handleDeleteRequest}
+              onViewBilling={handleViewBilling}
               searchTerm={debouncedSearchTerm}
               sortConfig={sortConfig}
               onSort={handleSort}
@@ -629,6 +657,12 @@ const MembershipsPage = () => {
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={confirmDelete}
         membershipToDelete={membershipToDelete}
+      />
+
+      <BillingScheduleDialog
+        isOpen={isBillingDialogOpen}
+        onClose={() => setIsBillingDialogOpen(false)}
+        membershipData={membershipForBilling}
       />
     </motion.div>
   );
