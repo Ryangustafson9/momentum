@@ -9,12 +9,12 @@ const MAX_MONITORING_RETRIES = 3;
 // Initialize realtime connection monitoring with retry logic
 const initializeRealtimeMonitoring = async () => {
   if (monitoringRetries >= MAX_MONITORING_RETRIES) {
-    console.warn('⚠️ Max realtime monitoring retries reached, skipping for stability');
+    
     return;
   }
 
   try {
-    console.log(`📡 Initializing realtime monitoring (attempt ${monitoringRetries + 1}/${MAX_MONITORING_RETRIES})`);
+    
     
     // Wait a moment for supabase client to fully initialize
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -25,33 +25,33 @@ const initializeRealtimeMonitoring = async () => {
     // Subscribe with enhanced error handling
     const subscription = realtimeChannel.subscribe((status, err) => {
       if (err) {
-        console.warn('⚠️ Realtime subscription error:', err.message);
+        
         return;
       }
       
       switch (status) {
         case 'SUBSCRIBED':
-          console.log('✅ Supabase realtime connected successfully');
+          
           monitoringRetries = 0; // Reset retry counter on success
           break;
         case 'CHANNEL_ERROR':
-          console.warn('⚠️ Supabase realtime channel error (will retry)');
+          
           scheduleRealtimeRetry();
           break;
         case 'TIMED_OUT':
-          console.warn('⏰ Supabase realtime connection timed out');
+          
           scheduleRealtimeRetry();
           break;
         case 'CLOSED':
-          console.log('🔌 Supabase realtime connection closed');
+          
           break;
         default:
-          console.log('📡 Supabase realtime status:', status);
+          
       }
     });
     
   } catch (error) {
-    console.warn(`⚠️ Realtime monitoring setup failed (attempt ${monitoringRetries + 1}):`, error.message);
+    
     scheduleRealtimeRetry();
   }
 };
@@ -60,7 +60,7 @@ const initializeRealtimeMonitoring = async () => {
 const scheduleRealtimeRetry = () => {
   monitoringRetries++;
   if (monitoringRetries < MAX_MONITORING_RETRIES) {
-    console.log(`🔄 Scheduling realtime retry in ${monitoringRetries * 2} seconds...`);
+    
     setTimeout(initializeRealtimeMonitoring, monitoringRetries * 2000);
   }
 };
@@ -76,7 +76,7 @@ export function getRealtimeStatus() {
     }
     return realtimeChannel.state || 'UNKNOWN';
   } catch (error) {
-    console.warn('⚠️ Error getting realtime status:', error.message);
+    
     return 'ERROR';
   }
 }
@@ -86,7 +86,7 @@ export function createRealtimeChannel(channelName, options = {}) {
     // Add random suffix to avoid channel name conflicts
     const uniqueChannelName = `${channelName}-${Date.now()}`;
     
-    console.log(`📺 Creating realtime channel: ${uniqueChannelName}`);
+    
     
     const channel = supabase.channel(uniqueChannelName, {
       // Enhanced channel configuration for stability
@@ -98,10 +98,10 @@ export function createRealtimeChannel(channelName, options = {}) {
       ...options
     });
     
-    console.log(`✅ Created realtime channel: ${uniqueChannelName}`);
+    
     return channel;
   } catch (error) {
-    console.warn(`⚠️ Failed to create realtime channel ${channelName}:`, error.message);
+    
     return null;
   }
 }
@@ -110,12 +110,12 @@ export function removeRealtimeChannel(channel) {
   try {
     if (channel && supabase.removeChannel) {
       supabase.removeChannel(channel);
-      console.log('📺 Realtime channel removed successfully');
+      
       return true;
     }
     return false;
   } catch (error) {
-    console.warn('⚠️ Failed to remove realtime channel:', error.message);
+    
     return false;
   }
 }
@@ -128,9 +128,9 @@ export function cleanupRealtime() {
       realtimeChannel = null;
     }
     monitoringRetries = 0;
-    console.log('🧹 Realtime cleanup completed');
+    
   } catch (error) {
-    console.error('❌ Realtime cleanup failed:', error);
+    
   }
 }
 
@@ -143,3 +143,4 @@ export function getMonitoringRetries() {
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', cleanupRealtime);
 }
+

@@ -47,7 +47,7 @@ const GeneralSettingsTab = (props) => {
   // Load settings from database
   const loadSettings = async () => {
     try {
-      console.log('🔄 Loading general settings...');
+      
       
       const { data, error } = await supabase
         .from('general_settings')
@@ -55,21 +55,21 @@ const GeneralSettingsTab = (props) => {
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('❌ Error loading settings:', error);
+        
         return;
       }
 
       if (data) {
-        console.log('✅ Settings loaded:', data);
+        
         setSettings(prev => ({
           ...prev,
           ...data
         }));
       } else {
-        console.log('⚠️ No settings found, using defaults');
+        
       }
     } catch (error) {
-      console.error('❌ Error loading settings:', error);
+      
       toast({
         title: "Error",
         description: "Could not load general settings. Using default values.",
@@ -82,7 +82,7 @@ const GeneralSettingsTab = (props) => {
   const saveSettings = async () => {
     setLoading(true);
     try {
-      console.log('💾 Saving settings:', settings);
+      
       
       const { error } = await supabase
         .from('general_settings')
@@ -96,7 +96,7 @@ const GeneralSettingsTab = (props) => {
         throw error;
       }
 
-      console.log('✅ Settings saved successfully');
+      
 
       // Call parent callback if provided
       if (props.onSettingsChange) {
@@ -108,7 +108,7 @@ const GeneralSettingsTab = (props) => {
         description: "General settings have been updated successfully.",
       });
     } catch (error) {
-      console.error('❌ Error saving settings:', error);
+      
       toast({
         title: "Error",
         description: "Failed to save settings. Please try again.",
@@ -261,5 +261,6 @@ const GeneralSettingsTab = (props) => {
 };
 
 export default GeneralSettingsTab;
+
 
 

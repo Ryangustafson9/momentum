@@ -37,7 +37,7 @@ const NonmemberPrompt = () => {
           }));
         }
       } catch (error) {
-        console.error('Error loading settings:', error);
+        
         // Use default settings if there's an error
       } finally {
         setIsLoading(false);
@@ -56,7 +56,7 @@ const NonmemberPrompt = () => {
       await logout();
       navigate('/login');
     } catch (error) {
-      console.error('Error logging out:', error);
+      
       // Still navigate to login even if logout fails
       navigate('/login');
     }
@@ -185,3 +185,4 @@ const NonmemberPrompt = () => {
 };
 
 export default NonmemberPrompt;
+

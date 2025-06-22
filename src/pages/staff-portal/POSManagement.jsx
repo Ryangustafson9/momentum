@@ -38,6 +38,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
+import StaffPageHeader from '@/components/staff/StaffPageHeader';
+import StaffPageContainer from '@/components/staff/StaffPageContainer';
+import { logger } from '@/utils/logger';
 
 const POSManagement = () => {
   const navigate = useNavigate();
@@ -168,11 +171,11 @@ const POSManagement = () => {
         throw transactionsError;
       }
 
-      console.log('POS Management - Fetched categories:', categoriesData);
-      console.log('POS Management - Fetched products:', productsData);
-      console.log('POS Management - Enriched products:', enrichedProducts);
-      console.log('POS Management - Fetched transactions:', transactionsData);
-      console.log('POS Management - Enriched transactions:', enrichedTransactions);
+      logger.info('POS Management - Fetched categories:', categoriesData);
+      logger.info('POS Management - Fetched products:', productsData);
+      logger.info('POS Management - Enriched products:', enrichedProducts);
+      logger.info('POS Management - Fetched transactions:', transactionsData);
+      logger.info('POS Management - Enriched transactions:', enrichedTransactions);
 
       setCategories(categoriesData || []);
       setProducts(enrichedProducts);
@@ -318,22 +321,19 @@ const POSManagement = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="mb-6 flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">POS Management</h1>
-          <p className="text-gray-600">Manage products, categories, and view transaction history</p>
-        </div>
-        <Button
-          variant="outline"
-          onClick={() => navigate('/staff-portal/pos')}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to POS
-        </Button>
-      </div>
+    <StaffPageContainer>
+      <StaffPageHeader 
+        title="POS Management"
+        description="Manage products, categories, and view transaction history"
+        actions={[
+          {
+            text: "Back to POS",
+            variant: "outline",
+            onClick: () => navigate('/staff-portal/pos'),
+            icon: ArrowLeft
+          }
+        ]}
+      />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
@@ -1205,7 +1205,7 @@ const POSManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </StaffPageContainer>
   );
 };
 

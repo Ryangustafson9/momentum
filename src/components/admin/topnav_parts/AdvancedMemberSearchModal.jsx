@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Search, 
-  Filter, 
-  X, 
-  User, 
-  Mail, 
-  Phone, 
+import {
+  Search,
+  Filter,
+  X,
+  User,
+  Mail,
+  Phone,
   Calendar,
   CreditCard,
   Settings,
   ChevronDown,
-  Download
+  Download,
+  PlusCircle
 } from 'lucide-react';
+import { MemberProfileService } from '@/services/memberProfileService';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -45,8 +48,10 @@ const AdvancedMemberSearchModal = ({
   const [joinDateFilter, setJoinDateFilter] = useState('all');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
   const [membershipTypes, setMembershipTypes] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
+  const { toast } = useToast();
 
   // Fetch membership types for filter options
   useEffect(() => {
@@ -58,7 +63,7 @@ const AdvancedMemberSearchModal = ({
           .order('name');
         setMembershipTypes(data || []);
       } catch (error) {
-        console.error('Error fetching membership types:', error);
+        
       }
     };
 
@@ -153,7 +158,7 @@ const AdvancedMemberSearchModal = ({
 
       setResults(processedResults);
     } catch (error) {
-      console.error('Error performing advanced search:', error);
+      
       setResults([]);
       setTotalCount(0);
     } finally {
@@ -201,6 +206,46 @@ const AdvancedMemberSearchModal = ({
       navigate(`/staff-portal/member/${member.id}`);
     }
     onClose();
+  };
+
+  const handleCreateNewMember = async () => {
+    if (isCreatingProfile) return; // Prevent double-clicks
+
+    setIsCreatingProfile(true);
+
+    try {
+      // Create temporary profile from search query
+      const { data: newProfile, error } = await MemberProfileService.createFromSearchQuery(searchTerm);
+
+      if (error) {
+        throw error;
+      }
+
+      if (!newProfile) {
+        throw new Error('Failed to create profile');
+      }
+
+      toast({
+        title: "Profile Created",
+        description: `Created draft profile for ${newProfile.first_name} ${newProfile.last_name}`,
+      });
+
+      // Navigate to the new profile page
+      if (navigate) {
+        navigate(`/staff-portal/member/${newProfile.system_member_id}`);
+      }
+      onClose();
+
+    } catch (error) {
+      
+      toast({
+        title: "Error",
+        description: `Failed to create profile: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingProfile(false);
+    }
   };
   const getRoleColor = (role) => {
     switch (role) {
@@ -435,11 +480,73 @@ const AdvancedMemberSearchModal = ({
                 </Card>
               ))}
 
+              {/* Always show Create New Member option when there's a search term and results exist */}
+              {!loading && results.length > 0 && searchTerm.trim().length >= 2 && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <Button
+                    variant="outline"
+                    onClick={isCreatingProfile ? undefined : handleCreateNewMember}
+                    disabled={isCreatingProfile}
+                    className="w-full text-primary hover:text-primary/80 border-primary hover:border-primary/80 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isCreatingProfile ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+                    ) : (
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                    )}
+                    {isCreatingProfile ? 'Creating Profile...' : (
+                      <>
+                        Create New Member: {(() => {
+                          const nameParts = searchTerm.trim().split(/\s+/);
+                          const firstName = nameParts[0] || '';
+                          const lastName = nameParts.slice(1).join(' ') || '';
+                          return (
+                            <span className="font-semibold">
+                              {firstName} {lastName}
+                            </span>
+                          );
+                        })()}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+
               {!loading && results.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   <User className="h-12 w-12 mx-auto mb-3 text-gray-400" />
                   <p>No members found matching your criteria</p>
-                  <p className="text-sm">Try adjusting your search filters</p>
+                  <p className="text-sm mb-4">Try adjusting your search filters</p>
+
+                  {/* Show Create New Member option if there's a search term */}
+                  {searchTerm.trim().length >= 2 && (
+                    <Button
+                      variant="outline"
+                      onClick={isCreatingProfile ? undefined : handleCreateNewMember}
+                      disabled={isCreatingProfile}
+                      className="mt-2 text-primary hover:text-primary/80 border-primary hover:border-primary/80 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isCreatingProfile ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+                      ) : (
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                      )}
+                      {isCreatingProfile ? 'Creating Profile...' : (
+                        <>
+                          Create New Member: {(() => {
+                            const nameParts = searchTerm.trim().split(/\s+/);
+                            const firstName = nameParts[0] || '';
+                            const lastName = nameParts.slice(1).join(' ') || '';
+                            return (
+                              <span className="font-semibold">
+                                {firstName} {lastName}
+                              </span>
+                            );
+                          })()}
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
@@ -451,3 +558,4 @@ const AdvancedMemberSearchModal = ({
 };
 
 export default AdvancedMemberSearchModal;
+

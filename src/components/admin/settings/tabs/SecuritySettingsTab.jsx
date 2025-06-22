@@ -22,7 +22,7 @@ const SecuritySettingsTabContent = () => {
         const currentSettings = await dataService.getSecuritySettings();
         setSettings(currentSettings);
       } catch (error) {
-        console.error("Failed to load security settings:", error);
+        
         toast({
           title: "Error",
           description: "Could not load security settings. Using default values.",
@@ -55,7 +55,7 @@ const SecuritySettingsTabContent = () => {
         className: "bg-green-500 text-white",
       });
     } catch (error) {
-      console.error("Failed to save security settings:", error);
+      
       toast({
         title: "Error",
         description: "Could not save security settings. Please try again.",
@@ -123,5 +123,6 @@ const SecuritySettingsTabContent = () => {
 };
 
 export default SecuritySettingsTabContent;
+
 
 

@@ -38,7 +38,7 @@ const Dashboard = () => {
     try {
       await logout();
     } catch (error) {
-      console.error('Logout error:', error);
+      
     }
   };
 
@@ -79,7 +79,7 @@ const Dashboard = () => {
       await logout();
       // User will be redirected automatically by your auth system
     } catch (error) {
-      console.error('Logout failed:', error);
+      
     }
   };
 
@@ -377,5 +377,6 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
 
 

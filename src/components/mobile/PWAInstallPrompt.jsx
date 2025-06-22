@@ -250,3 +250,4 @@ const PWAInstallPrompt = (props) => {
 };
 
 export default PWAInstallPrompt;
+

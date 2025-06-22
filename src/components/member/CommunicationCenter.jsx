@@ -151,7 +151,7 @@ const CommunicationCenter = ({ memberId, memberName, className = '' }) => {
       setSupportTickets(ticketsData || []);
 
     } catch (error) {
-      console.error('Error loading communication data:', error);
+      
     } finally {
       setLoading(false);
     }
@@ -196,7 +196,7 @@ const CommunicationCenter = ({ memberId, memberName, className = '' }) => {
       });
 
     } catch (error) {
-      console.error('Error sending message:', error);
+      
       toast({
         title: 'Failed to send message',
         description: error.message,
@@ -238,7 +238,7 @@ const CommunicationCenter = ({ memberId, memberName, className = '' }) => {
       });
 
     } catch (error) {
-      console.error('Error creating support ticket:', error);
+      
       toast({
         title: 'Failed to create ticket',
         description: error.message,
@@ -579,3 +579,4 @@ const SupportTicketForm = ({ onSubmit }) => {
 };
 
 export default CommunicationCenter;
+

@@ -49,7 +49,7 @@ const MemberDashboard = () => {
           .single();
 
         if (profileError) {
-          console.error('Profile fetch error:', profileError);
+          
           // Continue without membership info if profile fetch fails
         }
 
@@ -78,7 +78,7 @@ const MemberDashboard = () => {
         });
 
       } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+        
         toast({
           title: "Error",
           description: "Failed to load dashboard data",
@@ -257,3 +257,4 @@ const MemberDashboard = () => {
 };
 
 export default MemberDashboard;
+

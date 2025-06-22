@@ -33,7 +33,7 @@ const AdminProfileManager = () => {
       const profileStats = await profileUtils.getProfileStats();
       setStats(profileStats);
     } catch (error) {
-      console.error('Failed to load profile stats:', error);
+      
       toast({
         title: "Error",
         description: "Failed to load profile statistics",
@@ -62,7 +62,7 @@ const AdminProfileManager = () => {
         description: `Found ${searchResults.length} profiles`
       });
     } catch (error) {
-      console.error('Search failed:', error);
+      
       toast({
         title: "Search Failed",
         description: "Failed to search profiles",
@@ -93,7 +93,7 @@ const AdminProfileManager = () => {
       await handleSearch();
       await loadProfileStats();
     } catch (error) {
-      console.error('Bulk update failed:', error);
+      
       toast({
         title: "Bulk Update Failed",
         description: "Failed to update profiles",
@@ -295,3 +295,4 @@ const AdminProfileManager = () => {
 };
 
 export default AdminProfileManager;
+

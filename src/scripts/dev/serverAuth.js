@@ -21,8 +21,8 @@ const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'TEST_EMAIL', 'TES
 const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
 if (missingVars.length > 0) {
-  console.error('❌ Missing required environment variables:', missingVars.join(', '));
-  console.error('💡 Please set these in your .env file or environment');
+  
+  
   process.exit(1);
 }
 
@@ -44,7 +44,7 @@ let tokens = {
  */
 const loginAndStoreTokens = async (email, password) => {
   try {
-    console.log('🔐 Attempting login...');
+    
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -55,7 +55,7 @@ const loginAndStoreTokens = async (email, password) => {
       throw error;
     }
 
-    console.log('✅ Login successful');
+    
 
     // Store tokens in memory
     tokens.access_token = data.session.access_token;
@@ -67,8 +67,8 @@ const loginAndStoreTokens = async (email, password) => {
     );
     tokens.expiry_time = payload.exp * 1000; // Convert to milliseconds
 
-    console.log('💾 Tokens stored in memory');
-    console.log('⏰ Token expires at:', new Date(tokens.expiry_time).toISOString());
+    
+    
 
     // Set up automatic token refresh
     setupAutoRefresh();
@@ -76,7 +76,7 @@ const loginAndStoreTokens = async (email, password) => {
     return tokens;
 
   } catch (error) {
-    console.error('❌ Login failed:', error.message);
+    
     throw error;
   }
 };
@@ -90,7 +90,7 @@ const refreshAccessToken = async () => {
       throw new Error('No refresh token available');
     }
 
-    console.log('🔄 Refreshing access token...');
+    
 
     const { data, error } = await supabase.auth.refreshSession({
       refresh_token: tokens.refresh_token,
@@ -100,7 +100,7 @@ const refreshAccessToken = async () => {
       throw error;
     }
 
-    console.log('✅ Session refreshed successfully');
+    
 
     // Update tokens in memory
     tokens.access_token = data.session.access_token;
@@ -112,8 +112,8 @@ const refreshAccessToken = async () => {
     );
     tokens.expiry_time = payload.exp * 1000; // Convert to milliseconds
 
-    console.log('💾 Tokens updated in memory');
-    console.log('⏰ New token expires at:', new Date(tokens.expiry_time).toISOString());
+    
+    
 
     // Reset the auto-refresh timer
     setupAutoRefresh();
@@ -121,7 +121,7 @@ const refreshAccessToken = async () => {
     return tokens;
 
   } catch (error) {
-    console.error('❌ Error refreshing session:', error.message);
+    
     throw error;
   }
 };
@@ -139,18 +139,18 @@ const setupAutoRefresh = () => {
     const timeUntilExpiry = tokens.expiry_time - currentTime;
     const refreshTime = Math.max(timeUntilExpiry - 60000, 5000); // Refresh 1 min before expiry, minimum 5 seconds
 
-    console.log(`⏱️  Token expires in ${Math.round(timeUntilExpiry / 1000)} seconds`);
-    console.log(`🔄 Auto-refresh scheduled in ${Math.round(refreshTime / 1000)} seconds`);
+    
+    
 
     // Set timer to refresh token before expiry
     setTimeout(() => {
       refreshAccessToken().catch(error => {
-        console.error('❌ Auto-refresh failed:', error.message);
+        
       });
     }, refreshTime);
 
   } catch (error) {
-    console.error('❌ Error setting up auto-refresh:', error.message);
+    
   }
 };
 
@@ -159,7 +159,7 @@ const setupAutoRefresh = () => {
  */
 const testAuthenticatedRequest = async () => {
   try {
-    console.log('📊 Testing authenticated API request...');
+    
 
     const { data, error } = await supabase
       .from("profiles")
@@ -170,12 +170,12 @@ const testAuthenticatedRequest = async () => {
       throw error;
     }
 
-    console.log('✅ API request successful');
-    console.log('📋 Profile count:', data.length);
+    
+    
     return data;
 
   } catch (error) {
-    console.error('❌ API request failed:', error.message);
+    
     throw error;
   }
 };
@@ -185,7 +185,7 @@ const testAuthenticatedRequest = async () => {
  */
 const main = async () => {
   try {
-    console.log('🚀 Starting server authentication demo...\n');
+    
 
     // Step 1: Login and store tokens
     await loginAndStoreTokens(process.env.TEST_EMAIL, process.env.TEST_PASSWORD);
@@ -193,11 +193,11 @@ const main = async () => {
     // Step 2: Test authenticated request
     await testAuthenticatedRequest();
 
-    console.log('\n✨ Demo completed successfully');
-    console.log('💡 Token will auto-refresh before expiry');
+    
+    
 
   } catch (error) {
-    console.error('\n💥 Demo failed:', error.message);
+    
     process.exit(1);
   }
 };
@@ -206,4 +206,5 @@ const main = async () => {
 if (import.meta.url === `file://${process.argv[1]}`) {
   main();
 }
+
 

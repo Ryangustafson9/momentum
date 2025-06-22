@@ -61,7 +61,7 @@ const AccountIndicator = ({ className = "" }) => {
       await logout();
       navigate('/login');
     } catch (error) {
-      console.error('Logout failed:', error);
+      
     }
   };
 
@@ -217,3 +217,4 @@ const AccountIndicator = ({ className = "" }) => {
 };
 
 export default AccountIndicator;
+

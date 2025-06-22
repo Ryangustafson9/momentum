@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabaseClient';
 export const memberService = {
   // Get all members with optional filtering
   async getMembers(filters = {}) {
-    console.log('🔍 MemberService: Fetching members with filters:', filters);
+    
     
     let query = supabase
       .from('profiles')
@@ -39,17 +39,17 @@ export const memberService = {
     const { data, error } = await query;
 
     if (error) {
-      console.error('❌ MemberService: Error fetching members:', error);
+      
       throw new Error(`Failed to fetch members: ${error.message}`);
     }
 
-    console.log('✅ MemberService: Fetched', data?.length || 0, 'members');
+    
     return data || [];
   },
 
   // Get member count for dashboard stats
   async getMemberCount() {
-    console.log('🔍 MemberService: Fetching member count');
+    
     
     const { count, error } = await supabase
       .from('profiles')
@@ -57,17 +57,17 @@ export const memberService = {
       .eq('role', 'member');
 
     if (error) {
-      console.error('❌ MemberService: Error fetching member count:', error);
+      
       throw new Error(`Failed to fetch member count: ${error.message}`);
     }
 
-    console.log('✅ MemberService: Member count:', count);
+    
     return count || 0;
   },
 
   // Get single member profile
   async getMemberProfile(memberId) {
-    console.log('🔍 MemberService: Fetching profile for member:', memberId);
+    
     
     const { data, error } = await supabase
       .from('profiles')
@@ -86,17 +86,17 @@ export const memberService = {
       .single();
 
     if (error) {
-      console.error('❌ MemberService: Error fetching member profile:', error);
+      
       throw new Error(`Failed to fetch member profile: ${error.message}`);
     }
 
-    console.log('✅ MemberService: Fetched profile for:', data?.email);
+    
     return data;
   },
 
   // Get member's membership details
   async getMemberMembership(memberId) {
-    console.log('🔍 MemberService: Fetching membership for member:', memberId);
+    
     
     const { data, error } = await supabase
       .from('memberships')
@@ -108,17 +108,17 @@ export const memberService = {
       .maybeSingle();
 
     if (error) {
-      console.error('❌ MemberService: Error fetching membership:', error);
+      
       throw new Error(`Failed to fetch membership: ${error.message}`);
     }
 
-    console.log('✅ MemberService: Fetched membership:', data?.id || 'none');
+    
     return data;
   },
 
   // Get member's add-ons
   async getMemberAddons(memberId) {
-    console.log('🔍 MemberService: Fetching add-ons for member:', memberId);
+    
     
     const { data, error } = await supabase
       .from('addon_memberships')
@@ -129,17 +129,17 @@ export const memberService = {
       .eq('member_id', memberId);
 
     if (error) {
-      console.error('❌ MemberService: Error fetching add-ons:', error);
+      
       throw new Error(`Failed to fetch add-ons: ${error.message}`);
     }
 
-    console.log('✅ MemberService: Fetched', data?.length || 0, 'add-ons');
+    
     return data || [];
   },
 
   // Update member profile
   async updateMember(memberId, updates) {
-    console.log('🔄 MemberService: Updating member:', memberId, updates);
+    
     
     const { data, error } = await supabase
       .from('profiles')
@@ -152,17 +152,17 @@ export const memberService = {
       .single();
 
     if (error) {
-      console.error('❌ MemberService: Error updating member:', error);
+      
       throw new Error(`Failed to update member: ${error.message}`);
     }
 
-    console.log('✅ MemberService: Updated member:', data?.email);
+    
     return data;
   },
 
   // Check in member
   async checkInMember(memberId, memberName) {
-    console.log('🔄 MemberService: Checking in member:', memberName);
+    
     
     // Check if already checked in today
     const today = new Date().toISOString().split('T')[0];
@@ -191,17 +191,17 @@ export const memberService = {
       .single();
 
     if (error) {
-      console.error('❌ MemberService: Error checking in member:', error);
+      
       throw new Error(`Failed to check in member: ${error.message}`);
     }
 
-    console.log('✅ MemberService: Checked in member:', memberName);
+    
     return data;
   },
 
   // Check out member
   async checkOutMember(attendanceId) {
-    console.log('🔄 MemberService: Checking out member:', attendanceId);
+    
     
     const { data, error } = await supabase
       .from('attendance')
@@ -214,17 +214,17 @@ export const memberService = {
       .single();
 
     if (error) {
-      console.error('❌ MemberService: Error checking out member:', error);
+      
       throw new Error(`Failed to check out member: ${error.message}`);
     }
 
-    console.log('✅ MemberService: Checked out member');
+    
     return data;
   },
 
   // Get family members
   async getFamilyMembers(primaryMemberId) {
-    console.log('🔍 MemberService: Fetching family members for:', primaryMemberId);
+    
     
     const { data, error } = await supabase
       .from('family_members')
@@ -235,13 +235,14 @@ export const memberService = {
       .eq('primary_member_id', primaryMemberId);
 
     if (error) {
-      console.error('❌ MemberService: Error fetching family members:', error);
+      
       throw new Error(`Failed to fetch family members: ${error.message}`);
     }
 
-    console.log('✅ MemberService: Fetched', data?.length || 0, 'family members');
+    
     return data || [];
   },
 };
 
 export default memberService;
+

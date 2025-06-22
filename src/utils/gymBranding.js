@@ -42,7 +42,7 @@ export const getOperationalSettings = () => {
 // Load all settings from database
 export const loadGymSettings = async () => {
   try {
-    console.log('🔄 Loading gym settings from database...');
+    
     
     const { data: settings, error } = await supabase
       .from('general_settings')
@@ -61,12 +61,12 @@ export const loadGymSettings = async () => {
         logo_url: settings.logo_url || '' // Add logo support
       };
       
-      console.log('✅ Gym settings loaded:', cachedSettings);
+      
     } else {
-      console.log('⚠️ No settings found, using defaults');
+      
     }
   } catch (error) {
-    console.error('❌ Error loading gym settings:', error);
+    
   }
   
   return cachedSettings;
@@ -107,3 +107,4 @@ export const isFeatureEnabled = (featureName) => {
       return false;
   }
 };
+

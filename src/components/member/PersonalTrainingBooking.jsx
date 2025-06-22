@@ -137,7 +137,7 @@ const PersonalTrainingBooking = ({ memberId, className = '' }) => {
       if (error) throw error;
       setBookings(bookingsData || []);
     } catch (error) {
-      console.error('Error loading data:', error);
+      
     } finally {
       setLoading(false);
     }
@@ -203,7 +203,7 @@ const PersonalTrainingBooking = ({ memberId, className = '' }) => {
       });
 
     } catch (error) {
-      console.error('Error booking session:', error);
+      
       toast({
         title: 'Booking failed',
         description: error.message,
@@ -232,7 +232,7 @@ const PersonalTrainingBooking = ({ memberId, className = '' }) => {
       });
 
     } catch (error) {
-      console.error('Error cancelling booking:', error);
+      
       toast({
         title: 'Cancellation failed',
         description: error.message,
@@ -552,3 +552,4 @@ const BookingDialog = ({ trainer, isOpen, onClose, onBook, getAvailableSlots }) 
 };
 
 export default PersonalTrainingBooking;
+

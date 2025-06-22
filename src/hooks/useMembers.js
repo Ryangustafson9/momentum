@@ -23,7 +23,7 @@ export function useMembers(filters = {}) {
     staleTime: 5 * 60 * 1000, // 5 minutes
     cacheTime: 10 * 60 * 1000, // 10 minutes
     onError: (error) => {
-      console.error('Error fetching members:', error);
+      
       showToast.error('Failed to load members', error.message);
     },
   });
@@ -39,7 +39,7 @@ export function useMember(id) {
     enabled: !!id, // Only run if ID is provided
     staleTime: 5 * 60 * 1000,
     onError: (error) => {
-      console.error('Error fetching member:', error);
+      
       showToast.error('Failed to load member', error.message);
     },
   });
@@ -55,7 +55,7 @@ export function useMemberStats() {
     staleTime: 2 * 60 * 1000, // 2 minutes for stats
     cacheTime: 5 * 60 * 1000,
     onError: (error) => {
-      console.error('Error fetching member stats:', error);
+      
       showToast.error('Failed to load member statistics', error.message);
     },
   });
@@ -75,7 +75,7 @@ export function useCreateMember() {
       showToast.success('Member created successfully');
     },
     onError: (error) => {
-      console.error('Error creating member:', error);
+      
       showToast.error('Failed to create member', error.message);
     },
   });
@@ -97,7 +97,7 @@ export function useUpdateMember() {
       showToast.success('Member updated successfully');
     },
     onError: (error) => {
-      console.error('Error updating member:', error);
+      
       showToast.error('Failed to update member', error.message);
     },
   });
@@ -119,7 +119,7 @@ export function useDeleteMember() {
       showToast.success('Member archived successfully');
     },
     onError: (error) => {
-      console.error('Error archiving member:', error);
+      
       showToast.error('Failed to archive member', error.message);
     },
   });
@@ -205,7 +205,7 @@ export const useUpdateMember = () => {
       });
     },
     onError: (error) => {
-      console.error('Update member error:', error);
+      
       toast({
         title: "Error",
         description: error.message || "Failed to update member",
@@ -235,7 +235,7 @@ export const useCheckInMember = () => {
       });
     },
     onError: (error) => {
-      console.error('Check-in error:', error);
+      
       toast({
         title: "Check-in Failed",
         description: error.message || "Failed to check in member",
@@ -262,7 +262,7 @@ export const useCheckOutMember = () => {
       });
     },
     onError: (error) => {
-      console.error('Check-out error:', error);
+      
       toast({
         title: "Check-out Failed",
         description: error.message || "Failed to check out member",
@@ -347,4 +347,5 @@ export default {
   useFamilyMembers,
   useUpdateMember,
   useCheckInMember,
+
 

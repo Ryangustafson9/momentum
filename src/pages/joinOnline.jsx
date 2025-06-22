@@ -59,7 +59,7 @@ const JoinOnline = () => {
           description: parsed.description
         };
       } catch (e) {
-        console.warn('Failed to parse stored design:', e);
+        
       }
     }
 
@@ -135,7 +135,7 @@ const JoinOnline = () => {
         setIsStaff(['admin', 'staff'].includes(profile.role));
       }
     } catch (error) {
-      console.error('Error checking user role:', error);
+      
     }
   };
 
@@ -163,7 +163,7 @@ const JoinOnline = () => {
         setSettingsLoaded(true);
 
       } catch (error) {
-        console.error('❌ Error loading settings:', error);
+        
         setSettingsLoaded(true); // Still mark as loaded to prevent infinite loading
       }
     };
@@ -176,21 +176,21 @@ const JoinOnline = () => {
     if (!authLoading) {
       if (!user) {
         // Show a message or redirect to login with return URL
-        console.log('🔄 User not authenticated, showing sign-in prompt...');
+        
         // Option 1: Redirect to login with return URL
         // navigate('/login?redirect=/join-online');
         
         // Option 2: Show sign-in prompt on the page (better UX)
         // We'll handle this in the JSX below
       } else {
-        console.log('✅ User authenticated:', user.display_name);
+        
       }
     }
   }, [user, authLoading, navigate]);
 
   const fetchMembershipPlans = async () => {
     try {
-      console.log('🔍 Fetching membership plans...');
+      
       
       const { data: plans, error } = await supabase
         .from('membership_types')
@@ -210,7 +210,7 @@ const JoinOnline = () => {
         .order('price', { ascending: true });
 
       if (error) {
-        console.error('❌ Error fetching membership plans:', error);
+        
         toast({
           title: "Error loading plans",
           description: "Unable to load membership plans. Please try again.",
@@ -219,16 +219,16 @@ const JoinOnline = () => {
         return;
       }
 
-      console.log('✅ Fetched plans:', plans);
+      
 
       if (!plans || plans.length === 0) {
-        console.log('⚠️ No membership plans found with available_online=true and active=true');
-        console.log('💡 To fix this, you need to:');
-        console.log('   1. Go to /staff-portal/memberships');
-        console.log('   2. Create or edit membership plans');
-        console.log('   3. Set "Available for Sale" = true');
-        console.log('   4. Set "Available Online" = true');
-        console.log('   5. Set "Active" = true');
+        
+        
+        
+        
+        
+        
+        
         setMembershipPlans([]);
         return;
       }
@@ -252,10 +252,10 @@ const JoinOnline = () => {
         };
       });
 
-      console.log('✅ Transformed plans:', transformedPlans);
+      
       setMembershipPlans(transformedPlans);
     } catch (error) {
-      console.error('❌ Error in fetchMembershipPlans:', error);
+      
       toast({
         title: "Error",
         description: "Failed to load membership options.",
@@ -342,7 +342,7 @@ const JoinOnline = () => {
     setIsLoading(true);
     
     try {
-      console.log('🚀 Starting complete signup process...');
+      
       
       // Step 1: Check if email already exists
       const { data: existingProfiles, error: checkError } = await supabase
@@ -364,17 +364,17 @@ const JoinOnline = () => {
       }
       
       // Step 2: Create auth user using signup from AuthContext
-      console.log('📝 Creating auth user...');
+      
       const { user: newUser } = await signup(formData.email, formData.password);
       
       if (!newUser) {
         throw new Error('Failed to create user account');
       }
       
-      console.log('✅ Auth user created:', newUser.id);
+      
       
       // Step 3: Create profile with membership plan
-      console.log('👤 Creating user profile...');
+      
       const profileData = {
         id: newUser.id,
         email: formData.email.toLowerCase().trim(),
@@ -394,15 +394,15 @@ const JoinOnline = () => {
         .insert([profileData]);
       
       if (profileError) {
-        console.error('Profile creation error:', profileError);
+        
         throw new Error('Failed to create user profile: ' + profileError.message);
       }
       
-      console.log('✅ Profile created successfully');
+      
       
       // Step 4: Create membership record (optional, depending on your business logic)
       if (selectedPlan) {
-        console.log('💳 Creating membership record...');
+        
         const membershipData = {
           user_id: newUser.id,
           membership_type_id: selectedPlan.id,
@@ -417,10 +417,10 @@ const JoinOnline = () => {
           .insert([membershipData]);
         
         if (membershipError) {
-          console.warn('Membership creation warning:', membershipError);
+          
           // Don't fail the whole process for this
         } else {
-          console.log('✅ Membership record created');
+          
         }
       }
         // Success! Show welcome message and redirect
@@ -430,14 +430,14 @@ const JoinOnline = () => {
         variant: "default"
       });
       
-      console.log('🎉 Signup complete, redirecting to member dashboard...');
+      
         // Redirect to member dashboard
       setTimeout(() => {
         navigate('/member-portal/dashboard');
       }, 2000);
       
     } catch (error) {
-      console.error('❌ Signup error:', error);
+      
       toast({
         title: "Signup Failed",
         description: error.message || "Failed to create account. Please try again.",
@@ -1126,4 +1126,5 @@ const JoinOnline = () => {
 };
 
 export default JoinOnline;
+
 

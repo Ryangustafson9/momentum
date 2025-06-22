@@ -50,5 +50,6 @@ src/components/optimization/*.bak
 # Test files
 *.test.js.bak
 *.spec.js.bak
-node_modules
-node_modules
+
+# Database scripts with sensitive data
+scripts/database/*-with-keys.js

@@ -15,7 +15,7 @@ import { supabase } from '@/lib/supabaseClient';
 export async function validateAuthUserExists(userId) {
   try {
     if (!userId) {
-      console.warn('[ProfileValidation] ⚠️ No user ID provided for validation');
+      
       return false;
     }
 
@@ -24,23 +24,23 @@ export async function validateAuthUserExists(userId) {
     const { data: { user }, error } = await supabase.auth.getUser();
     
     if (error) {
-      console.error('[ProfileValidation] ❌ Error checking auth user:', error);
+      
       return false;
     }
 
     // If we have a current session, check if it matches the provided userId
     if (user && user.id === userId) {
-      console.log('[ProfileValidation] ✅ Auth user validated via current session');
+      
       return true;
     }
 
     // For other users, we can't directly validate from client-side
     // The database foreign key constraint will catch invalid references
-    console.warn('[ProfileValidation] ⚠️ Cannot validate auth user from client-side for different user');
+    
     return true; // Let database constraint handle validation
     
   } catch (error) {
-    console.error('[ProfileValidation] ❌ Auth user validation failed:', error);
+    
     return false;
   }
 }
@@ -95,7 +95,7 @@ export function validateProfileData(profileData) {
  */
 export async function createProfileSafe(profileData) {
   try {
-    console.log('[ProfileValidation] 🔍 Validating profile data...');
+    
     
     // Client-side validation
     const validation = validateProfileData(profileData);
@@ -109,7 +109,7 @@ export async function createProfileSafe(profileData) {
       throw new Error('Cannot create profile: auth user validation failed');
     }
     
-    console.log('[ProfileValidation] ✅ Validation passed, creating profile...');
+    
 
     // Create profile with direct insert since RPC function doesn't exist
     const { data, error } = await supabase
@@ -129,15 +129,15 @@ export async function createProfileSafe(profileData) {
       .single();
 
     if (error) {
-      console.error('[ProfileValidation] ❌ Profile creation failed:', error);
+      
       throw error;
     }
 
-    console.log('[ProfileValidation] ✅ Profile created successfully:', data);
+    
     return data;
     
   } catch (error) {
-    console.error('[ProfileValidation] ❌ Safe profile creation failed:', error);
+    
     throw error;
   }
 }
@@ -156,14 +156,14 @@ export async function profileExists(userId) {
       .maybeSingle();
     
     if (error && error.code !== 'PGRST116') {
-      console.error('[ProfileValidation] ❌ Error checking profile existence:', error);
+      
       return false;
     }
     
     return !!data;
     
   } catch (error) {
-    console.error('[ProfileValidation] ❌ Profile existence check failed:', error);
+    
     return false;
   }
 }
@@ -207,7 +207,7 @@ export async function getProfileSafe(userId) {
     
     if (error) {
       if (error.code === 'PGRST116') {
-        console.log('[ProfileValidation] 📝 No profile found for user:', userId);
+        
         return null;
       }
       throw error;
@@ -216,7 +216,7 @@ export async function getProfileSafe(userId) {
     return data;
     
   } catch (error) {
-    console.error('[ProfileValidation] ❌ Safe profile fetch failed:', error);
+    
     throw error;
   }
 }
@@ -228,3 +228,4 @@ export default {
   profileExists,
   getProfileSafe
 };
+

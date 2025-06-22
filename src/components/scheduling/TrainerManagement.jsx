@@ -115,7 +115,7 @@ const TrainerDialog = ({ isOpen, onClose, trainer, organizationId }) => {
       }
       onClose();
     } catch (error) {
-      console.error('Error saving trainer:', error);
+      
     }
   };
 
@@ -437,7 +437,7 @@ const TrainerManagement = ({ organizationId = 'default-org-id' }) => {
       try {
         await deleteMutation.mutateAsync(trainerId);
       } catch (error) {
-        console.error('Error deactivating trainer:', error);
+        
       }
     }
   };
@@ -546,3 +546,4 @@ const TrainerManagement = ({ organizationId = 'default-org-id' }) => {
 };
 
 export default TrainerManagement;
+

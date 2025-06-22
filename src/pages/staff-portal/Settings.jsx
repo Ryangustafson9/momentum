@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Settings, Bell, Shield, CreditCard, Users, LayoutDashboard, BarChart3, Palette, SlidersHorizontal } from 'lucide-react';
+import { Settings, Bell, Shield, CreditCard, Users, LayoutDashboard, BarChart3, Palette } from 'lucide-react';
 import SettingsPageLayout from '@/components/admin/settings/SettingsPageLayout.jsx';
 import SettingsTabs from '@/components/admin/settings/SettingsTabs.jsx';
 import GeneralSettingsTab from '@/components/admin/settings/tabs/GeneralSettingsTab.jsx';
@@ -8,10 +8,10 @@ import SecuritySettingsTab from '@/components/admin/settings/tabs/SecuritySettin
 import BillingSettingsTab from '@/components/admin/settings/tabs/BillingSettingsTab.jsx';
 import ReportingSettingsTab from '@/components/admin/settings/tabs/ReportingSettingsTab.jsx';
 import AppearanceSettingsTab from '@/components/admin/settings/tabs/AppearanceSettingsTab.jsx';
-import AdminPanelSettingsTab from '@/components/admin/settings/tabs/AdminPanelSettingsTab.jsx';
+
 import { TabsContent } from '@/components/ui/tabs';
 import { initializeGymBranding } from '@/utils/gymBranding.js';
-import { usePermissions } from '@/hooks/usePermissions';
+
 
 
 const settingsTabsConfig = [
@@ -58,22 +58,9 @@ const settingsTabsConfig = [
 ];
 
 const AdminSettingsPage = () => {
-  const { isAdmin } = usePermissions();
-  
-  // Add admin panel tab only for admin users
-  const adminPanelTab = {
-    value: "admin-panel",
-    label: "Admin Panel",
-    Icon: SlidersHorizontal,
-    component: <AdminPanelSettingsTab />,
-    description: "Advanced system administration, location management, and configuration tools.",
-    adminOnly: true
-  };
-
-  // Conditionally add admin panel tab for admin users
-  const tabsConfig = isAdmin 
-    ? [...settingsTabsConfig, adminPanelTab]
-    : settingsTabsConfig;
+  // Use the base settings tabs configuration without admin panel tab
+  // Admin panel is now accessed via separate route/button
+  const tabsConfig = settingsTabsConfig;
   // Initialize gym branding when settings page loads
   useEffect(() => {
     initializeGymBranding();
@@ -102,5 +89,6 @@ const AdminSettingsPage = () => {
 };
 
 export default AdminSettingsPage;
+
 
 

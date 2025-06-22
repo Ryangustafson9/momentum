@@ -40,3 +40,4 @@ const SettingsTabs = ({ defaultValue, children, tabsConfig }) => {
 export default SettingsTabs;
 
 
+

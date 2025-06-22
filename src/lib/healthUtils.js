@@ -5,19 +5,19 @@ import { getRealtimeStatus, getMonitoringRetries } from './realtimeUtils.js';
 // Central logging system for consistent formatting and production control
 function log(message, ...args) {
   if (import.meta.env.MODE !== 'production') {
-    console.log(`[HealthUtils] ${message}`, ...args);
+    
   }
 }
 
 function logError(message, ...args) {
   if (import.meta.env.MODE !== 'production') {
-    console.error(`[HealthUtils] ❌ ${message}`, ...args);
+    
   }
 }
 
 function logWarn(message, ...args) {
   if (import.meta.env.MODE !== 'production') {
-    console.warn(`[HealthUtils] ⚠️ ${message}`, ...args);
+    
   }
 }
 
@@ -201,3 +201,4 @@ export async function initializeHealthMonitoring() {
 
 // Auto-initialize health monitoring
 initializeHealthMonitoring();
+

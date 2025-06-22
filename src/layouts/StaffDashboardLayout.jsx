@@ -22,7 +22,7 @@ const pageTitles = {
 
 const getPageTitle = (pathname) => {
   if (pathname.startsWith('/member/')) return 'Member Profile';
-  return pageTitles[pathname] || 'GymPro Admin';
+  return pageTitles[pathname] || 'Staff Portal';
 };
 
 const AdminDashboardLayout = ({ children }) => {
@@ -44,16 +44,15 @@ const AdminDashboardLayout = ({ children }) => {
   };
     useEffect(() => {
     let isMounted = true;
-    const fetchMembers = async () => {
-      if (user?.role === 'staff' || user?.role === 'admin') {
+    const fetchMembers = async () => {      if (user?.role === 'staff' || user?.role === 'admin') {
         try {
-          console.log('Fetching all profiles for search...');          const { data: profiles, error } = await supabase
+          const { data: profiles, error } = await supabase
             .from('profiles')
             .select('id, first_name, last_name, display_name, email, role, system_member_id, phone')
             .order('first_name', { ascending: true });
           
           if (error) {
-            console.error('Error fetching profiles:', error);
+            
             return;
           }
             // Transform data for search component
@@ -68,14 +67,11 @@ const AdminDashboardLayout = ({ children }) => {
             system_member_id: profile.system_member_id,
             phone: profile.phone
           })) || [];
-          
-          if (isMounted) {
+            if (isMounted) {
             setAllMembers(transformedMembers);
-            console.log('✅ StaffDashboardLayout: Loaded profiles for search:', transformedMembers.length);
-            console.log('📊 Sample transformed data:', transformedMembers.slice(0, 2));
           }
         } catch (error) {
-          console.error("Failed to fetch profiles for search:", error);
+          
           if (isMounted) setAllMembers([]);
         }
       }
@@ -118,5 +114,6 @@ const AdminDashboardLayout = ({ children }) => {
 };
 
 export default AdminDashboardLayout;
+
 
 

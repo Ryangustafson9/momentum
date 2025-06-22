@@ -132,7 +132,7 @@ const RoomDialog = ({ isOpen, onClose, room, organizationId }) => {
       }
       onClose();
     } catch (error) {
-      console.error('Error saving room:', error);
+      
     }
   };
 
@@ -612,3 +612,4 @@ const RoomManagement = ({ organizationId = 'default-org-id' }) => {
 };
 
 export default RoomManagement;
+

@@ -420,7 +420,7 @@ const ResourceFilteredSchedule = ({ organizationId = 'default-org-id' }) => {
     };
 
     // This would trigger the enhanced class creation dialog
-    console.log('Quick schedule with prefilled data:', prefilledData);
+    
     // TODO: Integrate with class creation dialog
   };
 
@@ -587,3 +587,4 @@ const ResourceFilteredSchedule = ({ organizationId = 'default-org-id' }) => {
 };
 
 export default ResourceFilteredSchedule;
+

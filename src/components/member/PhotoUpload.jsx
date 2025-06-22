@@ -118,7 +118,7 @@ const PhotoUpload = ({
 
       return publicUrl;
     } catch (error) {
-      console.error('Upload error:', error);
+      
       throw error;
     }
   };
@@ -170,7 +170,7 @@ const PhotoUpload = ({
       }, 1000);
 
     } catch (error) {
-      console.error('Photo upload failed:', error);
+      
       toast({
         title: 'Upload failed',
         description: error.message || 'Failed to upload photo. Please try again.',
@@ -337,3 +337,4 @@ const PhotoUpload = ({
 };
 
 export default PhotoUpload;
+

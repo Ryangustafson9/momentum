@@ -122,3 +122,4 @@ const MembershipTableContent = ({ types, visibleColumns, onEdit, onDelete, onVie
 export default MembershipTableContent;
 
 
+

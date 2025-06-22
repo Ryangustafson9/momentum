@@ -206,3 +206,4 @@ const LiveActivityFeed = ({
 };
 
 export default LiveActivityFeed;
+

@@ -17,7 +17,7 @@ const AddOnSelector = ({ selectedAddons, onAddonsChange, primaryMembershipPrice 
 
   const fetchAvailableAddons = async () => {
     try {
-      console.log('🔍 Fetching available add-ons...');
+      
 
       const { data, error } = await supabase
         .from('membership_types')
@@ -28,14 +28,14 @@ const AddOnSelector = ({ selectedAddons, onAddonsChange, primaryMembershipPrice 
         .order('price', { ascending: true });
 
       if (error) {
-        console.error('❌ Error fetching add-ons:', error);
+        
         return;
       }
 
-      console.log('✅ Found add-ons:', data?.length || 0, data);
+      
       setAvailableAddons(data || []);
     } catch (error) {
-      console.error('❌ Error fetching add-ons:', error);
+      
     } finally {
       setIsLoading(false);
     }
@@ -265,3 +265,4 @@ const AddOnSelector = ({ selectedAddons, onAddonsChange, primaryMembershipPrice 
 };
 
 export default AddOnSelector;
+

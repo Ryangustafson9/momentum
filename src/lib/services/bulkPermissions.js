@@ -70,7 +70,7 @@ export const bulkUpdatePermissions = async (roleIds, permissions, currentUserId)
     
     return results;
   } catch (error) {
-    console.error('Error in bulk permission update:', error);
+    
     throw error;
   }
 };
@@ -139,7 +139,7 @@ export const bulkApplyTemplate = async (roleIds, templateKey, currentUserId) => 
     
     return results;
   } catch (error) {
-    console.error('Error in bulk template application:', error);
+    
     throw error;
   }
 };
@@ -211,7 +211,7 @@ export const bulkAddPermissions = async (roleIds, permissionsToAdd, currentUserI
     
     return results;
   } catch (error) {
-    console.error('Error in bulk add permissions:', error);
+    
     throw error;
   }
 };
@@ -283,7 +283,7 @@ export const bulkRemovePermissions = async (roleIds, permissionsToRemove, curren
     
     return results;
   } catch (error) {
-    console.error('Error in bulk remove permissions:', error);
+    
     throw error;
   }
 };
@@ -330,7 +330,7 @@ export const bulkCopyPermissions = async (sourceRoleId, targetRoleIds, currentUs
     
     return bulkResult;
   } catch (error) {
-    console.error('Error in bulk copy permissions:', error);
+    
     throw error;
   }
 };
@@ -342,3 +342,4 @@ export default {
   bulkRemovePermissions,
   bulkCopyPermissions
 };
+

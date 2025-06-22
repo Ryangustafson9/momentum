@@ -40,6 +40,7 @@ import {
 import LocationService from '@/lib/services/locationService';
 import { useLocationContext } from '@/contexts/LocationContext';
 import { useToast } from '@/hooks/use-toast';
+import { logger } from '@/utils/logger';
 
 const MigrationWorkflowManager = () => {
   const { currentLocation } = useLocationContext();
@@ -691,7 +692,7 @@ const MigrationWorkflowManager = () => {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSave={(migrationData) => {
-          console.log('Creating migration:', migrationData);
+          logger.info('Creating migration:', migrationData);
           setShowCreateModal(false);
           loadMigrations();
           toast({

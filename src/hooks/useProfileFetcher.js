@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { storage } from '@/utils/storageUtils';
 import { normalizeRole } from '@/utils/roleUtils';
@@ -32,7 +32,7 @@ export const useProfileFetcher = () => {
       setLoading(true);
       setError(null);
       
-      console.log('[useProfileFetcher] 🔍 Fetching user profile for:', userId);
+      
       
       const { data, error: fetchError } = await supabase
         .from('profiles')
@@ -41,11 +41,11 @@ export const useProfileFetcher = () => {
         .single();
 
       if (fetchError) {
-        console.error('[useProfileFetcher] ❌ Profile fetch error:', fetchError);
+        
         
         // Handle missing profile case
         if (fetchError.code === 'PGRST116' && createIfMissing) {
-          console.log('[useProfileFetcher] 📝 No profile found, creating basic profile...');
+          
           
           const createdProfile = await createUserProfile(userId, onProfileCreated);
           
@@ -62,11 +62,7 @@ export const useProfileFetcher = () => {
       // Validate and normalize profile data
       const normalizedProfile = normalizeProfileData(data);
       
-      console.log('[useProfileFetcher] ✅ Profile fetched and normalized:', {
-        id: normalizedProfile.id,
-        email: normalizedProfile.email,
-        role: normalizedProfile.role
-      });
+      
 
       // Cache the profile if requested
       if (cache) {
@@ -76,12 +72,12 @@ export const useProfileFetcher = () => {
       return normalizedProfile;
       
     } catch (err) {
-      console.error('[useProfileFetcher] ❌ Error fetching profile:', err);
+      
       setError(err);
       
       // Return fallback profile to prevent auth flow breakage
       const fallbackProfile = createFallbackProfile(userId);
-      console.log('[useProfileFetcher] 🔧 Using fallback profile:', fallbackProfile);
+      
       
       return fallbackProfile;
     } finally {
@@ -100,7 +96,7 @@ export const useProfileFetcher = () => {
     const { data: { session } } = await supabase.auth.getSession();
     const userEmail = session?.user?.email || `user_${userId}@temp.local`;
 
-    console.log('[useProfileFetcher] 📧 Using email for profile:', userEmail);
+    
 
     // Check if email already exists and handle conflicts
     if (userEmail && userEmail !== `user_${userId}@temp.local`) {
@@ -143,7 +139,7 @@ export const useProfileFetcher = () => {
       .single();
 
     if (existingProfile) {
-      console.log('[useProfileFetcher] 🔍 Found existing profile with same email:', existingProfile);
+      
       
       // Update the existing profile with the correct user ID
       const { data: updatedProfile, error: updateError } = await supabase
@@ -154,7 +150,7 @@ export const useProfileFetcher = () => {
         .single();
 
       if (!updateError && updatedProfile) {
-        console.log('[useProfileFetcher] ✅ Updated existing profile:', updatedProfile);
+        
         return updatedProfile;
       }
     }
@@ -184,7 +180,7 @@ export const useProfileFetcher = () => {
       insertError = result.error;
     } catch (rpcError) {
       // Fallback to direct insert if function doesn't exist
-      console.warn('[useProfileFetcher] ⚠️ Safe function not available, using direct insert');
+      
       const result = await supabase
         .from('profiles')
         .insert([profileData])
@@ -195,11 +191,11 @@ export const useProfileFetcher = () => {
     }
 
     if (insertError) {
-      console.error('[useProfileFetcher] ❌ Failed to create profile:', insertError);
+      
 
       // Handle email conflict by using temp email
       if (insertError.code === '23505' && insertError.message.includes('email')) {
-        console.log('[useProfileFetcher] 🔄 Retrying with unique temp email...');
+        
         const tempEmail = `user_${profileData.id}_${Date.now()}@temp.local`;
         profileData.email = tempEmail;
 
@@ -210,7 +206,7 @@ export const useProfileFetcher = () => {
       return profileData;
     }
 
-    console.log('[useProfileFetcher] ✅ Created new profile:', insertData);
+    
     return insertData;
   };
 
@@ -222,7 +218,7 @@ export const useProfileFetcher = () => {
   const normalizeProfileData = (data) => {
     // Ensure role exists and is valid
     if (!data.role || data.role === null) {
-      console.warn('[useProfileFetcher] ⚠️ Profile has no role, defaulting to nonmember');
+      
       data.role = 'nonmember';
       
       // Update the profile with default role (fire and forget)
@@ -232,7 +228,7 @@ export const useProfileFetcher = () => {
         .eq('id', data.id)
         .then(({ error }) => {
           if (error) {
-            console.error('[useProfileFetcher] ❌ Failed to update role:', error);
+            
           }
         });
     }
@@ -269,7 +265,7 @@ export const useProfileFetcher = () => {
       storage.local.set('cached_user', profile);
       storage.local.set('cached_user_timestamp', Date.now());
     } catch (error) {
-      console.warn('[useProfileFetcher] ⚠️ Failed to cache user:', error);
+      
     }
   };
 
@@ -288,10 +284,10 @@ export const useProfileFetcher = () => {
         const maxCacheAge = 24 * 60 * 60 * 1000; // 24 hours
 
         if (cacheAge < maxCacheAge) {
-          console.log('[useProfileFetcher] 💾 Using cached user data');
+          
           return cached;
         } else {
-          console.log('[useProfileFetcher] ⏰ Cached user data expired, clearing cache');
+          
           storage.local.remove('cached_user');
           storage.local.remove('cached_user_timestamp');
         }
@@ -299,7 +295,7 @@ export const useProfileFetcher = () => {
 
       return null;
     } catch (error) {
-      console.warn('[useProfileFetcher] ⚠️ Failed to load cached user:', error);
+      
       return null;
     }
   }, []);
@@ -311,9 +307,9 @@ export const useProfileFetcher = () => {
     try {
       storage.local.remove('cached_user');
       storage.local.remove('cached_user_timestamp');
-      console.log('[useProfileFetcher] 🗑️ Profile cache cleared');
+      
     } catch (error) {
-      console.warn('[useProfileFetcher] ⚠️ Failed to clear cache:', error);
+      
     }
   }, []);
 
@@ -328,3 +324,4 @@ export const useProfileFetcher = () => {
 };
 
 export default useProfileFetcher;
+

@@ -114,7 +114,7 @@ const WorkoutTracker = ({ memberId, className = '' }) => {
       if (error) throw error;
       setWorkouts(data || []);
     } catch (error) {
-      console.error('Error loading workouts:', error);
+      
     } finally {
       setLoading(false);
     }
@@ -200,7 +200,7 @@ const WorkoutTracker = ({ memberId, className = '' }) => {
       });
 
     } catch (error) {
-      console.error('Error saving workout:', error);
+      
       toast({
         title: 'Error saving workout',
         description: error.message,
@@ -455,3 +455,4 @@ const ExerciseTracker = ({ exercise, onSetComplete }) => {
 };
 
 export default WorkoutTracker;
+

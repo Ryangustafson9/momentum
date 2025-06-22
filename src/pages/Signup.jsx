@@ -31,15 +31,7 @@ const Signup = () => {
   const displayName = successUserName || createdUserName;
   // Debug URL parameters
   useEffect(() => {
-    console.log('🔍 URL parameters changed:', {
-      allParams: Object.fromEntries(searchParams.entries()),
-      success: searchParams.get('success'),
-      urlSuccess,
-      localSuccess,
-      showSuccess,
-      name: searchParams.get('name'),
-      displayName
-    });
+    
   }, [searchParams, urlSuccess, localSuccess, showSuccess, displayName]);
 
   const [formData, setFormData] = useState({
@@ -101,7 +93,6 @@ const Signup = () => {
   };
 
   const checkEmailExists = async (email) => {
-    console.log('🔍 checkEmailExists called with:', email);
     try {
       // Check profiles table for existing email
       const { data: profileData, error: profileError } = await supabase
@@ -110,20 +101,17 @@ const Signup = () => {
         .eq('email', email.toLowerCase()) // Case-insensitive check
         .maybeSingle();
 
-      console.log('🔍 Profile check result:', { data: profileData, error: profileError });
-
       if (profileError && profileError.code !== 'PGRST116') {
-        console.error('🔍 Error checking profiles:', profileError);
+        
         // If there's an error checking, assume email doesn't exist to allow signup attempt
         return false;
       }
 
       const emailExists = !!profileData;
-      console.log('🔍 Email exists result:', emailExists);
       return emailExists;
 
     } catch (error) {
-      console.log('🔍 Caught error in checkEmailExists:', error);
+      
       // If we can't check, assume email doesn't exist to allow signup attempt
       return false;
     }
@@ -131,11 +119,6 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    console.log('🔍 Form submission started:', formData);
-    console.log('🔍 Current user state before signup:', user);
-    console.log('🔍 Current showSuccess state:', showSuccess);
-    console.log('🔍 Current localSuccess state:', localSuccess);
-
     // Clear previous errors
     setDuplicateEmailError(false);
 
@@ -228,28 +211,22 @@ const Signup = () => {
       return;
     }
 
-    console.log('✅ All password requirements met, proceeding...');
     
     try {
-      console.log('🔍 Checking for duplicate email...');
-      
       const emailExists = await checkEmailExists(formData.email);
-      console.log('🔍 Email exists result:', emailExists);
       
       if (emailExists) {
-        console.log('❌ Email already exists - setting duplicate error');
         setDuplicateEmailError(true);
         return;
       }
 
-      console.log('✅ Email is unique, proceeding with registration...');
       const result = await signup(formData.email, formData.password, {
         firstName: formData.firstName,
         lastName: formData.lastName
-      });      console.log('✅ Registration completed:', result);
+      });      
 
       if (result && (result.user || result.profile)) {
-        console.log('🎯 Setting success state locally and in URL...');
+        
         
         // Set local success state immediately
         setLocalSuccess(true);
@@ -261,14 +238,14 @@ const Signup = () => {
           name: formData.firstName 
         });
         
-        console.log('✨ Success state set locally and in URL!');
-        console.log('🔍 URL should now be:', `${window.location.pathname}?success=true&name=${encodeURIComponent(formData.firstName)}`);
+        
+        
       } else {
-        console.log('❌ No user in result, signup may have failed silently:', result);
+        
       }
 
     } catch (error) {
-      console.error('❌ Registration error caught:', error);
+      
 
       // Check for various duplicate email error messages from Supabase
       const errorMessage = error.message?.toLowerCase() || '';
@@ -281,7 +258,7 @@ const Signup = () => {
         error.code === 'user_already_exists';
 
       if (isDuplicateEmail) {
-        console.log('❌ Duplicate email detected from auth error');
+        
         setDuplicateEmailError(true);
       } else {
         toast({
@@ -301,7 +278,7 @@ const Signup = () => {
         const joiningAllowed = await isOnlineJoiningAllowed();
         setAllowOnlineJoining(joiningAllowed);
       } catch (error) {
-        console.error('Failed to load club settings:', error);
+        
         // Default to allowing online joining if settings can't be loaded
         setAllowOnlineJoining(true);
       } finally {
@@ -317,33 +294,27 @@ const Signup = () => {
     // Only redirect if user is authenticated, we're not showing success,
     // and we're not in the middle of a signup flow
     if (user && !showSuccess && !searchParams.get('success') && !localSuccess) {
-      console.log('🔄 User is authenticated and not in signup flow, redirecting...', {
-        userRole: user.role,
-        showSuccess,
-        localSuccess,
-        hasSuccessParam: !!searchParams.get('success'),
-        currentURL: window.location.href
-      });
+      
 
       // Add a longer delay to ensure success state has time to be set
       const redirectTimer = setTimeout(() => {
         // Double-check we're still not showing success
         const currentSuccess = new URLSearchParams(window.location.search).get('success');
         if (!currentSuccess && !localSuccess) {
-          console.log('🎯 No success state found, proceeding with redirect...');
+          
           // Determine redirect based on user role
           if (user.role === 'admin' || user.role === 'staff') {
-            console.log('🎯 Redirecting admin/staff to staff dashboard');
+            
             navigate('/staff-portal/dashboard');
           } else if (user.role === 'member') {
-            console.log('🎯 Redirecting member to member dashboard');
+            
             navigate('/member-portal/dashboard');
           } else {
             // Non-members should not be auto-redirected to dashboards
-            console.log('🎯 Non-member user, staying on current page');
+            
           }
         } else {
-          console.log('🎯 Success state found, not redirecting');
+          
         }
       }, 2000); // Increased to 2 seconds to allow success state to be processed
 
@@ -352,13 +323,7 @@ const Signup = () => {
   }, [user, showSuccess, localSuccess, navigate, searchParams]);
   const gymColors = getGymColors();
 
-  console.log('🔍 Signup component render:', {
-    showSuccess,
-    localSuccess,
-    urlSuccess,
-    displayName,
-    user: user ? { id: user.id, role: user.role, name: user.name } : null
-  });
+  
 
   // ⭐ FIXED: Define passwordStrength first
   const passwordStrength = useMemo(() => {
@@ -391,92 +356,53 @@ const Signup = () => {
               src={getGymLogo()}
               alt={`${getGymName()} Logo`}
               className="h-20 mx-auto mb-2 object-contain"
-              onLoad={() => console.log('Gym logo loaded')}
-              onError={() => setGymLogoError(true)}
+              onLoad={async () =>  {
+                // Wait up to 3 seconds for user state to update
+                let attempts = 0;
+                while (!user && attempts < 6) {
+                  await new Promise(resolve => setTimeout(resolve, 500));
+                  attempts++;
+                }
+                // Navigate regardless (JoinOnline will handle auth)
+                navigate('/join-online');
+              }}
             />
           ) : (
-            <div className={`h-20 w-20 bg-gradient-to-br ${gymColors.primary} rounded-full flex items-center justify-center mx-auto mb-2 shadow-lg`}>
-              <span className="text-white text-3xl font-bold">{gymColors.fallback}</span>
+            <div className="h-20 mx-auto mb-2 flex items-center justify-center bg-gray-100 rounded-lg">
+              <span className="text-gray-500 text-sm">Logo not available</span>
             </div>
           )}
-        </div>        {/* SUCCESS STATE */}
+        </div>
+
         {showSuccess ? (
-          <div className="flex-grow flex flex-col justify-center items-center text-center">
+          /* SUCCESS STATE - Account Created */
+          <div className="text-center py-8">
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
+              className="mb-4"
             >
-              <CheckCircle className="w-24 h-24 text-green-500 mx-auto mb-6" />
+              <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
             </motion.div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">Success!</h1>
-            <p className="text-lg text-gray-700 mb-2">
-              Welcome to Nordic Fitness, {displayName}!
+            
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Welcome, {displayName}!
+            </h2>
+            <p className="text-gray-600 mb-4 text-sm">
+              Your account has been successfully created.
             </p>
-            <p className="text-gray-600 mb-8">
-              Your account has been created successfully.
-            </p>
-
-            <div className="bg-white/20 backdrop-blur-[10px] border border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.1)] p-6 mb-6 w-full rounded-xl">
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">
-                Ready to start your fitness journey?
-              </h2>
-              {allowOnlineJoining ? (
-                <p className="text-gray-700 mb-4">
-                  Would you like to sign up for a membership and unlock full access to our facilities?
-                </p>
-              ) : (
-                <p className="text-gray-700 mb-4">
-                  Contact {getGymName()} at <strong>(555) 123-4567</strong> or <strong>info@nordicfitness.com</strong> to set up your membership and unlock full access to our facilities.
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-3 w-full">
-              {allowOnlineJoining && (
-                <Button
-                  onClick={async () => {
-                    console.log('🔍 Membership button clicked');
-                    console.log('🔍 Current user state:', user);
-
-                    // If user is null, wait a bit for auth to update
-                    if (!user) {
-                      console.log('🔄 User is null, waiting for auth state...');
-
-                      // Wait up to 3 seconds for user state to update
-                      let attempts = 0;
-                      while (!user && attempts < 6) {
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                        attempts++;
-                        console.log(`🔄 Waiting attempt ${attempts}, user:`, user);
-                      }
-                    }
-
-                    // Navigate regardless (JoinOnline will handle auth)
-                    navigate('/join-online');
-                  }}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-lg font-semibold"
-                  size="lg"
-                >
-                  Yes, Sign Up for Membership
-                </Button>
-              )}
-              
+            
+            <div className="flex flex-col gap-4">
               <Button
-                variant="outline"
                 onClick={() => {
-                  console.log('🔍 Dashboard button clicked', { userRole: user?.role });
-
                   // Clear success state when going to dashboard
                   setSearchParams({});                  if (user?.role === 'admin' || user?.role === 'staff') {
-                    console.log('🎯 Navigating to staff dashboard');
                     navigate('/staff-portal/dashboard');
                   } else if (user?.role === 'member') {
-                    console.log('🎯 Navigating to member dashboard');
                     navigate('/member-portal/dashboard');
                   } else {
                     // Non-members should go to a welcome page or profile
-                    console.log('🎯 Non-member user, redirecting to dashboard');
                     navigate('/dashboard');
                   }
                 }}
@@ -491,7 +417,8 @@ const Signup = () => {
                 )}
               </Button>
             </div>
-          </div>        ) : (          /* FORM STATE */
+          </div>
+        ) : (          /* FORM STATE */
           <>
             <div className="text-center mb-6">
               <h1 className="text-2xl font-bold text-gray-900">Join Nordic Fitness</h1>
@@ -776,3 +703,4 @@ const Signup = () => {
 };
 
 export default Signup;
+

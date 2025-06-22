@@ -17,13 +17,7 @@ const PrivateRoute = ({ children, allowedRoles = [] }) => {
   const { user, authReady } = useAuth();
   const location = useLocation();
 
-  console.log('🔐 PrivateRoute check:', {
-    user: user?.email || 'none',
-    userRole: user?.role || 'none',
-    allowedRoles,
-    pathname: location.pathname,
-    authReady
-  });
+  
 
   // ⭐ WAIT: Auth not ready
   if (!authReady) {
@@ -32,13 +26,13 @@ const PrivateRoute = ({ children, allowedRoles = [] }) => {
 
   // ⭐ REDIRECT: No user = login (with location state)
   if (!user) {
-    console.log('🚫 No user, redirecting to login with return path:', location.pathname);
+    
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // ⭐ ALLOW: No role restrictions = any authenticated user
   if (allowedRoles.length === 0) {
-    console.log('✅ No role restrictions, allowing access');
+    
     return children;
   }
 
@@ -53,15 +47,16 @@ const PrivateRoute = ({ children, allowedRoles = [] }) => {
 
   // ⭐ CHECK: Route-specific access
   if (!canAccessRoute(location.pathname, user.role)) {
-    console.log('🚫 PrivateRoute: Cannot access route');
+    
     const redirectTo = getUnauthorizedRedirect(location.pathname, user.role);
     return <Navigate to={redirectTo} replace />;
   }
 
-  console.log('✅ Access granted');
+  
   return children;
 };
 
 export default PrivateRoute;
+
 
 

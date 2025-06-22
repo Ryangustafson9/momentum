@@ -39,6 +39,7 @@ import {
 import LocationService from '@/lib/services/locationService';
 import { useLocationContext } from '@/contexts/LocationContext';
 import { useToast } from '@/hooks/use-toast';
+import { logger } from '@/utils/logger';
 
 const PaymentProcessorHub = () => {
   const { currentLocation } = useLocationContext();
@@ -645,7 +646,7 @@ const PaymentProcessorHub = () => {
         processorId={showSetupWizard}
         onClose={() => setShowSetupWizard(false)}
         onComplete={(config) => {
-          console.log('Processor setup completed:', config);
+          logger.info('Processor setup completed:', config);
           setShowSetupWizard(false);
           loadPaymentConfig();
         }}

@@ -54,7 +54,6 @@ const StaffPermissionsManagement = () => {
   const fetchStaffPlans = async () => {
     try {
       setLoading(true);
-      console.log('🔍 Fetching staff plans...');
       
       const { data: plans, error } = await supabase
         .from('membership_types')
@@ -64,7 +63,6 @@ const StaffPermissionsManagement = () => {
 
       if (error) throw error;
 
-      console.log('✅ Staff plans fetched:', plans);
       
       // Initialize permissions if they don't exist
       const plansWithPermissions = plans.map(plan => ({
@@ -79,7 +77,7 @@ const StaffPermissionsManagement = () => {
         setSelectedPlan(plansWithPermissions[0]);
       }
     } catch (error) {
-      console.error('❌ Error fetching staff plans:', error);
+      
       toast({
         title: "Error",
         description: "Failed to load staff plans",
@@ -182,8 +180,6 @@ const StaffPermissionsManagement = () => {
     try {
       setSaving(true);
       
-      console.log('💾 Saving permissions for plan:', selectedPlan.name, selectedPlan.permissions);
-
       const { error } = await supabase
         .from('membership_types')
         .update({ 
@@ -212,7 +208,7 @@ const StaffPermissionsManagement = () => {
       });
 
     } catch (error) {
-      console.error('❌ Error saving permissions:', error);
+      
       toast({
         title: "❌ Save Failed",
         description: "Failed to save permissions. Please try again.",
@@ -495,3 +491,4 @@ const StaffPermissionsManagement = () => {
 };
 
 export default StaffPermissionsManagement;
+

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useLocationContext, useLocationData } from '@/contexts/LocationContext';
 import LocationService from '@/lib/services/locationService';
 import { Building2, Settings, MapPin, DollarSign } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 // Example component showing how to access location settings
 const LocationSettingsExample = () => {
@@ -223,9 +224,9 @@ const BillingComponent = () => {
 const updateBillingSettings = async (locationId, newConfig) => {
   const result = await LocationService.updateBillingConfig(locationId, newConfig);
   if (result.error) {
-    console.error('Failed to update billing config');
+    logger.error('Failed to update billing config');
   } else {
-    console.log('Billing config updated successfully');
+    logger.info('Billing config updated successfully');
   }
 };`}
             </pre>

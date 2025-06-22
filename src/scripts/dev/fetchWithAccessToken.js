@@ -18,8 +18,8 @@ const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'TEST_EMAIL', 'TES
 const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
 if (missingVars.length > 0) {
-  console.error('❌ Missing required environment variables:', missingVars.join(', '));
-  console.error('💡 Please set these in your .env file or environment');
+  
+  
   process.exit(1);
 }
 
@@ -57,12 +57,12 @@ const fetchDataWithAccessToken = async (accessToken) => {
       throw error;
     }
 
-    console.log('✅ Data fetched successfully');
-    console.log('📊 Profile count:', data.length);
+    
+    
     return data;
 
   } catch (error) {
-    console.error('❌ Error fetching data:', error.message);
+    
     throw error;
   }
 };
@@ -72,7 +72,7 @@ const fetchDataWithAccessToken = async (accessToken) => {
  */
 const testAccessToken = async () => {
   try {
-    console.log('🔐 Attempting authentication...');
+    
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email: process.env.TEST_EMAIL,
@@ -83,16 +83,16 @@ const testAccessToken = async () => {
       throw error;
     }
 
-    console.log('✅ Authentication successful');
+    
 
     const accessToken = data.session.access_token;
     const userData = await fetchDataWithAccessToken(accessToken);
 
-    console.log('🎉 Test completed successfully');
+    
     return userData;
 
   } catch (error) {
-    console.error('❌ Test failed:', error.message);
+    
     process.exit(1);
   }
 };
@@ -101,12 +101,13 @@ const testAccessToken = async () => {
 if (import.meta.url === `file://${process.argv[1]}`) {
   testAccessToken()
     .then(() => {
-      console.log('✨ Script completed');
+      
       process.exit(0);
     })
     .catch((error) => {
-      console.error('💥 Script failed:', error.message);
+      
       process.exit(1);
     });
 }
+
 

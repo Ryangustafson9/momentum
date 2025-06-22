@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LogOut, ChevronLeft, ChevronRight, Settings, GripVertical, Edit3,
   Home, Users, Calendar, BarChart2, UserCheck, Zap, UserCog, Briefcase,
-  Mail, CreditCard, Wrench, ShoppingCart
+  Mail, CreditCard, Wrench, ShoppingCart, Building, Tags
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -46,6 +46,8 @@ const iconMap = {
   CreditCard,
   Wrench,
   ShoppingCart,
+  Building,
+  Tags,
   Edit3,
   LogOut,
   Settings
@@ -177,8 +179,14 @@ const AdminSidebar = ({ onLogout, isExpanded, toggleSidebar, user }) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [orderedNavLinks, setOrderedNavLinks] = useState(() => {
     const saved = localStorage.getItem('adminSidebarOrder');
-    const baseLinks = saved ? JSON.parse(saved) : navLinks;
-    
+    let baseLinks = saved ? JSON.parse(saved) : navLinks;
+
+    // Ensure all links have correct paths (fix any localStorage corruption)
+    baseLinks = baseLinks.map(link => {
+      const correctLink = navLinks.find(nl => nl.label === link.label);
+      return correctLink ? { ...link, to: correctLink.to, icon: correctLink.icon } : link;
+    });
+
     // Filter links based on user role
     const filteredLinks = baseLinks.filter(link => {
       if (link.adminOnly && user?.role !== 'admin') {
@@ -186,7 +194,7 @@ const AdminSidebar = ({ onLogout, isExpanded, toggleSidebar, user }) => {
       }
       return true;
     });
-    
+
     return filteredLinks;
   });
 
@@ -209,8 +217,14 @@ const AdminSidebar = ({ onLogout, isExpanded, toggleSidebar, user }) => {
   // Update links when user role changes
   useEffect(() => {
     const saved = localStorage.getItem('adminSidebarOrder');
-    const baseLinks = saved ? JSON.parse(saved) : navLinks;
-    
+    let baseLinks = saved ? JSON.parse(saved) : navLinks;
+
+    // Ensure all links have correct paths (fix any localStorage corruption)
+    baseLinks = baseLinks.map(link => {
+      const correctLink = navLinks.find(nl => nl.label === link.label);
+      return correctLink ? { ...link, to: correctLink.to, icon: correctLink.icon } : link;
+    });
+
     // Filter links based on user role
     const filteredLinks = baseLinks.filter(link => {
       if (link.adminOnly && user?.role !== 'admin') {
@@ -218,7 +232,7 @@ const AdminSidebar = ({ onLogout, isExpanded, toggleSidebar, user }) => {
       }
       return true;
     });
-    
+
     setOrderedNavLinks(filteredLinks);
   }, [user?.role]);
 
@@ -389,6 +403,11 @@ const AdminSidebar = ({ onLogout, isExpanded, toggleSidebar, user }) => {
                       onClick={() => {
                         setOrderedNavLinks(navLinks);
                         localStorage.removeItem('adminSidebarOrder');
+                        toast({
+                          title: "Sidebar Reset",
+                          description: "Navigation has been reset to default order.",
+                          duration: 2000,
+                        });
                       }}
                       className="text-xs text-blue-600 hover:text-blue-700 h-auto p-1"
                     >

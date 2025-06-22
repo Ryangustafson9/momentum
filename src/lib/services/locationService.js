@@ -5,8 +5,47 @@
 import { supabase } from '@/lib/supabaseClient';
 
 export class LocationService {
-  // ==================== LOCATION MANAGEMENT ====================
+  // ==================== ORGANIZATION MANAGEMENT ====================
   
+  /**
+   * Get all organizations
+   */
+  static async getOrganizations() {
+    try {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      
+      return { data: null, error };
+    }
+  }
+
+  /**
+   * Get organization by slug
+   */
+  static async getOrganizationBySlug(slug) {
+    try {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('*')
+        .eq('slug', slug)
+        .single();
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      
+      return { data: null, error };
+    }
+  }
+
+  // ==================== LOCATION MANAGEMENT ====================
+
   /**
    * Get all locations for an organization
    */
@@ -26,7 +65,7 @@ export class LocationService {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      console.error('Error fetching organization locations:', error);
+      
       return { data: null, error };
     }
   }
@@ -50,7 +89,7 @@ export class LocationService {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      console.error('Error fetching location details:', error);
+      
       return { data: null, error };
     }
   }
@@ -75,7 +114,7 @@ export class LocationService {
       // Get the created location with full details
       return await this.getLocationDetails(data);
     } catch (error) {
-      console.error('Error creating location:', error);
+      
       return { data: null, error };
     }
   }
@@ -98,7 +137,7 @@ export class LocationService {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      console.error('Error updating location:', error);
+      
       return { data: null, error };
     }
   }
@@ -123,7 +162,7 @@ export class LocationService {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      console.error('Error updating billing config:', error);
+      
       return { data: null, error };
     }
   }
@@ -142,7 +181,7 @@ export class LocationService {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      console.error('Error fetching billing config:', error);
+      
       return { data: null, error };
     }
   }
@@ -170,7 +209,7 @@ export class LocationService {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      console.error('Error updating payment config:', error);
+      
       return { data: null, error };
     }
   }
@@ -224,7 +263,7 @@ export class LocationService {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      console.error('Error fetching location templates:', error);
+      
       return { data: null, error };
     }
   }
@@ -243,7 +282,7 @@ export class LocationService {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      console.error('Error creating location template:', error);
+      
       return { data: null, error };
     }
   }
@@ -301,7 +340,7 @@ export class LocationService {
 
       return { data: migration, error: null };
     } catch (error) {
-      console.error('Error applying template to location:', error);
+      
       return { data: null, error };
     }
   }
@@ -326,7 +365,7 @@ export class LocationService {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      console.error('Error creating billing migration:', error);
+      
       return { data: null, error };
     }
   }
@@ -351,14 +390,14 @@ export class LocationService {
           const result = await this.executeMigration(migration);
           results.push(result);
         } catch (migrationError) {
-          console.error(`Migration ${migration.id} failed:`, migrationError);
+          
           results.push({ id: migration.id, success: false, error: migrationError });
         }
       }
 
       return { data: results, error: null };
     } catch (error) {
-      console.error('Error executing pending migrations:', error);
+      
       return { data: null, error };
     }
   }
@@ -503,7 +542,7 @@ export class LocationService {
         error: null
       };
     } catch (error) {
-      console.error('Error fetching location analytics:', error);
+      
       return { data: null, error };
     }
   }
@@ -529,3 +568,4 @@ export class LocationService {
 }
 
 export default LocationService;
+

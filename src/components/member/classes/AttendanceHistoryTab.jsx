@@ -39,3 +39,4 @@ const AttendanceHistoryTab = ({ memberAttendance, allClasses }) => {
 export default AttendanceHistoryTab;
 
 
+

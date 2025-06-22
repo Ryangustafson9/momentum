@@ -100,8 +100,7 @@ const SuperAdminPanelPage = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Super Admin Panel</h1>
           <p className="text-muted-foreground mt-1">Manage core system configurations and advanced settings.</p>
-        </div>
-        <Button onClick={() => navigate('/')} variant="outline">
+        </div>        <Button onClick={() => navigate('/staff-portal/dashboard')} variant="outline">
           <ArrowLeft className="mr-2 h-4 w-4" /> Return to Staff Portal
         </Button>
       </div>
@@ -117,5 +116,6 @@ const SuperAdminPanelPage = () => {
 };
 
 export default SuperAdminPanelPage;
+
 
 

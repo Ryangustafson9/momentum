@@ -12,7 +12,11 @@ const StatCard = ({
   badgeCount,
   isEditMode,
   onRemoveCard,
-  isDragging = false
+  isDragging = false,
+  listeners = {}, // Accept listeners as prop
+  attributes = {}, // Accept attributes as prop
+  setNodeRef = null, // Accept setNodeRef as prop
+  style: dragStyle = {}, // Accept style as prop
 }) => {
   const navigate = useNavigate();
 
@@ -26,40 +30,49 @@ const StatCard = ({
       navigate(navigateTo);
     }
   };
+
+  const handleRemoveClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onRemoveCard(cardConfig.id);
+  };
+
   return (
     <motion.div
-      layout
+      layout={!isDragging} // Disable layout animation during drag
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
       onClick={handleCardClick}
-      className={`bg-card border border-border overflow-hidden shadow-sm hover:shadow-md rounded-xl relative transition-all duration-200 ${
+      ref={setNodeRef}
+      style={dragStyle}
+      {...attributes}
+      {...(isEditMode ? listeners : {})}
+      className={`bg-card border border-border overflow-hidden shadow-sm rounded-xl relative transition-all duration-200 ${
         !isEditMode && navigateTo ? 'cursor-pointer hover:shadow-lg hover:scale-[1.02] hover:border-primary/20' : ''
-      } ${isDragging ? 'shadow-lg scale-105 rotate-2 z-50' : ''} ${isEditMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
+      } ${isDragging ? 'shadow-xl scale-105 rotate-2 z-50 border-blue-300' : ''} ${
+        isEditMode ? 'cursor-grab active:cursor-grabbing hover:shadow-lg hover:border-blue-300 hover:bg-blue-50/30' : 'hover:shadow-md'
+      }`}
     >
       {isEditMode && (
         <>
-          {/* Drag Handle */}
-          <div className="absolute top-2 left-2 opacity-70 hover:opacity-100 transition-opacity">
+          {/* Drag Handle (visual indicator) */}
+          <div className="absolute top-2 left-2 opacity-60 hover:opacity-100 transition-opacity">
             <GripVertical className="h-4 w-4 text-gray-500" />
           </div>
 
           {/* Remove Button */}
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemoveCard(cardConfig.id);
-            }}
-            className="absolute top-3 right-3 z-10 bg-destructive text-destructive-foreground rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-destructive/90 transition-colors shadow-sm"
+            onClick={handleRemoveClick}
+            className="absolute top-2 right-2 z-10 bg-destructive text-destructive-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-destructive/90 transition-colors shadow-sm"
           >
             <X className="h-3 w-3" />
           </button>
-          <div className="absolute top-3 left-3 z-10 text-muted-foreground/50">
-            <GripVertical className="w-4 h-4" />
-          </div>
+
+          {/* Edit mode overlay for better visual feedback */}
+          <div className="absolute inset-0 bg-blue-500/5 border-2 border-blue-200 border-dashed rounded-xl pointer-events-none opacity-0 hover:opacity-100 transition-opacity" />
         </>
       )}
-      
       <div className="p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-4">
@@ -104,5 +117,6 @@ const StatCard = ({
 };
 
 export default StatCard;
+
 
 

@@ -62,7 +62,7 @@ export const getPermissionUsageStats = async () => {
     
     return stats;
   } catch (error) {
-    console.error('Error getting permission usage stats:', error);
+    
     return null;
   }
 };
@@ -131,7 +131,7 @@ export const getRoleComplexityAnalysis = async () => {
     
     return analysis;
   } catch (error) {
-    console.error('Error getting role complexity analysis:', error);
+    
     return null;
   }
 };
@@ -222,7 +222,7 @@ export const getPermissionCoverageReport = async () => {
     
     return report;
   } catch (error) {
-    console.error('Error getting permission coverage report:', error);
+    
     return null;
   }
 };
@@ -324,7 +324,7 @@ export const getSecurityAuditReport = async () => {
     
     return audit;
   } catch (error) {
-    console.error('Error getting security audit report:', error);
+    
     return null;
   }
 };
@@ -356,7 +356,7 @@ export const generateComprehensiveReport = async () => {
       }
     };
   } catch (error) {
-    console.error('Error generating comprehensive report:', error);
+    
     return null;
   }
 };
@@ -368,3 +368,4 @@ export default {
   getSecurityAuditReport,
   generateComprehensiveReport
 };
+

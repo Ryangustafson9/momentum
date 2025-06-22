@@ -106,7 +106,7 @@ const ReferralSystem = ({ memberId, memberName, className = '' }) => {
       });
 
     } catch (error) {
-      console.error('Error loading referral data:', error);
+      
     } finally {
       setLoading(false);
     }
@@ -433,3 +433,4 @@ const ReferralSystem = ({ memberId, memberName, className = '' }) => {
 };
 
 export default ReferralSystem;
+

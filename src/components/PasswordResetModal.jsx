@@ -35,7 +35,7 @@ const PasswordResetModal = ({ isOpen, onClose }) => {
       await resetPassword(email);
       setIsSuccess(true);
     } catch (error) {
-      console.error('Password reset error:', error);
+      
       setError(error.message || 'Failed to send reset email. Please try again.');
     } finally {
       setIsLoading(false);
@@ -172,3 +172,4 @@ const PasswordResetModal = ({ isOpen, onClose }) => {
 };
 
 export default PasswordResetModal;
+

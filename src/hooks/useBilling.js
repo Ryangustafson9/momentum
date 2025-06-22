@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 const billingService = {
   // Get member's billing information
   async getMemberBilling(memberId) {
-    console.log('🔍 BillingService: Fetching billing for member:', memberId);
+    
     
     const { data, error } = await supabase
       .from('memberships')
@@ -22,7 +22,7 @@ const billingService = {
       .maybeSingle();
 
     if (error) {
-      console.error('❌ BillingService: Error fetching billing:', error);
+      
       throw new Error(`Failed to fetch billing information: ${error.message}`);
     }
 
@@ -33,7 +33,7 @@ const billingService = {
         const stripeInvoices = await stripeService.getCustomerInvoices(data.stripe_customer_id);
         invoices = stripeInvoices.data || [];
       } catch (error) {
-        console.warn('⚠️ Could not fetch Stripe invoices:', error.message);
+        
       }
     }
 
@@ -46,13 +46,13 @@ const billingService = {
       autoRenew: data?.auto_renew || false
     };
 
-    console.log('✅ BillingService: Fetched billing information');
+    
     return billingInfo;
   },
 
   // Get all member billing overview for staff
   async getAllMembersBilling() {
-    console.log('🔍 BillingService: Fetching all members billing');
+    
     
     const { data, error } = await supabase
       .from('memberships')
@@ -68,7 +68,7 @@ const billingService = {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('❌ BillingService: Error fetching all billing:', error);
+      
       throw new Error(`Failed to fetch billing overview: ${error.message}`);
     }
 
@@ -98,20 +98,20 @@ const billingService = {
       };
     });
 
-    console.log('✅ BillingService: Processed', processedData.length, 'billing records');
+    
     return processedData;
   },
 
   // Process membership payment
   async processMembershipPayment(memberData, paymentData) {
-    console.log('🔄 BillingService: Processing membership payment');
+    
     
     return await stripeService.processMembershipSignup(memberData, paymentData);
   },
 
   // Update payment method
   async updatePaymentMethod(memberId, paymentMethodData) {
-    console.log('🔄 BillingService: Updating payment method for member:', memberId);
+    
     
     // Get member's Stripe customer ID
     const { data: membership } = await supabase
@@ -140,17 +140,17 @@ const billingService = {
       .eq('auth_user_id', memberId);
 
     if (error) {
-      console.error('❌ Error updating payment method in database:', error);
+      
       throw new Error(`Failed to update payment method: ${error.message}`);
     }
 
-    console.log('✅ BillingService: Payment method updated');
+    
     return result;
   },
 
   // Cancel membership
   async cancelMembership(memberId, cancelAtPeriodEnd = true) {
-    console.log('🔄 BillingService: Cancelling membership for member:', memberId);
+    
     
     // Get member's subscription
     const { data: membership } = await supabase
@@ -180,17 +180,17 @@ const billingService = {
       .eq('auth_user_id', memberId);
 
     if (error) {
-      console.error('❌ Error updating membership status:', error);
+      
       throw new Error(`Failed to cancel membership: ${error.message}`);
     }
 
-    console.log('✅ BillingService: Membership cancelled');
+    
     return result;
   },
 
   // Retry failed payment
   async retryFailedPayment(memberId) {
-    console.log('🔄 BillingService: Retrying failed payment for member:', memberId);
+    
     
     // Get member's latest invoice
     const { data: membership } = await supabase
@@ -226,11 +226,11 @@ const billingService = {
         .eq('auth_user_id', memberId);
 
       if (error) {
-        console.error('❌ Error updating membership after successful retry:', error);
+        
       }
     }
 
-    console.log('✅ BillingService: Payment retry completed');
+    
     return result;
   }
 };
@@ -282,7 +282,7 @@ export const useProcessMembershipPayment = () => {
       });
     },
     onError: (error) => {
-      console.error('Payment processing error:', error);
+      
       toast({
         title: "Payment Failed",
         description: error.message || "Failed to process payment",
@@ -310,7 +310,7 @@ export const useUpdatePaymentMethod = () => {
       });
     },
     onError: (error) => {
-      console.error('Update payment method error:', error);
+      
       toast({
         title: "Update Failed",
         description: error.message || "Failed to update payment method",
@@ -343,7 +343,7 @@ export const useCancelMembership = () => {
       });
     },
     onError: (error) => {
-      console.error('Cancel membership error:', error);
+      
       toast({
         title: "Cancellation Failed",
         description: error.message || "Failed to cancel membership",
@@ -379,7 +379,7 @@ export const useRetryFailedPayment = () => {
       }
     },
     onError: (error) => {
-      console.error('Retry payment error:', error);
+      
       toast({
         title: "Retry Failed",
         description: error.message || "Failed to retry payment",
@@ -397,3 +397,4 @@ export default {
   useCancelMembership,
   useRetryFailedPayment,
 };
+

@@ -99,7 +99,7 @@ const FinancialReport = () => {
       });
 
     } catch (error) {
-      console.error('Error fetching financial data:', error);
+      
       toast({
         title: 'Error',
         description: `Failed to fetch financial data: ${error.message}`,
@@ -268,3 +268,4 @@ const FinancialReport = () => {
 };
 
 export default FinancialReport;
+

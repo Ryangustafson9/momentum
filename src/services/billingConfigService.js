@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabaseClient';
 export const billingConfigService = {
   // Get billing configuration for organization
   async getBillingConfig(organizationId) {
-    console.log('🔍 BillingConfigService: Fetching config for org:', organizationId);
+    
     
     const { data, error } = await supabase
       .from('billing_configurations')
@@ -13,17 +13,17 @@ export const billingConfigService = {
       .maybeSingle();
 
     if (error) {
-      console.error('❌ BillingConfigService: Error fetching config:', error);
+      
       throw new Error(`Failed to fetch billing configuration: ${error.message}`);
     }
 
     // Return default config if none exists
     if (!data) {
-      console.log('ℹ️ No billing config found, returning defaults');
+      
       return this.getDefaultBillingConfig(organizationId);
     }
 
-    console.log('✅ BillingConfigService: Fetched billing config');
+    
     return data;
   },
 
@@ -53,7 +53,7 @@ export const billingConfigService = {
 
   // Update billing configuration
   async updateBillingConfig(organizationId, configData) {
-    console.log('🔄 BillingConfigService: Updating config for org:', organizationId);
+    
     
     const { data, error } = await supabase
       .from('billing_configurations')
@@ -66,17 +66,17 @@ export const billingConfigService = {
       .single();
 
     if (error) {
-      console.error('❌ BillingConfigService: Error updating config:', error);
+      
       throw new Error(`Failed to update billing configuration: ${error.message}`);
     }
 
-    console.log('✅ BillingConfigService: Updated billing config');
+    
     return data;
   },
 
   // Get house charges for organization
   async getHouseCharges(organizationId) {
-    console.log('🔍 BillingConfigService: Fetching house charges for org:', organizationId);
+    
     
     const { data, error } = await supabase
       .from('house_charges')
@@ -86,17 +86,17 @@ export const billingConfigService = {
       .order('name');
 
     if (error) {
-      console.error('❌ BillingConfigService: Error fetching house charges:', error);
+      
       throw new Error(`Failed to fetch house charges: ${error.message}`);
     }
 
-    console.log('✅ BillingConfigService: Fetched', data?.length || 0, 'house charges');
+    
     return data || [];
   },
 
   // Create house charge
   async createHouseCharge(organizationId, chargeData) {
-    console.log('🔄 BillingConfigService: Creating house charge:', chargeData.name);
+    
     
     const { data, error } = await supabase
       .from('house_charges')
@@ -109,17 +109,17 @@ export const billingConfigService = {
       .single();
 
     if (error) {
-      console.error('❌ BillingConfigService: Error creating house charge:', error);
+      
       throw new Error(`Failed to create house charge: ${error.message}`);
     }
 
-    console.log('✅ BillingConfigService: Created house charge:', data.name);
+    
     return data;
   },
 
   // Update house charge
   async updateHouseCharge(chargeId, updates) {
-    console.log('🔄 BillingConfigService: Updating house charge:', chargeId);
+    
     
     const { data, error } = await supabase
       .from('house_charges')
@@ -132,17 +132,17 @@ export const billingConfigService = {
       .single();
 
     if (error) {
-      console.error('❌ BillingConfigService: Error updating house charge:', error);
+      
       throw new Error(`Failed to update house charge: ${error.message}`);
     }
 
-    console.log('✅ BillingConfigService: Updated house charge');
+    
     return data;
   },
 
   // Delete house charge
   async deleteHouseCharge(chargeId) {
-    console.log('🔄 BillingConfigService: Deleting house charge:', chargeId);
+    
     
     const { error } = await supabase
       .from('house_charges')
@@ -150,17 +150,17 @@ export const billingConfigService = {
       .eq('id', chargeId);
 
     if (error) {
-      console.error('❌ BillingConfigService: Error deleting house charge:', error);
+      
       throw new Error(`Failed to delete house charge: ${error.message}`);
     }
 
-    console.log('✅ BillingConfigService: Deleted house charge');
+    
     return true;
   },
 
   // Get member house charges
   async getMemberHouseCharges(memberId) {
-    console.log('🔍 BillingConfigService: Fetching house charges for member:', memberId);
+    
     
     const { data, error } = await supabase
       .from('member_house_charges')
@@ -172,17 +172,17 @@ export const billingConfigService = {
       .eq('is_active', true);
 
     if (error) {
-      console.error('❌ BillingConfigService: Error fetching member house charges:', error);
+      
       throw new Error(`Failed to fetch member house charges: ${error.message}`);
     }
 
-    console.log('✅ BillingConfigService: Fetched', data?.length || 0, 'member house charges');
+    
     return data || [];
   },
 
   // Assign house charge to member
   async assignHouseChargeToMember(memberId, houseChargeId, organizationId, options = {}) {
-    console.log('🔄 BillingConfigService: Assigning house charge to member:', memberId);
+    
     
     const { data, error } = await supabase
       .from('member_house_charges')
@@ -201,17 +201,17 @@ export const billingConfigService = {
       .single();
 
     if (error) {
-      console.error('❌ BillingConfigService: Error assigning house charge:', error);
+      
       throw new Error(`Failed to assign house charge: ${error.message}`);
     }
 
-    console.log('✅ BillingConfigService: Assigned house charge to member');
+    
     return data;
   },
 
   // Remove house charge from member
   async removeHouseChargeFromMember(memberHouseChargeId) {
-    console.log('🔄 BillingConfigService: Removing house charge from member:', memberHouseChargeId);
+    
     
     const { error } = await supabase
       .from('member_house_charges')
@@ -222,17 +222,17 @@ export const billingConfigService = {
       .eq('id', memberHouseChargeId);
 
     if (error) {
-      console.error('❌ BillingConfigService: Error removing house charge:', error);
+      
       throw new Error(`Failed to remove house charge: ${error.message}`);
     }
 
-    console.log('✅ BillingConfigService: Removed house charge from member');
+    
     return true;
   },
 
   // Get billing schedules for organization
   async getBillingSchedules(organizationId, filters = {}) {
-    console.log('🔍 BillingConfigService: Fetching billing schedules for org:', organizationId);
+    
     
     let query = supabase
       .from('billing_schedules')
@@ -259,17 +259,17 @@ export const billingConfigService = {
     const { data, error } = await query;
 
     if (error) {
-      console.error('❌ BillingConfigService: Error fetching billing schedules:', error);
+      
       throw new Error(`Failed to fetch billing schedules: ${error.message}`);
     }
 
-    console.log('✅ BillingConfigService: Fetched', data?.length || 0, 'billing schedules');
+    
     return data || [];
   },
 
   // Create or update billing schedule
   async upsertBillingSchedule(scheduleData) {
-    console.log('🔄 BillingConfigService: Upserting billing schedule');
+    
     
     const { data, error } = await supabase
       .from('billing_schedules')
@@ -281,11 +281,11 @@ export const billingConfigService = {
       .single();
 
     if (error) {
-      console.error('❌ BillingConfigService: Error upserting billing schedule:', error);
+      
       throw new Error(`Failed to upsert billing schedule: ${error.message}`);
     }
 
-    console.log('✅ BillingConfigService: Upserted billing schedule');
+    
     return data;
   },
 
@@ -308,14 +308,7 @@ export const billingConfigService = {
     // Calculate prorated amount
     const proratedAmount = (monthlyAmount * daysUsed) / daysInMonth;
     
-    console.log('💰 Proration calculation:', {
-      startDate,
-      endDate,
-      monthlyAmount,
-      daysInMonth,
-      daysUsed,
-      proratedAmount: Math.round(proratedAmount * 100) / 100
-    });
+    
     
     return Math.round(proratedAmount * 100) / 100;
   },
@@ -405,3 +398,4 @@ export const billingConfigService = {
 };
 
 export default billingConfigService;
+

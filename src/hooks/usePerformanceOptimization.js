@@ -219,7 +219,7 @@ export const useRenderCount = (componentName = 'Component') => {
     renderCount.current += 1;
     
     if (process.env.NODE_ENV === 'development') {
-      console.log(`${componentName} rendered ${renderCount.current} times`);
+      
     }
   });
   
@@ -245,7 +245,7 @@ export const useWhyDidYouUpdate = (name, props) => {
       });
       
       if (Object.keys(changedProps).length && process.env.NODE_ENV === 'development') {
-        console.log('[why-did-you-update]', name, changedProps);
+        
       }
     }
     
@@ -284,7 +284,7 @@ export const useOptimizedLocalStorage = (key, initialValue) => {
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
     } catch (error) {
-      console.warn(`Error reading localStorage key "${key}":`, error);
+      
       return initialValue;
     }
   });
@@ -303,7 +303,7 @@ export const useOptimizedLocalStorage = (key, initialValue) => {
         window.localStorage.setItem(key, JSON.stringify(valueToStore));
       }
     } catch (error) {
-      console.warn(`Error setting localStorage key "${key}":`, error);
+      
     }
   }, [key, storedValue]);
 
@@ -365,3 +365,4 @@ export default {
   useOptimizedWindowSize,
   useIdleCallback,
 };
+

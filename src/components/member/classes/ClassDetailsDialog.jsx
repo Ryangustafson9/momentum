@@ -103,3 +103,4 @@ const ClassDetailsDialog = ({ classInfo, isOpen, onClose, onBook, onCancelBookin
 export default ClassDetailsDialog;
 
 
+

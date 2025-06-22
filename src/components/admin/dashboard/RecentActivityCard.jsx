@@ -42,3 +42,4 @@ const RecentActivityCard = ({ activities, isEditMode, onRemoveCard }) => {
 export default RecentActivityCard;
 
 
+

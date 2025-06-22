@@ -50,3 +50,4 @@ export function useHealthStatus(autoRefresh = false, interval = 60000) {
     isCached: health?.cached || false
   };
 }
+

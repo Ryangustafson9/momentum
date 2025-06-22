@@ -87,7 +87,7 @@ const MembershipPlansReport = () => {
         `);
 
       if (usageError) {
-        console.warn('Could not fetch usage data:', usageError.message);
+        
       }
 
       // Process usage statistics
@@ -133,7 +133,7 @@ const MembershipPlansReport = () => {
       });
 
     } catch (error) {
-      console.error('Error fetching plans data:', error);
+      
       toast({
         title: 'Error',
         description: `Failed to fetch membership plans data: ${error.message}`,
@@ -338,3 +338,4 @@ const MembershipPlansReport = () => {
 };
 
 export default MembershipPlansReport;
+

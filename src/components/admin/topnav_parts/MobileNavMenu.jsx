@@ -2,13 +2,12 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  LayoutDashboard, Calendar, Settings, CheckSquare, FileText, CalendarClock, Award, Users, Briefcase
+import {
+  LayoutDashboard, Calendar, Settings, CheckSquare, FileText, CalendarClock, Award, Briefcase
 } from 'lucide-react';
 
 const staffNavItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/members', label: 'Members', icon: Users },
   { path: '/check-in', label: 'Check-In', icon: CheckSquare },
   { path: '/memberships', label: 'Memberships', icon: Award },
   { path: '/classes', label: 'Classes', icon: Calendar },
@@ -52,5 +51,6 @@ const MobileNavMenu = ({ closeMobileMenu }) => {
 };
 
 export default MobileNavMenu;
+
 
 

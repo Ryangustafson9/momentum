@@ -23,7 +23,7 @@ const MemberTopNavbar = () => {
       await logout();
       navigate('/login');
     } catch (error) {
-      console.error('Sign out error:', error);
+      
     }
   };
 
@@ -124,3 +124,4 @@ const MemberTopNavbar = () => {
 };
 
 export default MemberTopNavbar;
+

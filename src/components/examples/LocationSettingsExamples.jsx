@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useLocationContext, useLocationData } from '@/contexts/LocationContext';
 import LocationService from '@/lib/services/locationService';
+import { logger } from '@/utils/logger';
 
 // Example 1: Using LocationContext Hook
 const LocationBasicExample = () => {
@@ -250,9 +251,9 @@ const updateBillingConfig = async (locationId, newConfig) => {
   });
   
   if (result.error) {
-    console.error('Update failed:', result.error);
+    logger.error('Update failed:', result.error);
   } else {
-    console.log('Config updated:', result.data);
+    logger.info('Config updated:', result.data);
   }
 };`}
               </pre>

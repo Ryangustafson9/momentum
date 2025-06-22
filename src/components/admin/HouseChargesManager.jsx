@@ -99,7 +99,7 @@ const HouseChargeDialog = ({ isOpen, onClose, charge, organizationId }) => {
       }
       onClose();
     } catch (error) {
-      console.error('Error saving house charge:', error);
+      
     }
   };
 
@@ -373,7 +373,7 @@ const HouseChargesManager = ({ organizationId = 'default-org-id' }) => {
       try {
         await deleteMutation.mutateAsync(chargeId);
       } catch (error) {
-        console.error('Error deleting house charge:', error);
+        
       }
     }
   };
@@ -462,3 +462,4 @@ const HouseChargesManager = ({ organizationId = 'default-org-id' }) => {
 };
 
 export default HouseChargesManager;
+

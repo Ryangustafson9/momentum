@@ -17,13 +17,13 @@ export class PermissionsService {
         .rpc('get_user_permissions', { user_id: userId });
 
       if (error) {
-        console.error('Error fetching user permissions:', error);
+        
         return [];
       }
 
       return Array.isArray(data) ? data : [];
     } catch (error) {
-      console.error('Error in getUserPermissions:', error);
+      
       return [];
     }
   }
@@ -40,13 +40,13 @@ export class PermissionsService {
         });
 
       if (error) {
-        console.error('Error checking user permission:', error);
+        
         return false;
       }
 
       return Boolean(data);
     } catch (error) {
-      console.error('Error in userHasPermission:', error);
+      
       return false;
     }
   }
@@ -63,13 +63,13 @@ export class PermissionsService {
         .single();
 
       if (error) {
-        console.error('Error fetching user role info:', error);
+        
         return null;
       }
 
       return data;
     } catch (error) {
-      console.error('Error in getUserRoleInfo:', error);
+      
       return null;
     }
   }
@@ -86,13 +86,13 @@ export class PermissionsService {
         .select();
 
       if (error) {
-        console.error('Error assigning staff role:', error);
+        
         return { success: false, error };
       }
 
       return { success: true, data };
     } catch (error) {
-      console.error('Error in assignStaffRole:', error);
+      
       return { success: false, error };
     }
   }
@@ -109,13 +109,13 @@ export class PermissionsService {
         .select();
 
       if (error) {
-        console.error('Error removing staff role:', error);
+        
         return { success: false, error };
       }
 
       return { success: true, data };
     } catch (error) {
-      console.error('Error in removeStaffRole:', error);
+      
       return { success: false, error };
     }
   }
@@ -131,13 +131,13 @@ export class PermissionsService {
         .order('name');
 
       if (error) {
-        console.error('Error fetching staff roles:', error);
+        
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error in getAllStaffRoles:', error);
+      
       return [];
     }
   }
@@ -180,3 +180,4 @@ export class PermissionsService {
 }
 
 export default PermissionsService;
+

@@ -14,7 +14,7 @@ export const getGeneralSettings = async () => {
       // Add other settings as needed
     };
   } catch (error) {
-    console.error('Error fetching general settings:', error);
+    
     // Return default settings on error
     return {
       NonmemberSignupPrompt: false,
@@ -33,7 +33,7 @@ export const updateGeneralSettings = async (settings) => {
     // This can be expanded later to update a database table
     return settings;
   } catch (error) {
-    console.error('Error updating general settings:', error);
+    
     throw error;
   }
 };
@@ -49,7 +49,7 @@ export const getSetting = async (key, defaultValue = null) => {
     const settings = await getGeneralSettings();
     return settings[key] !== undefined ? settings[key] : defaultValue;
   } catch (error) {
-    console.error(`Error fetching setting ${key}:`, error);
+    
     return defaultValue;
   }
 };
@@ -69,7 +69,8 @@ export const setSetting = async (key, value) => {
     };
     return await updateGeneralSettings(updatedSettings);
   } catch (error) {
-    console.error(`Error setting ${key}:`, error);
+    
     throw error;
   }
 };
+

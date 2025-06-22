@@ -381,3 +381,4 @@ export const generatePerformanceReport = () => {
 };
 
 export default performanceMonitor;
+

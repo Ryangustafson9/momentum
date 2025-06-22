@@ -81,7 +81,7 @@ export const LocationProvider = ({ children }) => {
         }
       }
     } catch (err) {
-      console.error('Error loading available locations:', err);
+      
       setError(err.message);
     } finally {
       setLoading(false);
@@ -89,7 +89,7 @@ export const LocationProvider = ({ children }) => {
   };
 
   const handleLocationNotFound = (slug) => {
-    console.warn(`Location with slug "${slug}" not found`);
+    
     setError(`Location "${slug}" not found or not accessible`);
     
     // Redirect to first available location if exists
@@ -105,7 +105,7 @@ export const LocationProvider = ({ children }) => {
     const targetLocation = availableLocations.find(loc => loc.slug === locationSlug);
     
     if (!targetLocation) {
-      console.error(`Cannot switch to location: ${locationSlug} not found`);
+      
       return false;
     }
 
@@ -153,7 +153,7 @@ export const LocationProvider = ({ children }) => {
       const result = await LocationService.getLocationDetails(currentLocation.id);
       return result.data;
     } catch (error) {
-      console.error('Error getting current location config:', error);
+      
       return null;
     }
   };
@@ -227,7 +227,7 @@ export const useLocationData = (dataType, options = {}) => {
         if (result.error) throw result.error;
         setData(result.data);
       } catch (err) {
-        console.error(`Error loading ${dataType}:`, err);
+        
         setError(err.message);
       } finally {
         setLoading(false);
@@ -241,3 +241,4 @@ export const useLocationData = (dataType, options = {}) => {
 };
 
 export default LocationContext;
+

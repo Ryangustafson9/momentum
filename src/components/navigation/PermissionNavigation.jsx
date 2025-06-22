@@ -114,3 +114,4 @@ export const GroupedPermissionNavigation = ({ className = '' }) => {
 };
 
 export default PermissionNavigation;
+

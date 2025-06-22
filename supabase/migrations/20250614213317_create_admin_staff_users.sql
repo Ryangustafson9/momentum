@@ -1,16 +1,16 @@
--- Delete test users and create admin/staff accounts
--- This cleans up test accounts and creates proper admin/staff users
+-- Create admin/staff accounts
+-- Production migration for setting up initial admin and staff users
 
 DO $$
 DECLARE
   admin_user_id UUID := gen_random_uuid();
   staff_user_id UUID := gen_random_uuid();
 BEGIN
-  -- Delete the test users from both auth.users and profiles
+  -- Clean up any existing test accounts (if any)
   DELETE FROM auth.users WHERE email IN ('currentuser@test.com', 'newuser@test.com');
   DELETE FROM profiles WHERE email IN ('currentuser@test.com', 'newuser@test.com');
 
-  RAISE NOTICE 'Deleted test users: currentuser@test.com, newuser@test.com';
+  RAISE NOTICE 'Cleaned up any existing test accounts';
 
   -- Create admin user profile
   INSERT INTO profiles (

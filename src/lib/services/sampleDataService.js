@@ -207,7 +207,7 @@ const SAMPLE_STAFF_PLANS = [
  */
 export const createSampleStaffPlans = async () => {
   try {
-    console.log('🏗️ Creating sample staff plans...');
+    
     
     const results = {
       created: [],
@@ -239,12 +239,12 @@ export const createSampleStaffPlans = async () => {
             });
 
           if (roleError) {
-            console.error(`❌ Error creating role for ${planData.name}:`, roleError);
+            
             results.errors.push({ plan: planData.name, error: roleError.message });
             continue;
           }
           
-          console.log(`✅ Created role: ${roleId}`);
+          
         }
 
         // 2. Create staff plan with role_id
@@ -277,31 +277,31 @@ export const createSampleStaffPlans = async () => {
             .single();
 
           if (planError) {
-            console.error(`❌ Error creating plan ${planData.name}:`, planError);
+            
             results.errors.push({ plan: planData.name, error: planError.message });
             continue;
           }
 
-          console.log(`✅ Created staff plan: ${planData.name}`);
+          
           results.created.push({
             plan: newPlan,
             role: roleId
           });
         } else {
-          console.log(`ℹ️ Staff plan already exists: ${planData.name}`);
+          
         }
 
       } catch (error) {
-        console.error(`❌ Error processing ${planData.name}:`, error);
+        
         results.errors.push({ plan: planData.name, error: error.message });
       }
     }
 
-    console.log('🎉 Sample staff plans creation completed:', results);
+    
     return results;
 
   } catch (error) {
-    console.error('❌ Error creating sample staff plans:', error);
+    
     throw error;
   }
 };
@@ -326,7 +326,7 @@ export const checkSampleStaffPlansExist = async () => {
       plans: data || []
     };
   } catch (error) {
-    console.error('Error checking sample staff plans:', error);
+    
     return { exist: false, count: 0, plans: [] };
   }
 };
@@ -336,7 +336,7 @@ export const checkSampleStaffPlansExist = async () => {
  */
 export const deleteSampleStaffPlans = async () => {
   try {
-    console.log('🗑️ Deleting sample staff plans...');
+    
 
     // Get all staff plans
     const { data: staffPlans } = await supabase
@@ -367,18 +367,18 @@ export const deleteSampleStaffPlans = async () => {
         .in('id', roleIds);
 
       if (rolesError) {
-        console.warn('Error deleting roles:', rolesError);
+        
       }
     }
 
-    console.log(`✅ Deleted ${staffPlans.length} staff plans and ${roleIds.length} roles`);
+    
     return { 
       deleted: staffPlans.length, 
       message: `Deleted ${staffPlans.length} staff plans and ${roleIds.length} roles` 
     };
 
   } catch (error) {
-    console.error('❌ Error deleting sample staff plans:', error);
+    
     throw error;
   }
 };
@@ -388,3 +388,4 @@ export default {
   checkSampleStaffPlansExist,
   deleteSampleStaffPlans
 };
+

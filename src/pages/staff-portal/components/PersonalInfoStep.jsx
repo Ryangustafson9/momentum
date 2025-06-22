@@ -1,15 +1,27 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Phone, Calendar, Home, AlertCircle } from 'lucide-react';
+import { User, Mail, Phone, Calendar, Home, AlertCircle, Building } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getGymColors } from '@/utils/gymBranding';
+import CorporateAffiliationField from '@/components/corporate/CorporateAffiliationField';
 
 const PersonalInfoStep = ({ formData, updateFormData, onNext, onPrev, canProceed }) => {
   const gymColors = getGymColors();
+  const emailRef = useRef(null);
+
+  // Focus on email field if first and last name are pre-populated
+  useEffect(() => {
+    if (formData.firstName && formData.lastName && !formData.email && emailRef.current) {
+      // Small delay to ensure the component is fully rendered
+      setTimeout(() => {
+        emailRef.current?.focus();
+      }, 100);
+    }
+  }, [formData.firstName, formData.lastName, formData.email]);
 
   const handleInputChange = (field, value) => {
     updateFormData({ [field]: value });
@@ -90,14 +102,15 @@ const PersonalInfoStep = ({ formData, updateFormData, onNext, onPrev, canProceed
               <Label htmlFor="email">Email Address *</Label>
               <div className="relative mt-1">
                 <Input
+                  ref={emailRef}
                   id="email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   placeholder="Enter email address"
                   className={`pl-10 ${
-                    formData.email && !isValidEmail(formData.email) 
-                      ? 'border-red-500 dark:border-red-400' 
+                    formData.email && !isValidEmail(formData.email)
+                      ? 'border-red-500 dark:border-red-400'
                       : ''
                   }`}
                 />
@@ -231,6 +244,25 @@ const PersonalInfoStep = ({ formData, updateFormData, onNext, onPrev, canProceed
           </CardContent>
         </Card>
 
+        {/* Corporate Affiliation */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building className="h-5 w-5" style={{ color: gymColors.primary }} />
+              Corporate Partnership (Optional)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CorporateAffiliationField
+              value={formData.corporateAffiliation}
+              onChange={(affiliation) => handleInputChange('corporateAffiliation', affiliation)}
+              membershipTypeId={formData.membershipTypeId}
+              membershipPrice={formData.membershipType?.price || 0}
+              showDiscountPreview={true}
+            />
+          </CardContent>
+        </Card>
+
         {/* Additional Notes */}
         <Card className="lg:col-span-2">
           <CardHeader>
@@ -291,3 +323,4 @@ const PersonalInfoStep = ({ formData, updateFormData, onNext, onPrev, canProceed
 };
 
 export default PersonalInfoStep;
+

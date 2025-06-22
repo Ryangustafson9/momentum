@@ -42,3 +42,4 @@ const AllClassesTabContent = ({ filteredClasses, memberAttendance, onBook, onCan
 export default AllClassesTabContent;
 
 
+

@@ -31,7 +31,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog.jsx';
-import { Textarea } from '@/components/ui/textarea.jsx'; 
+import { Textarea } from '@/components/ui/textarea.jsx';
+import StaffPageHeader from '@/components/staff/StaffPageHeader';
+import StaffPageContainer from '@/components/staff/StaffPageContainer';
 
 
 const initialTrainers = [
@@ -239,18 +241,21 @@ const Trainers = () => {
       trainer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       trainer.specialization.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        <div>
-            <h1 className="text-3xl font-bold tracking-tight">Manage Trainers</h1>
-            <p className="text-muted-foreground">Oversee trainer profiles and specializations.</p>
-        </div>
-        <Button onClick={() => { setEditingTrainer(null); setIsFormOpen(true); }} className="bg-primary hover:bg-primary/90">
-          <PlusCircle className="mr-2 h-5 w-5" /> Add New Trainer
-        </Button>
-      </div>
+    <StaffPageContainer>
+      <StaffPageHeader 
+        title="Manage Trainers"
+        description="Oversee trainer profiles and specializations."
+        actions={[
+          {
+            text: "Add New Trainer",
+            variant: "default",
+            onClick: () => { setEditingTrainer(null); setIsFormOpen(true); },
+            icon: PlusCircle,
+            className: "bg-primary hover:bg-primary/90"
+          }
+        ]}
+      />
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -291,14 +296,14 @@ const Trainers = () => {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
               Delete Trainer
-            </AlertDialogAction>
-          </AlertDialogFooter>
+            </AlertDialogAction>          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </StaffPageContainer>
   );
 };
 
 export default Trainers;
+
 
 

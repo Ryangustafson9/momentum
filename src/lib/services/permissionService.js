@@ -258,13 +258,13 @@ export const getStaffRolePermissions = async (roleId) => {
       .single();
     
     if (error) {
-      console.error('Error fetching role permissions:', error);
+      
       return {};
     }
     
     return data?.permissions || {};
   } catch (error) {
-    console.error('Error in getStaffRolePermissions:', error);
+    
     return {};
   }
 };
@@ -289,7 +289,7 @@ export const getUserPermissions = async (userId) => {
       .single();
     
     if (membershipError || !membership) {
-      console.warn('No active membership found for user:', userId);
+      
       return {};
     }
     
@@ -301,7 +301,7 @@ export const getUserPermissions = async (userId) => {
     // Return default permissions for non-staff users
     return {};
   } catch (error) {
-    console.error('Error in getUserPermissions:', error);
+    
     return {};
   }
 };
@@ -351,7 +351,7 @@ export const updateStaffRolePermissions = async (roleId, permissions) => {
     
     return data;
   } catch (error) {
-    console.error('Error updating staff role permissions:', error);
+    
     throw error;
   }
 };
@@ -362,20 +362,16 @@ export const updateStaffRolePermissions = async (roleId, permissions) => {
 export const getAllStaffRoles = async () => {
   try {
     // Get staff roles from staff_roles table
-    console.log('🔍 Fetching staff roles from staff_roles table...');
     const { data: staffRoles, error: rolesError } = await supabase
       .from('staff_roles')
       .select('*')
       .order('name');
-
-    console.log('📊 Staff roles query result:', { staffRoles, rolesError });
 
     if (rolesError) {
       throw rolesError;
     }
 
     // Get staff plans from membership_types table
-    console.log('🔍 Fetching staff plans from membership_types...');
     const { data: staffPlans, error: plansError } = await supabase
       .from('membership_types')
       .select(`
@@ -394,27 +390,17 @@ export const getAllStaffRoles = async () => {
       .eq('category', 'Staff')
       .order('name');
 
-    console.log('📊 Staff plans query result:', { staffPlans, plansError });
-    console.log('📋 Raw staff plans data:', staffPlans);
-
     if (plansError) {
-      console.warn('❌ Error fetching staff plans:', plansError);
+      
     }
 
     // Combine staff roles and staff plans
     const allRoles = [...(staffRoles || [])];
-    console.log('📋 Initial staff roles:', allRoles);
 
     // Add staff plans that have associated roles
     if (staffPlans && staffPlans.length > 0) {
-      console.log('🔗 Processing staff plans:', staffPlans);
       staffPlans.forEach(plan => {
-        console.log('🔍 Processing plan:', plan);
-        console.log('🔍 Plan role_id:', plan.role_id);
-        console.log('🔍 Plan staff_roles:', plan.staff_roles);
-        
         if (plan.staff_roles) {
-          console.log('✅ Plan has associated role:', plan.staff_roles);
           // Check if this role is already in our list
           const existingRole = allRoles.find(role => role.id === plan.staff_roles.id);
           if (!existingRole) {
@@ -426,7 +412,6 @@ export const getAllStaffRoles = async () => {
               staff_plan_description: plan.description,
               is_staff_plan: true
             };
-            console.log('➕ Adding new role:', newRole);
             allRoles.push(newRole);
           } else {
             // Update existing role with plan information
@@ -434,10 +419,8 @@ export const getAllStaffRoles = async () => {
             existingRole.staff_plan_name = plan.name;
             existingRole.staff_plan_description = plan.description;
             existingRole.is_staff_plan = true;
-            console.log('🔄 Updated existing role:', existingRole);
           }
         } else {
-          console.log('❌ Plan has no associated role_id or staff_roles relation. Plan role_id:', plan.role_id);
           // Create a temporary role for staff plans without role_id
           const tempRole = {
             id: `temp_${plan.id}`,
@@ -450,19 +433,16 @@ export const getAllStaffRoles = async () => {
             is_staff_plan: true,
             is_temp_role: true
           };
-          console.log('🔧 Creating temporary role for plan:', tempRole);
           allRoles.push(tempRole);
         }
       });
     } else {
-      console.log('❌ No staff plans found');
+      
     }
 
-    console.log('🎯 Final combined roles:', allRoles);
-    console.log('🎯 Staff plans in final roles:', allRoles.filter(role => role.is_staff_plan));
     return allRoles;
   } catch (error) {
-    console.error('Error fetching staff roles:', error);
+    
     return [];
   }
 };
@@ -498,7 +478,7 @@ export const getStaffPlans = async () => {
 
     return data || [];
   } catch (error) {
-    console.error('Error fetching staff plans:', error);
+    
     return [];
   }
 };
@@ -541,7 +521,7 @@ export const syncStaffPlanWithRole = async (planData) => {
 
     return roleId;
   } catch (error) {
-    console.error('Error syncing staff plan with role:', error);
+    
     throw error;
   }
 };
@@ -560,3 +540,4 @@ export default {
   getStaffPlans,
   syncStaffPlanWithRole
 };
+

@@ -122,7 +122,7 @@ const LoyaltyProgram = ({ memberId, className = '' }) => {
       setChallenges(weeklyChallenge);
 
     } catch (error) {
-      console.error('Error loading loyalty data:', error);
+      
     } finally {
       setLoading(false);
     }
@@ -187,7 +187,7 @@ const LoyaltyProgram = ({ memberId, className = '' }) => {
       });
 
     } catch (error) {
-      console.error('Error redeeming reward:', error);
+      
       toast({
         title: 'Redemption failed',
         description: error.message,
@@ -470,3 +470,4 @@ const LoyaltyProgram = ({ memberId, className = '' }) => {
 };
 
 export default LoyaltyProgram;
+

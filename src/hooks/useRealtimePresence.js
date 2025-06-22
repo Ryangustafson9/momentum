@@ -3,7 +3,7 @@
  * Track online users, staff activity, and live interactions
  */
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
 import { useAuth } from '@/contexts/AuthContext';
@@ -291,3 +291,4 @@ export const useClassPresence = (classId, enabled = true) => {
     enabled && classId
   );
 };
+

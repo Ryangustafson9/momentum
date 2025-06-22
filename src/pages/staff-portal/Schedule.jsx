@@ -26,6 +26,8 @@ import {
   useClassSchedule,
   useScheduleConflicts
 } from '@/hooks/useScheduling';
+import StaffPageHeader from '@/components/staff/StaffPageHeader';
+import StaffPageContainer from '@/components/staff/StaffPageContainer';
 
 // Time slots for the schedule (5 AM to 10 PM)
 const TIME_SLOTS = Array.from({ length: 17 }, (_, i) => {
@@ -221,84 +223,66 @@ const SchedulePage = ({ organizationId = 'default-org-id' }) => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
   const isLoading = trainersLoading || roomsLoading || scheduleLoading;
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo and Title */}
-            <div className="flex items-center space-x-4">
-              <img
-                src="/assets/momentum-logo.svg"
-                alt="Momentum"
-                className="h-8 w-auto"
-              />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Weekly Schedule</h1>
-                <p className="text-sm text-gray-600">
-                  {weekDates[0]?.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - {weekDates[6]?.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                </p>
-              </div>
-            </div>
-
-            {/* Controls */}
-            <div className="flex items-center space-x-4">
-              {/* Week Navigation */}
-              <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm" onClick={goToPreviousWeek}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="sm" onClick={goToToday}>
-                  Today
-                </Button>
-                <Button variant="outline" size="sm" onClick={goToNextWeek}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {/* Filters */}
-              <div className="flex items-center space-x-2">
-                <Select value={filterInstructor} onValueChange={setFilterInstructor}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="All Instructors" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">All Instructors</SelectItem>
-                    {trainers.map(trainer => (
-                      <SelectItem key={trainer.id} value={trainer.first_name + ' ' + trainer.last_name}>
-                        {trainer.first_name} {trainer.last_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select value={filterRoom} onValueChange={setFilterRoom}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="All Rooms" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">All Rooms</SelectItem>
-                    {rooms.map(room => (
-                      <SelectItem key={room.id} value={room.name}>
-                        {room.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Add Class Button */}
-              <Button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Class
+    <StaffPageContainer>
+      <StaffPageHeader
+        title="Weekly Schedule"
+        subtitle={`${weekDates[0]?.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${weekDates[6]?.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`}
+        actions={
+          <div className="flex items-center space-x-4">
+            {/* Week Navigation */}
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={goToPreviousWeek}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={goToToday}>
+                Today
+              </Button>
+              <Button variant="outline" size="sm" onClick={goToNextWeek}>
+                <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
+
+            {/* Filters */}
+            <div className="flex items-center space-x-2">
+              <Select value={filterInstructor} onValueChange={setFilterInstructor}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="All Instructors" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Instructors</SelectItem>
+                  {trainers.map(trainer => (
+                    <SelectItem key={trainer.id} value={trainer.first_name + ' ' + trainer.last_name}>
+                      {trainer.first_name} {trainer.last_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={filterRoom} onValueChange={setFilterRoom}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="All Rooms" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Rooms</SelectItem>
+                  {rooms.map(room => (
+                    <SelectItem key={room.id} value={room.name}>
+                      {room.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Add Class Button */}
+            <Button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Class
+            </Button>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Main Schedule Grid */}
       <div className="flex-1 overflow-hidden">
@@ -541,9 +525,7 @@ const SchedulePage = ({ organizationId = 'default-org-id' }) => {
                     <p className="text-gray-600 text-sm">{selectedClass.description}</p>
                   </div>
                 )}
-              </div>
-
-              <div className="flex space-x-3 mt-6">
+              </div>              <div className="flex space-x-3 mt-6">
                 <Button className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
                   Edit Class
                 </Button>
@@ -555,10 +537,11 @@ const SchedulePage = ({ organizationId = 'default-org-id' }) => {
           </motion.div>
         </div>
       )}
-    </div>
+    </StaffPageContainer>
   );
 };
 
 export default SchedulePage;
+
 
 

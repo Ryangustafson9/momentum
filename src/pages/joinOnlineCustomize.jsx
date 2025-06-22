@@ -53,7 +53,7 @@ const JoinOnlineCustomize = () => {
 
       setSelectedPlan(data);
     } catch (error) {
-      console.error('Error fetching plan:', error);
+      
       toast({
         title: 'Error',
         description: 'Failed to load membership plan details.',
@@ -298,3 +298,4 @@ const JoinOnlineCustomize = () => {
 };
 
 export default JoinOnlineCustomize;
+

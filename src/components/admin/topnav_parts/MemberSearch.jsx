@@ -3,24 +3,26 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, PlusCircle, User, Mail, Phone } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { matchesSearchTerm, getSearchRelevanceScore, HIGHLIGHT_COLORS } from '@/utils/searchHighlight.jsx';
+import HighlightedText from '@/components/ui/HighlightedText';
+import { MemberProfileService } from '@/services/memberProfileService';
+import { MemberTaggingService } from '@/services/memberTaggingService';
+import { useToast } from '@/hooks/use-toast';
 
 const MemberSearch = ({ allMembers, navigate }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
+  const [memberTags, setMemberTags] = useState({});
   const searchRef = useRef(null);
   const debounceRef = useRef(null);
-
+  const { toast } = useToast();
   // Debug logging
   useEffect(() => {
-    console.log('MemberSearch: allMembers prop received:', allMembers?.length || 0, 'members');
-    console.log('MemberSearch: Sample data:', allMembers?.slice(0, 2));
-  }, [allMembers]);
-  const performSearch = useCallback((term) => {
-    console.log('🔍 MemberSearch performSearch called with term:', term);
-    console.log('📊 allMembers available:', allMembers?.length || 0);
-    
+    // Member search data verification for development
+  }, [allMembers]);const performSearch = useCallback((term) => {
     if (term.length === 0) {
       setSearchResults([]);
       setIsLoading(false);
@@ -36,35 +38,73 @@ const MemberSearch = ({ allMembers, navigate }) => {
     setIsLoading(true);
 
     if (Array.isArray(allMembers) && allMembers.length > 0) {
-      console.log('🔎 Searching through members...');
-      const filtered = allMembers.filter(member => {
-        if (!member) return false;
+      const filtered = allMembers        .filter(member => {
+          if (!member) return false;
 
-        const name = member.name || member.display_name || member.full_name || `${member.first_name || ''} ${member.last_name || ''}`.trim();
-        const email = member.email || '';
-        const phone = member.phone || '';
-        const role = member.role || '';
-        const systemMemberId = member.system_member_id || '';
+          const name = member.name || member.display_name || member.full_name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email || 'Unknown Member';
+          const email = member.email || '';
+          const phone = member.phone || '';
+          const role = member.role || '';
+          const systemMemberId = member.system_member_id || '';
 
-        const searchLower = term.toLowerCase();
-
-        const matches = name.toLowerCase().includes(searchLower) ||
-               email.toLowerCase().includes(searchLower) ||
-               phone.includes(term) ||
-               role.toLowerCase().includes(searchLower) ||
-               String(systemMemberId).toLowerCase().includes(searchLower);
+          // Use enhanced search utilities
+          const nameMatch = matchesSearchTerm(name, term);
+          const emailMatch = matchesSearchTerm(email, term);
+          const phoneMatch = matchesSearchTerm(phone, term);
+          const roleMatch = matchesSearchTerm(role, term);
+          const idMatch = matchesSearchTerm(String(systemMemberId), term);
                
-        return matches;
-      }).slice(0, 8); // Limit to 8 results for better UX
+          return nameMatch || emailMatch || phoneMatch || roleMatch || idMatch;
+        })
+        .map(member => {
+          const displayName = member.name || member.display_name || member.full_name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email || 'Unknown Member';
+          return {
+            ...member,
+            displayName,
+            relevanceScore: Math.max(
+              getSearchRelevanceScore(displayName, term),
+              getSearchRelevanceScore(member.email || '', term),
+              getSearchRelevanceScore(member.phone || '', term),
+              getSearchRelevanceScore(member.role || '', term),
+              getSearchRelevanceScore(String(member.system_member_id || ''), term)
+            )
+          };
+        })
+        .sort((a, b) => b.relevanceScore - a.relevanceScore) // Sort by relevance
+        .slice(0, 8); // Limit to 8 results for better UX
 
-      console.log('✅ Search results found:', filtered.length);
       setSearchResults(filtered);
+
+      // Load tags for the search results
+      loadMemberTags(filtered);
     } else {
-      console.log('⚠️ No allMembers data available for search');
       setSearchResults([]);
     }
     setIsLoading(false);
   }, [allMembers]);
+
+  // Function to load tags for members
+  const loadMemberTags = async (members) => {
+    try {
+      const tagPromises = members.map(async (member) => {
+        const result = await MemberTaggingService.getMemberTags(member.id);
+        return {
+          memberId: member.id,
+          tags: result.data || []
+        };
+      });
+
+      const tagResults = await Promise.all(tagPromises);
+      const tagsMap = {};
+      tagResults.forEach(({ memberId, tags }) => {
+        tagsMap[memberId] = tags;
+      });
+
+      setMemberTags(tagsMap);
+    } catch (error) {
+      
+    }
+  };
 
   useEffect(() => {
     // Clear previous debounce
@@ -107,10 +147,43 @@ const MemberSearch = ({ allMembers, navigate }) => {
     setShowSearchDropdown(false);
   };
 
-  const handleCreateNewMember = () => {
-    navigate(`/staff-portal/member-registration?name=${encodeURIComponent(searchTerm)}`);
-    setSearchTerm('');
-    setShowSearchDropdown(false);
+  const handleCreateNewMember = async () => {
+    if (isCreatingProfile) return; // Prevent double-clicks
+
+    setIsCreatingProfile(true);
+
+    try {
+      // Create temporary profile from search query
+      const { data: newProfile, error } = await MemberProfileService.createFromSearchQuery(searchTerm);
+
+      if (error) {
+        throw error;
+      }
+
+      if (!newProfile) {
+        throw new Error('Failed to create profile');
+      }
+
+      toast({
+        title: "Profile Created",
+        description: `Created draft profile for ${newProfile.first_name} ${newProfile.last_name}`,
+      });
+
+      // Navigate to the new profile page
+      navigate(`/staff-portal/member/${newProfile.system_member_id}`);
+      setSearchTerm('');
+      setShowSearchDropdown(false);
+
+    } catch (error) {
+      
+      toast({
+        title: "Error",
+        description: `Failed to create profile: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingProfile(false);
+    }
   };
 
   const getRoleColor = (role) => {
@@ -156,15 +229,14 @@ const MemberSearch = ({ allMembers, navigate }) => {
               <>
                 <div className="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700">
                   Found {searchResults.length} profile{searchResults.length !== 1 ? 's' : ''}
-                </div>
-                {searchResults.map(member => {
-                  const displayName = member.name || member.full_name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email;
+                </div>                {searchResults.map(member => {
+                  const displayName = member.displayName || member.name || member.full_name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email || 'Unknown Member';
                   return (
                     <div
                       key={member.id}
                       role="option"
                       aria-selected="false"
-                      className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer border-b border-gray-50 dark:border-gray-700 last:border-b-0 transition-colors"
+                      className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer border-b border-gray-50 dark:border-gray-700 transition-colors"
                       onClick={() => handleSelectMember(member)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSelectMember(member)}
                       tabIndex={0}
@@ -172,57 +244,160 @@ const MemberSearch = ({ allMembers, navigate }) => {
                       <div className="flex items-center justify-between">
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
-                            {displayName}
+                            <HighlightedText
+                              text={displayName}
+                              searchTerm={searchTerm}
+                              highlightClass={HIGHLIGHT_COLORS.MEMBER_SEARCH}
+                            />
                           </p>
                           <div className="flex items-center space-x-2 mt-1">
                             {member.system_member_id && (
                               <p className="text-xs text-gray-500 dark:text-gray-400">
                                 <User className="inline h-3 w-3 mr-1" />
-                                ID: {member.system_member_id}
+                                ID: <HighlightedText
+                                  text={String(member.system_member_id)}
+                                  searchTerm={searchTerm}
+                                  highlightClass={HIGHLIGHT_COLORS.MEMBER_SEARCH}
+                                />
                               </p>
                             )}
                             {member.email && (
                               <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                                 <Mail className="inline h-3 w-3 mr-1" />
-                                {member.email}
+                                <HighlightedText
+                                  text={member.email}
+                                  searchTerm={searchTerm}
+                                  highlightClass={HIGHLIGHT_COLORS.MEMBER_SEARCH}
+                                />
                               </p>
                             )}
                             {member.phone && (
                               <p className="text-xs text-gray-500 dark:text-gray-400">
                                 <Phone className="inline h-3 w-3 mr-1" />
-                                {member.phone}
+                                <HighlightedText
+                                  text={member.phone}
+                                  searchTerm={searchTerm}
+                                  highlightClass={HIGHLIGHT_COLORS.MEMBER_SEARCH}
+                                />
                               </p>
                             )}
                           </div>
+
+                          {/* Member Tags */}
+                          {memberTags[member.id] && memberTags[member.id].length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {memberTags[member.id].slice(0, 2).map(tagAssignment => (
+                                <Badge
+                                  key={tagAssignment.member_tags.id}
+                                  style={{
+                                    backgroundColor: tagAssignment.member_tags.color,
+                                    color: '#fff'
+                                  }}
+                                  className="text-xs px-1 py-0"
+                                >
+                                  {tagAssignment.member_tags.name}
+                                </Badge>
+                              ))}
+                              {memberTags[member.id].length > 2 && (
+                                <Badge variant="outline" className="text-xs px-1 py-0">
+                                  +{memberTags[member.id].length - 2}
+                                </Badge>
+                              )}
+                            </div>
+                          )}
                         </div>
-                        <Badge
-                          variant="outline"
-                          className={`ml-2 text-xs ${getRoleColor(member.role)}`}
-                        >
-                          {member.role || 'member'}
-                        </Badge>
+                        <div className="flex flex-col items-end gap-1">
+                          <Badge
+                            variant="outline"
+                            className={`text-xs ${getRoleColor(member.role)}`}
+                          >
+                            <HighlightedText
+                              text={member.role || 'member'}
+                              searchTerm={searchTerm}
+                              highlightClass={HIGHLIGHT_COLORS.MEMBER_SEARCH}
+                            />
+                          </Badge>
+                        </div>
                       </div>
                     </div>
                   );
                 })}
-              </>
-            )}
 
-            {!isLoading && searchResults.length === 0 && searchTerm.length >= 2 && (
+                {/* Always show Create New Member option when there's a search term */}
+                <div className="border-t border-gray-100 dark:border-gray-700">
+                  <div
+                    role="button"
+                    className={`px-4 py-3 text-sm font-medium transition-colors flex items-center ${
+                      isCreatingProfile
+                        ? 'text-gray-400 cursor-not-allowed'
+                        : 'text-primary hover:text-primary/80 hover:bg-primary/5 cursor-pointer'
+                    }`}
+                    onClick={isCreatingProfile ? undefined : handleCreateNewMember}
+                    onKeyDown={(e) => e.key === 'Enter' && !isCreatingProfile && handleCreateNewMember()}
+                    tabIndex={0}
+                  >
+                    {isCreatingProfile ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+                    ) : (
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                    )}
+                    {isCreatingProfile ? 'Creating Profile...' : (
+                      <>
+                        Create New Member: {(() => {
+                          const nameParts = searchTerm.trim().split(/\s+/);
+                          const firstName = nameParts[0] || '';
+                          const lastName = nameParts.slice(1).join(' ') || '';
+                          return (
+                            <span className="font-semibold">
+                              {firstName} {lastName}
+                            </span>
+                          );
+                        })()}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}            {!isLoading && searchResults.length === 0 && searchTerm.length >= 2 && (
               <div className="px-4 py-6 text-center">
                 <User className="mx-auto h-8 w-8 text-gray-400 dark:text-gray-500 mb-2" />
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                  No profiles found matching "{searchTerm}"
+                  No profiles found matching "<HighlightedText
+                    text={searchTerm}
+                    searchTerm={searchTerm}
+                    highlightClass={HIGHLIGHT_COLORS.MEMBER_SEARCH}
+                  />"
                 </p>
                 <div
                   role="button"
-                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-primary hover:text-primary/80 cursor-pointer"
-                  onClick={handleCreateNewMember}
-                  onKeyDown={(e) => e.key === 'Enter' && handleCreateNewMember()}
+                  className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    isCreatingProfile
+                      ? 'text-gray-400 cursor-not-allowed'
+                      : 'text-primary hover:text-primary/80 cursor-pointer hover:bg-primary/5'
+                  }`}
+                  onClick={isCreatingProfile ? undefined : handleCreateNewMember}
+                  onKeyDown={(e) => e.key === 'Enter' && !isCreatingProfile && handleCreateNewMember()}
                   tabIndex={0}
                 >
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Create New Member "{searchTerm}"
+                  {isCreatingProfile ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+                  ) : (
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                  )}
+                  {isCreatingProfile ? 'Creating Profile...' : (
+                    <>
+                      Create New Member: {(() => {
+                        const nameParts = searchTerm.trim().split(/\s+/);
+                        const firstName = nameParts[0] || '';
+                        const lastName = nameParts.slice(1).join(' ') || '';
+                        return (
+                          <span className="font-semibold">
+                            {firstName} {lastName}
+                          </span>
+                        );
+                      })()}
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -234,5 +409,6 @@ const MemberSearch = ({ allMembers, navigate }) => {
 };
 
 export default MemberSearch;
+
 
 

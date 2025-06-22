@@ -1,17 +1,17 @@
 import React, { Suspense } from 'react';
 import { Navigate } from 'react-router-dom';
 
-// ⭐ LAZY: Heavy admin components
-const AdminPanelPage = React.lazy(() => import('@/pages/staff/AdminPanelPage.jsx'));
-const SettingsPage = React.lazy(() => import('@/pages/staff/Settings.jsx'));
-const StaffHomepage = React.lazy(() => import('@/pages/staff/StaffHomepage.jsx'));
-const Classes = React.lazy(() => import('@/pages/staff/Classes.jsx'));
-const MembersPage = React.lazy(() => import('@/pages/staff/Members.jsx'));
-const ReportsPage = React.lazy(() => import('@/pages/staff/Reports.jsx'));
-const SchedulePage = React.lazy(() => import('@/pages/staff/Schedule.jsx'));
-const MembershipsPage = React.lazy(() => import('@/pages/staff/Memberships.jsx'));
-const TrainersPage = React.lazy(() => import('@/pages/staff/Trainers.jsx'));
-const AdminPanel = React.lazy(() => import('@/pages/admin/AdminPanel.jsx'));
+// ⭐ LAZY: Heavy admin components (updated to staff-portal paths)
+const AdminPanelPage = React.lazy(() => import('@/pages/staff-portal/AdminPanelPage.jsx'));
+const SettingsPage = React.lazy(() => import('@/pages/staff-portal/Settings.jsx'));
+const StaffHomepage = React.lazy(() => import('@/pages/staff-portal/Homepage.jsx'));
+const Classes = React.lazy(() => import('@/pages/staff-portal/Classes.jsx'));
+
+const ReportsPage = React.lazy(() => import('@/pages/staff-portal/Reports.jsx'));
+const SchedulePage = React.lazy(() => import('@/pages/staff-portal/Schedule.jsx'));
+const MembershipsPage = React.lazy(() => import('@/pages/staff-portal/Memberships.jsx'));
+const TrainersPage = React.lazy(() => import('@/pages/staff-portal/Trainers.jsx'));
+const SuperAdminPanel = React.lazy(() => import('@/pages/staff-portal/SuperAdminPanel.jsx'));
 
 // ⭐ LOADING: Enhanced loading for admin pages
 const AdminPageLoadingSpinner = () => (
@@ -35,14 +35,13 @@ export const adminRoutes = [
   {
     path: 'dashboard',
     element: <AdminLazyWrapper Component={AdminPanelPage} />,
-    title: 'Admin Panel',
+    title: 'Admin Dashboard',
     description: 'Administrative dashboard with system-wide controls',
     lazy: true,
     heavy: true // Admin panel is heavy
   },
   {
-    path: 'settings',
-    element: <AdminLazyWrapper Component={SettingsPage} />,
+    path: 'settings',    element: <AdminLazyWrapper Component={SettingsPage} />,
     title: 'System Settings',
     description: 'Configure application settings and preferences',
     lazy: true,
@@ -50,33 +49,20 @@ export const adminRoutes = [
   },
   {
     path: 'adminpanel',
-    element: <AdminLazyWrapper Component={AdminPanel} />,
-    title: 'Admin Panel',
+    element: <AdminLazyWrapper Component={SuperAdminPanel} />,
+    title: 'Super Admin Panel',
     description: 'Master administrative control panel with backend settings',
     lazy: true,
     heavy: true // Admin panel with permissions is heavy
   },
   {
-    path: 'dashboard',
-    element: <AdminLazyWrapper Component={StaffHomepage} />,
-    title: 'Staff Dashboard',
-    description: 'Staff-level dashboard view',
-    lazy: true
-  },
-  { 
-    path: 'classes', 
+    path: 'classes',
     element: <AdminLazyWrapper Component={Classes} />,
     title: 'Class Management',
     description: 'Advanced class management with admin privileges',
     lazy: true
   },
-  { 
-    path: 'members', 
-    element: <AdminLazyWrapper Component={MembersPage} />,
-    title: 'Member Management',
-    description: 'Full member management with admin privileges',
-    lazy: true
-  },
+
   { 
     path: 'reports', 
     element: <AdminLazyWrapper Component={ReportsPage} />,
@@ -121,3 +107,4 @@ export const adminRoutes = [
 ];
 
 export default adminRoutes;
+

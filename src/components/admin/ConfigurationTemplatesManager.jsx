@@ -777,3 +777,4 @@ const ConfigurationTemplatesManager = () => {
 };
 
 export default ConfigurationTemplatesManager;
+

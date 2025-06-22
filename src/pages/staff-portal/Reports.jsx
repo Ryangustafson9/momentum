@@ -11,6 +11,8 @@ import FinancialReport from '@/components/reports/FinancialReport';
 import MemberAnalyticsReport from '@/components/reports/MemberAnalyticsReport';
 import MembershipPlansReport from '@/components/reports/MembershipPlansReport';
 import TestDataButton from '@/components/admin/TestDataButton';
+import StaffPageHeader from '@/components/staff/StaffPageHeader';
+import StaffPageContainer from '@/components/staff/StaffPageContainer';
 
 const ReportCard = ({ title, description, icon, actionText, onAction, navigateTo }) => {
   const navigate = useNavigate();
@@ -101,21 +103,19 @@ const ReportsPage = () => {
       </motion.div>
     );
   }
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6"
-    >
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Reports Center</h1>
-          <p className="text-muted-foreground">Access detailed reports for gym operations and performance.</p>
-        </div>
-        <TestDataButton />
-      </div>
+    <StaffPageContainer>      <StaffPageHeader 
+        title="Reports Center"
+        description="Access detailed reports for gym operations and performance."
+        actions={[
+          {
+            text: "Test Data",
+            variant: "outline",
+            onClick: () => {}, // TestDataButton logic would go here
+            icon: FileText
+          }
+        ]}
+      />
 
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
@@ -229,16 +229,16 @@ const ReportsPage = () => {
                 <li>Class-Specific Attendance Records</li>
                 <li>Individual Member Attendance History</li>
                 <li>No-Show Rates & Analysis</li>
-                <li>Trainer Performance & Class Ratings</li>
-              </ul>
+                <li>Trainer Performance & Class Ratings</li>              </ul>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-    </motion.div>
+    </StaffPageContainer>
   );
 };
 
 export default ReportsPage;
+
 
 

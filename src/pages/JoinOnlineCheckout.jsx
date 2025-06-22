@@ -63,22 +63,19 @@ const JoinOnlineCheckout = () => {
     if (checkoutData) {
       try {
         const parsed = JSON.parse(checkoutData);
-        console.log('🛒 Loading checkout data from sessionStorage:', parsed);
         loadCheckoutDataFromSession(parsed);
         return;
       } catch (error) {
-        console.error('Error parsing checkout data from sessionStorage:', error);
+        
       }
     }
     
     // Fallback to URL parameter approach
     if (!planId) {
-      console.log('❌ No plan ID in URL and no sessionStorage data, redirecting to join-online');
       navigate('/join-online');
       return;
     }
     
-    console.log('📋 Loading checkout data from URL parameter:', planId);
     loadCheckoutData();
   }, [planId]);
 
@@ -94,7 +91,7 @@ const JoinOnlineCheckout = () => {
         .single();
 
       if (planError) {
-        console.error('Error loading plan:', planError);
+        
         toast({
           title: "Error",
           description: "Failed to load selected plan.",
@@ -114,7 +111,7 @@ const JoinOnlineCheckout = () => {
         .order('price', { ascending: true });
 
       if (addonsError) {
-        console.error('Error loading add-ons:', addonsError);
+        
         toast({
           title: "Warning",
           description: "Failed to load add-ons. You can still proceed with just the membership.",
@@ -122,12 +119,11 @@ const JoinOnlineCheckout = () => {
         });
         setAvailableAddons([]);
       } else {
-        console.log('✅ Loaded available add-ons:', addons);
         setAvailableAddons(addons || []);
       }
 
     } catch (error) {
-      console.error('Error in loadCheckoutData:', error);
+      
       toast({
         title: "Error",
         description: "Failed to load checkout data.",
@@ -141,8 +137,6 @@ const JoinOnlineCheckout = () => {
     try {
       setLoading(true);
       
-      console.log('🔍 Loading plan data for ID:', checkoutData.plan);
-      
       // Load selected membership plan
       const { data: plan, error: planError } = await supabase
         .from('membership_types')
@@ -151,7 +145,7 @@ const JoinOnlineCheckout = () => {
         .single();
 
       if (planError) {
-        console.error('Error loading plan:', planError);
+        
         toast({
           title: "Error",
           description: "Failed to load selected plan.",
@@ -165,15 +159,12 @@ const JoinOnlineCheckout = () => {
       
       // Load add-ons if they were selected in customize page
       if (checkoutData.addons && checkoutData.addons.length > 0) {
-        console.log('🔍 Loading selected add-ons:', checkoutData.addons);
-        
         const { data: addons, error: addonsError } = await supabase
           .from('membership_types')
           .select('*')
           .in('id', checkoutData.addons);        if (addonsError) {
-          console.error('Error loading selected add-ons:', addonsError);
+          
         } else {
-          console.log('✅ Loaded selected add-ons from session:', addons);
           setSelectedAddons(addons || []);
         }
       }      // Also load all available add-ons for display
@@ -184,16 +175,15 @@ const JoinOnlineCheckout = () => {
         .eq('available_online', true)
         .eq('active', true)
         .order('price', { ascending: true });      if (allAddonsError) {
-        console.error('Error loading all add-ons:', allAddonsError);
+        
         // If we can't load available add-ons, set empty array
         setAvailableAddons([]);
       } else {
-        console.log('✅ Loaded available add-ons:', allAddons);
         setAvailableAddons(allAddons || []);
       }
 
     } catch (error) {
-      console.error('Error in loadCheckoutDataFromSession:', error);
+      
       toast({
         title: "Error",
         description: "Failed to load checkout data.",
@@ -259,16 +249,7 @@ const JoinOnlineCheckout = () => {
         return 'period';
     }
   };  const handleProceedToPayment = async () => {
-    console.log('🎯 Submit Payment button clicked!');
-    console.log('🔍 Current state:', {
-      user: user?.email || 'No user',
-      selectedPlan: selectedPlan?.name || 'No plan',
-      processingPayment,
-      loading
-    });
-
     if (!user) {
-      console.log('❌ No user logged in, redirecting to login');
       toast({
         title: "Login Required",
         description: "Please log in to complete your membership purchase.",
@@ -392,19 +373,13 @@ const JoinOnlineCheckout = () => {
       });
       
       // Log all errors for debugging
-      console.warn('❌ Form validation errors:', validationErrors);
+      
       return;
     }
 
     setProcessingPayment(true);
 
     try {
-      console.log('🔄 Processing payment for user:', user.email);
-      console.log('📋 Selected Plan:', selectedPlan);
-      console.log('🎯 Selected Add-ons:', selectedAddons);
-      console.log('💰 Total:', calculateTotal());
-      console.log('💳 Billing Info:', { ...billingInfo, cardNumber: '****', cvv: '***', accountNumber: '****' });
-
       // Show processing message
       toast({
         title: "Processing Payment",
@@ -434,14 +409,12 @@ const JoinOnlineCheckout = () => {
         }))
       };
 
-      console.log('🚀 Calling stripe service...');
-      
       // Add a slight delay to simulate real payment processing
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Process membership signup through Stripe service      const result = await stripeService.processMembershipSignup(memberData, paymentData);
       
-      console.log('✅ Payment processing result:', result);      if (result.success) {
+      if (result.success) {
         // Clear checkout data from sessionStorage
         sessionStorage.removeItem('membershipCheckoutData');
         
@@ -466,7 +439,7 @@ const JoinOnlineCheckout = () => {
       }
 
     } catch (error) {
-      console.error('❌ Payment processing error:', error);
+      
       toast({
         title: "Payment Failed",
         description: error.message || "There was an error processing your payment. Please try again.",
@@ -601,13 +574,7 @@ const JoinOnlineCheckout = () => {
   };
 
   // Debug component state
-  console.log('🔍 JoinOnlineCheckout render state:', {
-    user: user?.email || 'No user',
-    selectedPlan: selectedPlan?.name || 'No plan',
-    loading,
-    processingPayment,
-    planId
-  });
+  
 
   if (loading) {
     return (
@@ -635,7 +602,7 @@ const JoinOnlineCheckout = () => {
         onSubmit={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          console.log('⚠️ Form submission prevented');
+          
         }}
         onKeyDown={handleKeyDown}
       >
@@ -1220,13 +1187,8 @@ const JoinOnlineCheckout = () => {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('🎯 Button clicked event:', e);
-                  console.log('🔍 Button state:', {
-                    disabled: processingPayment || loading || !selectedPlan,
-                    processingPayment,
-                    loading,
-                    selectedPlan: selectedPlan?.name
-                  });
+                  
+                  
                   handleProceedToPayment();
                 }}
                 disabled={processingPayment || loading || !selectedPlan}
@@ -1307,4 +1269,5 @@ const JoinOnlineCheckout = () => {
 };
 
 export default JoinOnlineCheckout;
+
 

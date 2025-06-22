@@ -34,7 +34,7 @@ export const logPermissionChange = async (changeData) => {
     
     return data;
   } catch (error) {
-    console.error('Error logging permission change:', error);
+    
     throw error;
   }
 };
@@ -57,7 +57,7 @@ export const getRolePermissionHistory = async (roleId, limit = 50) => {
     
     return data || [];
   } catch (error) {
-    console.error('Error fetching role permission history:', error);
+    
     return [];
   }
 };
@@ -112,7 +112,7 @@ export const getAllPermissionHistory = async (page = 1, pageSize = 20, filters =
       totalPages: Math.ceil((count || 0) / pageSize)
     };
   } catch (error) {
-    console.error('Error fetching permission history:', error);
+    
     return {
       data: [],
       count: 0,
@@ -202,7 +202,7 @@ export const getPermissionChangeStats = async (dateRange = 30) => {
     
     return stats;
   } catch (error) {
-    console.error('Error fetching permission change stats:', error);
+    
     return {
       total: 0,
       byType: {},
@@ -256,7 +256,7 @@ export const revertPermissions = async (historyId, currentUserId) => {
     
     return updatedRole;
   } catch (error) {
-    console.error('Error reverting permissions:', error);
+    
     throw error;
   }
 };
@@ -281,7 +281,7 @@ export const cleanupPermissionHistory = async (daysToKeep = 365) => {
     
     return data?.length || 0;
   } catch (error) {
-    console.error('Error cleaning up permission history:', error);
+    
     return 0;
   }
 };
@@ -295,3 +295,4 @@ export default {
   revertPermissions,
   cleanupPermissionHistory
 };
+

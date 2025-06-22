@@ -44,7 +44,7 @@ const staffDashboardService = {
         activeClasses: classCount || 0,
       };
     } catch (error) {
-      console.error('Error fetching staff stats:', error);
+      
       return {
         totalMembers: 0,
         activeClasses: 0,
@@ -75,7 +75,7 @@ const staffDashboardService = {
 
       return activities;
     } catch (error) {
-      console.error('Error fetching recent activity:', error);
+      
       return [];
     }
   }
@@ -137,7 +137,7 @@ const StaffDashboard = () => {
 
   // Fetch dashboard data
   const fetchDashboardData = useCallback(async () => {
-    console.log('🔄 Fetching staff dashboard data...');
+    
     
     await withLoading(async () => {
       try {
@@ -146,8 +146,8 @@ const StaffDashboard = () => {
           staffDashboardService.getRecentActivity()
         ]);
         
-        console.log('📊 Stats received:', statsData);
-        console.log('📋 Activity received:', activityData);
+        
+        
         
         setStats(prev => ({
           ...prev,
@@ -161,10 +161,10 @@ const StaffDashboard = () => {
         
         setRecentActivity(activityData);
         
-        console.log('✅ Staff dashboard data loaded successfully');
+        
         
       } catch (error) {
-        console.error('❌ Failed to fetch dashboard data:', error);
+        
         toast({
           title: "Dashboard Error",
           description: "Some dashboard data may not be up to date.",
@@ -176,7 +176,7 @@ const StaffDashboard = () => {
 
   // Load data on mount
   useEffect(() => {
-    console.log('🚀 StaffDashboard: Component mounted');
+    
     fetchDashboardData();
   }, [fetchDashboardData]);
 
@@ -333,17 +333,11 @@ const StaffDashboard = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <button
-            onClick={() => navigate('/staff/checkin')}
+            onClick={() => navigate('/staff-portal/checkin')}
             className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
             <Users className="h-8 w-8 text-blue-600 mb-2" />
             <span className="text-sm font-medium">Check In</span>
-          </button>          <button
-            onClick={() => navigate('/staff-portal/members')}
-            className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <Users className="h-8 w-8 text-green-600 mb-2" />
-            <span className="text-sm font-medium">Members</span>
           </button>
           <button
             onClick={() => navigate('/staff-portal/classes')}
@@ -374,5 +368,6 @@ const StaffDashboard = () => {
 };
 
 export default StaffDashboard;
+
 
 

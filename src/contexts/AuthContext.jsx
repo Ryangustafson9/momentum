@@ -47,17 +47,15 @@ export const AuthProvider = ({ children }) => {
         const maxCacheAge = 24 * 60 * 60 * 1000; // 24 hours
 
         if (cacheAge < maxCacheAge) {
-          console.log('[AuthContext] 💾 Using cached user data');
           return cached;
         } else {
-          console.log('[AuthContext] ⏰ Cached user data expired, clearing cache');
           storage.local.remove('cached_user');
           storage.local.remove('cached_user_timestamp');
         }
       }
 
       return null;    } catch (error) {
-      console.warn('[AuthContext] ⚠️ Failed to load cached user:', error);
+      
       return null;
     }
   });
@@ -77,13 +75,11 @@ export const AuthProvider = ({ children }) => {
   const fetchUserPermissions = async (userId) => {
     setPermissionsLoading(true);
     try {
-      console.log('[AuthContext] 🔐 Fetching permissions for user:', userId);
       const permissions = await PermissionsService.getUserPermissions(userId);
       setUserPermissions(permissions);
-      console.log('[AuthContext] ✅ Permissions loaded:', permissions);
       return permissions;
     } catch (error) {
-      console.error('[AuthContext] ❌ Failed to fetch permissions:', error);
+      
       setUserPermissions([]);
       return [];
     } finally {
@@ -105,7 +101,7 @@ export const AuthProvider = ({ children }) => {
     try {
       return await PermissionsService.userHasPermission(user.id, permissionName);
     } catch (error) {
-      console.error('[AuthContext] ❌ Failed to check permission:', error);
+      
       return false;
     }
   };
@@ -115,7 +111,7 @@ export const AuthProvider = ({ children }) => {
       const profile = await fetchUserProfile(userId, {
         ...options,
         onProfileCreated: (createdProfile) => {
-          console.log('[AuthContext] 🎉 New profile created:', createdProfile);
+          
           setUser(createdProfile);
         }
       });
@@ -125,27 +121,26 @@ export const AuthProvider = ({ children }) => {
       // 🔐 PERMISSIONS: Fetch permissions after profile is set
       if (profile?.id) {
         fetchUserPermissions(profile.id).catch(error => {
-          console.warn('[AuthContext] ⚠️ Background permissions fetch failed:', error);
+          
         });
       }
       
       return profile;
     } catch (error) {
-      console.error('[AuthContext] ❌ Failed to fetch and set profile:', error);
+      
       throw error;
     }
   };
 
   // ⭐ SIMPLIFIED: Auth state listener with faster timeout
   useEffect(() => {
-    console.log('[AuthContext] 🔄 Initializing auth state...');
+    
     
     let isMounted = true;
     
     // ⭐ FASTER: Reduced timeout to 3 seconds
     const authTimeout = setTimeout(() => {
       if (isMounted) {
-        console.log('[AuthContext] ⚠️ Auth loading timeout - forcing completion');
         setAuthReady(true);
       }
     }, 3000); // Reduced from 5000ms to 3000ms
@@ -156,7 +151,7 @@ export const AuthProvider = ({ children }) => {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('[AuthContext] ❌ Session error:', error);
+          
           if (isMounted) {
             setAuthReady(true);
           }
@@ -164,11 +159,10 @@ export const AuthProvider = ({ children }) => {
         }
 
         if (session?.user && isMounted) {
-          console.log('[AuthContext] 👤 Found existing session for:', session.user.id);
-            // ⭐ ASYNC: Fetch profile in background, don't wait
+          // ⭐ ASYNC: Fetch profile in background, don't wait
           fetchAndSetProfile(session.user.id)
             .catch((error) => {
-              console.warn('[AuthContext] ⚠️ Background profile fetch failed during init:', error);
+              
               // Don't throw - this is a background operation
             })
             .finally(() => {
@@ -178,7 +172,6 @@ export const AuthProvider = ({ children }) => {
               }
             });
         } else {
-          console.log('[AuthContext] 🚫 No active session');
           if (isMounted) {
             setAuthReady(true);
             clearTimeout(authTimeout);
@@ -186,7 +179,7 @@ export const AuthProvider = ({ children }) => {
         }
         
       } catch (error) {
-        console.error('[AuthContext] ❌ Auth initialization error:', error);
+        
         if (isMounted) {
           setAuthReady(true);
           clearTimeout(authTimeout);
@@ -199,7 +192,7 @@ export const AuthProvider = ({ children }) => {
 
     // ⭐ SIMPLIFIED: Auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[AuthContext] 🔄 Auth state changed:', event);
+      
       
       if (!isMounted) return;
 
@@ -209,7 +202,7 @@ export const AuthProvider = ({ children }) => {
             // ⭐ BACKGROUND: Don't block UI for profile fetching
             fetchAndSetProfile(session.user.id)
               .catch((error) => {
-                console.warn('[AuthContext] ⚠️ Background profile fetch failed on sign in:', error);
+                
                 // Don't throw - this is a background operation
                 // User can still use the app with basic auth data
               });
@@ -226,7 +219,7 @@ export const AuthProvider = ({ children }) => {
           break;
           
         case 'TOKEN_REFRESHED':
-          console.log('[AuthContext] 🔄 Token refreshed');
+          
           break;
       }
 
@@ -247,8 +240,6 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
 
     try {
-      console.log('[AuthContext] 🔑 Logging in...');
-
       // ⚠️ SCHEMA ERROR FIX: Try login with better error handling
       let data, error;
 
@@ -260,7 +251,7 @@ export const AuthProvider = ({ children }) => {
         data = result.data;
         error = result.error;
       } catch (schemaError) {
-        console.error('[AuthContext] ❌ Schema error during login:', schemaError);
+        
 
         // If it's a schema error, try to handle it gracefully
         if (schemaError.message?.includes('Database error querying schema')) {
@@ -271,19 +262,14 @@ export const AuthProvider = ({ children }) => {
 
       if (error) throw error;
 
-      console.log('[AuthContext] ✅ Login successful, fetching profile...');
-      console.log('[AuthContext] 🔍 Auth data:', data);
-      
       // ⭐ IMMEDIATE: Fetch profile right after login
       let userProfile = null;
       if (data.user) {
         try {
-          console.log('[AuthContext] 📋 Fetching profile for user ID:', data.user.id);
           userProfile = await fetchAndSetProfile(data.user.id);
-          console.log('[AuthContext] ✅ Profile fetched successfully:', userProfile);
         } catch (profileError) {
-          console.warn('[AuthContext] ⚠️ Profile fetch failed:', profileError);
-          console.log('[AuthContext] 🔧 Creating fallback profile...');
+          
+          
           
           userProfile = {
             id: data.user.id,
@@ -300,10 +286,10 @@ export const AuthProvider = ({ children }) => {
             storage.local.set('cached_user', userProfile);
             storage.local.set('cached_user_timestamp', Date.now());
           } catch (error) {
-            console.warn('[AuthContext] ⚠️ Failed to cache fallback user:', error);
+            
           }
 
-          console.log('[AuthContext] 📋 Fallback profile created:', userProfile);
+          
         }
       }
       
@@ -317,11 +303,10 @@ export const AuthProvider = ({ children }) => {
         name: ''
       };
       
-      console.log('[AuthContext] 🎯 Returning user for login:', returnUser);
       return { user: returnUser };
       
     } catch (error) {
-      console.error('[AuthContext] ❌ Login error:', error);
+      
 
       // Don't show toast here - let the Login component handle UI feedback
       // Just throw the error with a clear message for the UI to handle
@@ -343,8 +328,6 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
 
     try {
-      console.log('[AuthContext] 📝 Signing up...');
-
       // ⚠️ RACE CONDITION FIX: Check for existing users before creating auth user
       // This prevents orphaned auth users and provides better error messages
       const { data: existingProfile, error: existingProfileError } = await supabase
@@ -354,7 +337,7 @@ export const AuthProvider = ({ children }) => {
         .maybeSingle();
 
       if (existingProfileError && existingProfileError.code !== 'PGRST116') {
-        console.error('[AuthContext] ❌ Error checking existing profile:', existingProfileError);
+        
         throw new Error('Unable to verify account status. Please try again.');
       }
 
@@ -362,8 +345,6 @@ export const AuthProvider = ({ children }) => {
       if (existingProfile) {
         throw new Error('An account with this email already exists. Please try logging in instead.');
       }
-
-      console.log('[AuthContext] 🔍 Email verification passed, proceeding with signup...');
 
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -378,11 +359,11 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (error) {
-        console.error('[AuthContext] ❌ Auth signup failed:', error);
+        
         throw error;
       }      // Only create profile if auth user was created successfully
       if (data.user) {
-        console.log('[AuthContext] 👤 Auth user created successfully, now creating profile...');
+        
 
         let normalizedUser;
 
@@ -397,8 +378,6 @@ export const AuthProvider = ({ children }) => {
             phone: userData.phone || null
           };
 
-          console.log('[AuthContext] 🔍 Validating auth user before profile creation...');
-
           // ⚠️ FOREIGN KEY FIX: Validate auth user exists before creating profile
           const authUserValid = await validateAuthUserExists(data.user.id);
           if (!authUserValid) {
@@ -406,13 +385,13 @@ export const AuthProvider = ({ children }) => {
           }
 
           // ⚠️ FOREIGN KEY FIX: Try safe profile creation, fallback to direct insert
-          console.log('[AuthContext] 📝 Creating profile with foreign key validation...');
+          
 
           let createdProfile;
           try {
             createdProfile = await createProfileSafe(profileData);
           } catch (safeError) {
-            console.warn('[AuthContext] ⚠️ Safe creation failed, using direct insert:', safeError);
+            
             const { data, error } = await supabase
               .from('profiles')
               .insert([profileData])
@@ -421,7 +400,7 @@ export const AuthProvider = ({ children }) => {
 
             if (error) throw error;
             createdProfile = data;
-          }          console.log('[AuthContext] ✅ Profile created successfully with foreign key validation:', createdProfile);          // ⚠️ FIX: Normalize and cache user data like in login()
+          }                    // ⚠️ FIX: Normalize and cache user data like in login()
           normalizedUser = {
             ...createdProfile,
             role: normalizeRole(createdProfile.role || 'nonmember')
@@ -434,10 +413,10 @@ export const AuthProvider = ({ children }) => {
           // ⭐ FIX: Set user state immediately so signup component can show success
           setUser(normalizedUser);
           
-          console.log('[AuthContext] 💾 User data normalized, cached, and state updated:', normalizedUser);
+          
 
         } catch (profileCreationError) {
-          console.error('[AuthContext] ❌ Profile creation process failed:', profileCreationError);
+          
           throw profileCreationError;
         }        showToast.success(
           'Account Created!',
@@ -454,7 +433,7 @@ export const AuthProvider = ({ children }) => {
       }
       
     } catch (error) {
-      console.error('[AuthContext] ❌ Signup error:', error);
+      
       
       if (error.message.includes('User already registered')) {
         showToast.error('Account Exists', 'An account with this email already exists');
@@ -470,7 +449,7 @@ export const AuthProvider = ({ children }) => {
 
   const resetPassword = async (email) => {
     try {
-      console.log('[AuthContext] 🔄 Sending password reset email...');
+      
 
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
@@ -478,7 +457,7 @@ export const AuthProvider = ({ children }) => {
 
       if (error) throw error;
 
-      console.log('[AuthContext] ✅ Password reset email sent successfully');
+      
       showToast.success(
         'Reset Email Sent',
         'Please check your email for password reset instructions'
@@ -487,7 +466,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
 
     } catch (error) {
-      console.error('[AuthContext] ❌ Password reset error:', error);
+      
 
       if (error.message.includes('User not found')) {
         throw new Error('No account found with this email address');
@@ -500,7 +479,7 @@ export const AuthProvider = ({ children }) => {
   };
   const logout = async () => {
     try {
-      console.log('[AuthContext] 🚪 Logging out...');
+      
 
       // ⭐ CLEAR: All stored data including cached user
       storage.local.remove('cached_user');
@@ -521,7 +500,7 @@ export const AuthProvider = ({ children }) => {
       window.location.href = '/login';
 
     } catch (error) {
-      console.error('[AuthContext] ❌ Logout error:', error);
+      
       showToast.error('Logout Failed', error.message);
       // ⭐ FALLBACK: Even if logout fails, redirect to login
       window.location.href = '/login';
@@ -552,3 +531,4 @@ export const AuthProvider = ({ children }) => {
 };
 
 export default AuthProvider;
+

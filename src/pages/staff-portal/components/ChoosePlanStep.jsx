@@ -31,7 +31,7 @@ const ChoosePlanStep = ({ formData, updateFormData, onNext, canProceed }) => {
       if (error) throw error;
       setMembershipTypes(data || []);
     } catch (error) {
-      console.error('Error fetching membership types:', error);
+      
       toast({
         title: 'Error',
         description: 'Failed to load membership plans',
@@ -249,3 +249,4 @@ const ChoosePlanStep = ({ formData, updateFormData, onNext, canProceed }) => {
 };
 
 export default ChoosePlanStep;
+

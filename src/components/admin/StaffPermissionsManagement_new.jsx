@@ -16,6 +16,7 @@ import {
   Settings 
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { logger } from '@/utils/logger';
 
 // Get permission categories from the comprehensive permission service
 const PERMISSION_CATEGORIES = (() => {
@@ -54,7 +55,7 @@ const StaffPermissionsManagement = () => {
   const fetchStaffPlans = async () => {
     try {
       setLoading(true);
-      console.log('🔍 Fetching staff plans...');
+      logger.info('🔍 Fetching staff plans...');
       
       const { data: plans, error } = await supabase
         .from('membership_types')
@@ -64,7 +65,7 @@ const StaffPermissionsManagement = () => {
 
       if (error) throw error;
 
-      console.log('✅ Staff plans fetched:', plans);
+      logger.info('✅ Staff plans fetched:', plans);
       
       // Initialize permissions if they don't exist
       const plansWithPermissions = plans.map(plan => ({
@@ -74,7 +75,7 @@ const StaffPermissionsManagement = () => {
 
       setStaffPlans(plansWithPermissions);
     } catch (error) {
-      console.error('❌ Error fetching staff plans:', error);
+      logger.error('❌ Error fetching staff plans:', error);
       toast({
         title: "Error",
         description: "Failed to load staff plans",
@@ -114,7 +115,7 @@ const StaffPermissionsManagement = () => {
       
       if (!plan) return;
 
-      console.log('💾 Saving permissions for plan:', plan.name, plan.permissions);
+      logger.info('💾 Saving permissions for plan:', plan.name, plan.permissions);
 
       const { error } = await supabase
         .from('membership_types')
@@ -133,7 +134,7 @@ const StaffPermissionsManagement = () => {
       });
 
     } catch (error) {
-      console.error('❌ Error saving permissions:', error);
+      logger.error('❌ Error saving permissions:', error);
       toast({
         title: "Error",
         description: "Failed to save permissions",

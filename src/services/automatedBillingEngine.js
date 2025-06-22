@@ -6,7 +6,7 @@ import { billingConfigService } from './billingConfigService';
 export const automatedBillingEngine = {
   // Process all billing for an organization
   async processBillingCycle(organizationId, billingType = 'membership') {
-    console.log('🔄 BillingEngine: Starting billing cycle for org:', organizationId, 'type:', billingType);
+    
     
     try {
       // Create billing job record
@@ -18,7 +18,7 @@ export const automatedBillingEngine = {
       // Get members to bill
       const membersToBill = await this.getMembersToBill(organizationId, billingType, config);
       
-      console.log('📊 BillingEngine: Found', membersToBill.length, 'members to bill');
+      
       
       // Update job with total count
       await this.updateBillingJob(billingJob.id, {
@@ -55,7 +55,7 @@ export const automatedBillingEngine = {
             success: false,
             error: error.message
           });
-          console.error('❌ BillingEngine: Error processing member:', member.id, error);
+          
         }
         
         // Update progress
@@ -73,10 +73,7 @@ export const automatedBillingEngine = {
         completed_at: new Date().toISOString()
       });
       
-      console.log('✅ BillingEngine: Billing cycle completed', {
-        successful: successfulBillings,
-        failed: failedBillings
-      });
+      
       
       return {
         success: true,
@@ -88,7 +85,7 @@ export const automatedBillingEngine = {
       };
       
     } catch (error) {
-      console.error('❌ BillingEngine: Billing cycle failed:', error);
+      
       throw new Error(`Billing cycle failed: ${error.message}`);
     }
   },
@@ -122,7 +119,7 @@ export const automatedBillingEngine = {
       .eq('id', jobId);
 
     if (error) {
-      console.error('❌ Error updating billing job:', error);
+      
     }
   },
 
@@ -251,7 +248,7 @@ export const automatedBillingEngine = {
 
   // Process billing for a single member
   async processMemberBilling(member, config, billingType) {
-    console.log('💳 BillingEngine: Processing billing for member:', member.email);
+    
     
     try {
       if (billingType === 'membership') {
@@ -262,7 +259,7 @@ export const automatedBillingEngine = {
       
       return { success: false, error: 'Unknown billing type' };
     } catch (error) {
-      console.error('❌ BillingEngine: Error processing member billing:', error);
+      
       return { success: false, error: error.message };
     }
   },
@@ -479,14 +476,14 @@ export const automatedBillingEngine = {
       }
 
     } catch (error) {
-      console.error('❌ Payment processing error:', error);
+      
       return { success: false, error: error.message };
     }
   },
 
   // Handle failed payment
   async handleFailedPayment(member, invoice, config) {
-    console.log('❌ BillingEngine: Handling failed payment for member:', member.email);
+    
     
     // Update invoice status
     await supabase
@@ -518,9 +515,10 @@ export const automatedBillingEngine = {
     // Send notification if enabled
     if (config.send_failed_payment_notifications) {
       // In production, this would send an email notification
-      console.log('📧 Would send failed payment notification to:', member.email);
+      
     }
   }
 };
 
 export default automatedBillingEngine;
+

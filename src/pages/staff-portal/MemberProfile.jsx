@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { 
   User, Mail, Phone, Shield, Edit3, Save, CreditCard, CalendarCheck, AlertTriangle, LifeBuoy, Image as ImageIcon, 
   Fingerprint, Settings as SettingsIcon, MessageSquare, CalendarDays, FileText, Users, LogOut, MoreVertical, 
-  PauseCircle, XCircle, Repeat, Trash2, Briefcase, Home, DollarSign, CheckSquare, Info, PlusCircle, ChevronDown, ChevronUp, UserCog, UserX, UserCheck
+  PauseCircle, XCircle, Repeat, Trash2, Briefcase, Home, DollarSign, CheckSquare, Info, PlusCircle, ChevronDown, ChevronUp, UserCog, UserX, UserCheck, Star
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast.js';
 import { supabase } from '@/lib/supabaseClient';
 import { dataService } from '@/services/apiService';
+import { MemberProfileService } from '@/services/memberProfileService';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -35,12 +36,54 @@ const getInitials = (name) => {
 const statusVariant = (status) => {
   switch (status?.toLowerCase()) {
     case 'active': return 'success';
+    case 'draft': return 'warning';
     case 'inactive':
     case 'suspended':
     case 'cancelled':
     case 'expired': return 'destructive';
     default: return 'secondary';
   }
+};
+
+const DraftProfileBanner = ({ memberData, onActivate }) => {
+  const completionStatus = MemberProfileService.getProfileCompletionStatus(memberData);
+
+  if (memberData?.status !== 'draft') return null;
+
+  return (
+    <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20 mb-6">
+      <CardContent className="pt-6">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start space-x-3">
+            <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+            <div>
+              <h3 className="font-semibold text-yellow-800 dark:text-yellow-200">
+                Draft Profile - Incomplete
+              </h3>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                This is a new member profile that needs to be completed.
+                Profile completion: {completionStatus.completionPercentage}%
+              </p>
+              {completionStatus.missingFields.length > 0 && (
+                <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                  Missing required fields: {completionStatus.missingFields.join(', ')}
+                </p>
+              )}
+            </div>
+          </div>
+          {completionStatus.isComplete && (
+            <Button
+              onClick={onActivate}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <UserCheck className="mr-2 h-4 w-4" />
+              Activate Profile
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
 };
 
 const ProfileSectionCard = ({ title, icon: Icon, children, actions, description, className }) => (
@@ -283,11 +326,6 @@ const StaffMemberProfilePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Add debugging
-  console.log('🚀 StaffMemberProfilePage component mounted');
-  console.log('📋 systemMemberId from useParams:', systemMemberId);
-  console.log('🌐 Current location:', window.location.href);
-  
   const [memberData, setMemberData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -298,33 +336,30 @@ const StaffMemberProfilePage = () => {
   const [loggedInStaff, setLoggedInStaff] = useState(null);
 
   const fetchProfileData = useCallback(async () => {
-    console.log('🔍 Starting fetchProfileData for systemMemberId:', systemMemberId);
     setIsLoading(true);
 
     // Get current staff user from auth
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      console.log('👤 Auth user:', user?.email);
       if (user) {
         const { data: staffProfile } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
           .single();
-        console.log('👨‍💼 Staff profile:', staffProfile?.email);
         setLoggedInStaff(staffProfile || { id: user.id, email: user.email });
       }
     } catch (error) {
-      console.error('Error fetching staff profile:', error);
+      
       setLoggedInStaff({ id: 'temp', email: 'temp@example.com' });
     }
 
     if (!systemMemberId) {
-      console.error('❌ No systemMemberId provided');
+      
       toast({ title: "Error", description: "No member ID provided.", variant: "destructive" });
-      navigate('/staff-portal/members');
+      navigate('/staff-portal/dashboard');
       return;
-    }    console.log('🔍 Fetching member data for ID:', systemMemberId);
+    }    
     try {      // Fetch member profile first
       const { data: memberDetails, error: memberError } = await supabase
         .from('profiles')
@@ -333,11 +368,11 @@ const StaffMemberProfilePage = () => {
         .single();
 
       if (memberError) {
-        console.error('❌ Error fetching member:', memberError);
+        
         throw memberError;
       }
 
-      console.log('✅ Member data fetched:', memberDetails);
+      
 
       // Fetch membership data separately if member exists
       let membershipData = null;
@@ -394,7 +429,7 @@ const StaffMemberProfilePage = () => {
         Promise.resolve([])
       ]);      
       if (combinedData) {
-        console.log('✅ Setting member data:', combinedData);
+        
         setMemberData(combinedData);
         setMembershipTypes(types || []);
 
@@ -424,29 +459,29 @@ const StaffMemberProfilePage = () => {
           setBookings(allRecords.filter(r => r.status === 'Booked' || r.status === 'Cancelled'));
           setMembershipLog(membershipLogData || []);
         } catch (error) {
-          console.error("Error fetching attendance/membership log:", error);
+          
           // Continue without this data
           setCheckIns([]);
           setBookings([]);
           setMembershipLog([]);
         }
       } else {
-        console.error('❌ No member details found for ID:', systemMemberId);
+        
         toast({ title: "Error", description: "Could not load member details.", variant: "destructive" });
-        navigate('/staff-portal/members');
+        navigate('/staff-portal/dashboard');
       }
     } catch (error) {
-      console.error("❌ Error fetching profile data:", error);
+      
       toast({ title: "Error", description: `Failed to load profile data: ${error.message}`, variant: "destructive" });
     } finally {
-      console.log('🏁 Setting isLoading to false');
+      
       setIsLoading(false);
     }
   }, [systemMemberId, navigate, toast]);  useEffect(() => {
     if (systemMemberId) {
       // Add timeout to prevent infinite loading
       const timeoutId = setTimeout(() => {
-        console.error('❌ Profile data loading timeout');
+        
         setIsLoading(false);
         toast({ 
           title: "Loading Timeout", 
@@ -470,9 +505,9 @@ const StaffMemberProfilePage = () => {
     try {
       const dob = updatedFormData.dob && updatedFormData.dob !== "" ? new Date(updatedFormData.dob).toISOString().split('T')[0] : null;
       const join_date = updatedFormData.join_date && updatedFormData.join_date !== "" ? new Date(updatedFormData.join_date).toISOString().split('T')[0] : null;
-      
-      const dataToSave = { 
-        ...updatedFormData, 
+
+      const dataToSave = {
+        ...updatedFormData,
         dob,
         join_date,
         first_name: updatedFormData.first_name || '',
@@ -493,8 +528,41 @@ const StaffMemberProfilePage = () => {
       toast({ title: "Profile Updated", description: "Member's information has been saved." });
       fetchProfileData();
     } catch (error) {
-      console.error("Error saving profile:", error);
+      
       toast({ title: "Error", description: `Could not save profile changes. ${error.message}`, variant: "destructive" });
+    }
+  };
+
+  const handleActivateProfile = async () => {
+    if (!memberData?.id) return;
+
+    try {
+      const { data: activatedProfile, error } = await MemberProfileService.activateProfile(
+        memberData.id,
+        {
+          first_name: memberData.first_name,
+          last_name: memberData.last_name,
+          email: memberData.email
+        }
+      );
+
+      if (error) {
+        throw error;
+      }
+
+      setMemberData(activatedProfile);
+      toast({
+        title: "Profile Activated",
+        description: "Member profile has been successfully activated!"
+      });
+      fetchProfileData();
+    } catch (error) {
+      
+      toast({
+        title: "Activation Failed",
+        description: error.message,
+        variant: "destructive"
+      });
     }
   };
   
@@ -520,9 +588,23 @@ const StaffMemberProfilePage = () => {
       </div>
     );
   }
+    const currentMembership = membershipTypes.find(mt => mt.id === memberData.current_membership_type_id);
   
-  const currentMembership = membershipTypes.find(mt => mt.id === memberData.current_membership_type_id);
-  const memberNameForAvatar = memberData.name || "Member";
+  // Construct member name with proper fallbacks
+  let displayName = "Member Name"; // Default fallback
+  if (memberData.first_name && memberData.last_name) {
+    displayName = `${memberData.first_name} ${memberData.last_name}`;
+  } else if (memberData.first_name) {
+    displayName = memberData.first_name;
+  } else if (memberData.last_name) {
+    displayName = memberData.last_name;
+  } else if (memberData.name && memberData.name.trim() !== "") {
+    displayName = memberData.name;
+  } else if (memberData.email) {
+    displayName = memberData.email.split('@')[0]; // Use email username as fallback
+  }
+  
+  const memberNameForAvatar = displayName;
   const avatarSrc = memberData.profile_picture_url || '';
 
 
@@ -532,72 +614,336 @@ const StaffMemberProfilePage = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       className="container mx-auto px-2 sm:px-4 py-6 space-y-6"
-    >
-      <Card className="overflow-hidden shadow-xl rounded-xl bg-card">
+    >      <Card className="overflow-hidden shadow-xl rounded-xl bg-card">
         <div className="p-6 flex flex-col items-center bg-gradient-to-b from-primary/10 to-transparent dark:from-primary/20">
-          <Avatar className="h-28 w-28 md:h-32 md:w-32 border-4 border-background shadow-lg">
-            {avatarSrc ? (
-              <AvatarImage src={avatarSrc} alt={memberData.name || "Member avatar"} />
-            ) : (
-              <div className="flex items-center justify-center h-full w-full bg-muted rounded-full">
-                <User className="h-16 w-16 text-muted-foreground" />
+          {/* Enhanced Profile Photo Section */}
+          <div className="relative">
+            <Avatar className="h-32 w-32 md:h-40 md:w-40 border-4 border-background shadow-lg">
+              {avatarSrc ? (
+                <AvatarImage src={avatarSrc} alt={memberData.name || "Member avatar"} />
+              ) : (
+                <div className="flex items-center justify-center h-full w-full bg-muted rounded-full">
+                  <User className="h-20 w-20 text-muted-foreground" />
+                </div>
+              )}
+              <AvatarFallback className="text-4xl">{getInitials(memberNameForAvatar)}</AvatarFallback>
+            </Avatar>
+            
+            {/* Status Indicator Overlay */}
+            <div className="absolute -bottom-2 -right-2 bg-background rounded-full p-2 shadow-lg">
+              {memberData.status === 'Active' ? (
+                <CheckSquare className="h-6 w-6 text-green-500" />
+              ) : memberData.status === 'Inactive' ? (
+                <PauseCircle className="h-6 w-6 text-yellow-500" />
+              ) : (
+                <XCircle className="h-6 w-6 text-red-500" />
+              )}
+            </div>
+          </div>
+
+          {/* Enhanced Name and Identity Section */}
+          <div className="mt-6 text-center space-y-3">            {/* Primary Name Display */}
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">
+                {displayName}
+              </h1>
+              
+              {/* Member ID */}
+              <p className="text-lg text-muted-foreground mt-1 flex items-center justify-center gap-2">
+                <Fingerprint className="h-4 w-4" />
+                Member ID: {memberData.system_member_id || memberData.id}
+              </p>
+            </div>
+
+            {/* Status Badges Row */}
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              {/* Membership Status */}
+              <Badge 
+                variant={statusVariant(memberData.status)} 
+                className="px-3 py-1.5 text-sm font-medium"
+              >
+                {memberData.status === 'Active' && <CheckSquare className="h-4 w-4 mr-1" />}
+                {memberData.status === 'Inactive' && <PauseCircle className="h-4 w-4 mr-1" />}
+                {(!memberData.status || memberData.status === 'Unknown') && <AlertTriangle className="h-4 w-4 mr-1" />}
+                {memberData.status || 'Unknown'}
+              </Badge>
+
+              {/* Corporate Affiliation - Placeholder for future feature */}
+              {/* TODO: Add corporate affiliation when implemented */}
+              {/* {memberData.corporate_affiliation && (
+                <Badge variant="outline" className="px-3 py-1.5 text-sm border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-900/30">
+                  <Briefcase className="h-4 w-4 mr-1" />
+                  {memberData.corporate_affiliation.company_name} Employee
+                </Badge>
+              )} */}
+
+              {/* Member Type */}
+              <Badge variant="secondary" className="px-3 py-1.5 text-sm">
+                {memberData.role === 'admin' ? 'Administrator' : 
+                 memberData.role === 'staff' ? 'Staff Member' : 'Member'}
+              </Badge>
+            </div>
+
+            {/* Key Information Row */}
+            <div className="mt-4 flex flex-col sm:flex-row items-center gap-2 sm:gap-6 text-sm text-muted-foreground">
+              {/* Membership Plan */}
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                <span>{currentMembership?.name || 'No Active Plan'}</span>
               </div>
-            )}
-            <AvatarFallback className="text-3xl">{getInitials(memberData.name)}</AvatarFallback>
-          </Avatar>
-          <h1 className="mt-4 text-3xl md:text-4xl font-bold text-foreground tracking-tight">{memberData.name || "Member"}</h1>
-          <div className="mt-2 flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
-            <span>{currentMembership?.name || 'N/A Membership'}</span>
-            <Badge variant={statusVariant(memberData.status)} className="px-3 py-1">{memberData.status || 'Unknown'}</Badge>
-            <span>Joined: {memberData.join_date ? format(new Date(memberData.join_date), 'PP') : 'N/A'}</span>
+              
+              {/* Join Date */}
+              <div className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4" />
+                <span>Joined: {memberData.join_date ? format(new Date(memberData.join_date), 'PP') : 'N/A'}</span>
+              </div>
+
+              {/* Email (for quick reference) */}
+              {memberData.email && (
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  <span className="truncate max-w-[200px]">{memberData.email}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Additional Status Indicators */}
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+              {/* First Visit Indicator */}
+              {memberData.join_date && new Date(memberData.join_date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) && (
+                <Badge variant="outline" className="border-yellow-500 text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-600">
+                  <Star className="h-3 w-3 mr-1" />
+                  New Member
+                </Badge>
+              )}
+              
+              {/* Verification Status - Placeholder for corporate members */}
+              {/* TODO: Add verification status for corporate members */}
+              {/* {memberData.verification_status === 'verified' && (
+                <Badge variant="outline" className="border-green-500 text-green-600 bg-green-50 dark:bg-green-900/30">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Verified
+                </Badge>
+              )} */}
+            </div>
           </div>
         </div>
 
-        <div className="p-4 sm:p-6 border-t grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-          <Button variant="outline" size="sm" onClick={handleEditProfile}><Edit3 className="mr-2 h-4 w-4" /> Edit Profile</Button>
-          <Button variant="outline" size="sm" onClick={() => setIsAssignMembershipDialogOpen(true)}><Briefcase className="mr-2 h-4 w-4" /> Manage Plan</Button>
-          <Button variant="outline" size="sm" onClick={() => handleQuickAction('Manage Family')}><Users className="mr-2 h-4 w-4" /> Family</Button>          <Button variant="outline" size="sm" onClick={() => handleQuickAction('Payment Methods')}><DollarSign className="mr-2 h-4 w-4" /> Payments</Button>
+        {/* Enhanced Action Buttons */}
+        <div className="p-4 sm:p-6 border-t grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <Button variant="outline" size="sm" onClick={handleEditProfile} className="flex items-center gap-2">
+            <Edit3 className="h-4 w-4" /> 
+            Edit Profile
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setIsAssignMembershipDialogOpen(true)} className="flex items-center gap-2">
+            <Briefcase className="h-4 w-4" /> 
+            Manage Plan
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => handleQuickAction('Manage Family')} className="flex items-center gap-2">
+            <Users className="h-4 w-4" /> 
+            Family
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => handleQuickAction('Payment Methods')} className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" /> 
+            Payments
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => handleQuickAction('Check In')} className="flex items-center gap-2">
+            <CheckSquare className="h-4 w-4" /> 
+            Check In
+          </Button>
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-1 space-y-6">
-           <ProfileSectionCard title="Contact Information" icon={Info} description="Primary contact details.">
-              <InfoRow label="Email Address" value={memberData.email} icon={Mail} />
-              <InfoRow label="Phone Number" value={memberData.phone} icon={Phone} />
+      {/* Draft Profile Banner */}
+      <DraftProfileBanner
+        memberData={memberData}
+        onActivate={handleActivateProfile}
+      />
+
+      {/* Contact Information moved to Demographic tab */}
+      <div className="hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1 space-y-6">
+           <ProfileSectionCard 
+             title="Contact Information" 
+             icon={Info} 
+             description="Primary contact details"
+             className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20"
+           >
+              <InfoRow label="Email Address" value={memberData.email} icon={Mail}>
+                {memberData.email && (
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-sm truncate">{memberData.email}</p>
+                    <Button variant="ghost" size="sm" onClick={() => window.location.href = `mailto:${memberData.email}`}>
+                      <Mail className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </InfoRow>
+              <InfoRow label="Phone Number" value={memberData.phone} icon={Phone}>
+                {memberData.phone && (
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-sm">{memberData.phone}</p>
+                    <Button variant="ghost" size="sm" onClick={() => window.location.href = `tel:${memberData.phone}`}>
+                      <Phone className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </InfoRow>
               <InfoRow label="Home Address" value={memberData.address} icon={Home} />
+              <InfoRow label="Date of Birth" value={memberData.dob ? format(new Date(memberData.dob), 'PP') : 'Not provided'} icon={CalendarDays} />
             </ProfileSectionCard>
-            <ProfileSectionCard title="Emergency Contact" icon={Shield} description="Who to contact in an emergency.">
+            
+            <ProfileSectionCard 
+              title="Emergency Contact" 
+              icon={Shield} 
+              description="Who to contact in an emergency"
+              className="bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20"
+            >
               <InfoRow label="Contact Name" value={memberData.emergency_contact_name} icon={User} />
-              <InfoRow label="Contact Phone" value={memberData.emergency_contact_phone} icon={Phone} />
+              <InfoRow label="Contact Phone" value={memberData.emergency_contact_phone} icon={Phone}>
+                {memberData.emergency_contact_phone && (
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-sm">{memberData.emergency_contact_phone}</p>
+                    <Button variant="ghost" size="sm" onClick={() => window.location.href = `tel:${memberData.emergency_contact_phone}`}>
+                      <Phone className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </InfoRow>
             </ProfileSectionCard>
         </div>
-        <StaffNotesSection memberId={memberData.id} staffId={loggedInStaff.id} />
-      </div>
-
-
-      <Tabs defaultValue="membership-details" className="w-full">
-        <TabsList id="staffProfileTabsTriggerList" className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-4 bg-muted/50 rounded-lg p-1">
-          <TabsTrigger value="membership-details"><Briefcase className="mr-2 h-4 w-4"/>Membership</TabsTrigger>
-          <TabsTrigger value="activity-history"><CheckSquare className="mr-2 h-4 w-4"/>Activity</TabsTrigger>
-          <TabsTrigger value="billing-payments"><DollarSign className="mr-2 h-4 w-4"/>Billing</TabsTrigger>
-          <TabsTrigger value="family-dependents"><Users className="mr-2 h-4 w-4"/>Family</TabsTrigger>
-        </TabsList>
         
+        <div className="lg:col-span-2">
+          <StaffNotesSection memberId={memberData.id} staffId={loggedInStaff.id} />
+        </div>
+      </div>
+      </div><Tabs defaultValue="demographic" className="w-full">
+        <TabsList id="staffProfileTabsTriggerList" className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mb-4 bg-muted/50 rounded-lg p-1">
+          <TabsTrigger value="demographic"><User className="mr-2 h-4 w-4"/>Demographic</TabsTrigger>
+          <TabsTrigger value="membership-details"><Briefcase className="mr-2 h-4 w-4"/>Membership</TabsTrigger>
+          <TabsTrigger value="notes"><MessageSquare className="mr-2 h-4 w-4"/>Notes</TabsTrigger>
+          <TabsTrigger value="billing-payments"><DollarSign className="mr-2 h-4 w-4"/>Billing</TabsTrigger>
+          <TabsTrigger value="history"><CalendarDays className="mr-2 h-4 w-4"/>History</TabsTrigger>        </TabsList>
+
+        <TabsContent value="demographic">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ProfileSectionCard 
+              title="Contact Information" 
+              icon={Info} 
+              description="Primary contact details"
+              className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20"
+            >
+              <InfoRow label="Email Address" value={memberData.email} icon={Mail}>
+                {memberData.email && (
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-sm truncate">{memberData.email}</p>
+                    <Button variant="ghost" size="sm" onClick={() => window.location.href = `mailto:${memberData.email}`}>
+                      <Mail className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </InfoRow>
+              <InfoRow label="Phone Number" value={memberData.phone} icon={Phone}>
+                {memberData.phone && (
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-sm">{memberData.phone}</p>
+                    <Button variant="ghost" size="sm" onClick={() => window.location.href = `tel:${memberData.phone}`}>
+                      <Phone className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </InfoRow>
+              <InfoRow label="Home Address" value={memberData.address} icon={Home} />
+              <InfoRow label="Date of Birth" value={memberData.dob ? format(new Date(memberData.dob), 'PP') : 'Not provided'} icon={CalendarDays} />
+            </ProfileSectionCard>
+            
+            <ProfileSectionCard 
+              title="Emergency Contact" 
+              icon={Shield} 
+              description="Who to contact in an emergency"
+              className="bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20"
+            >
+              <InfoRow label="Contact Name" value={memberData.emergency_contact_name} icon={User} />
+              <InfoRow label="Contact Phone" value={memberData.emergency_contact_phone} icon={Phone}>
+                {memberData.emergency_contact_phone && (
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-sm">{memberData.emergency_contact_phone}</p>
+                    <Button variant="ghost" size="sm" onClick={() => window.location.href = `tel:${memberData.emergency_contact_phone}`}>
+                      <Phone className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </InfoRow>
+            </ProfileSectionCard>
+          </div>
+        </TabsContent>
+
         <TabsContent value="membership-details">
-            <ProfileSectionCard title="Membership Details" icon={Briefcase} description="Overview of member's current plan and status.">
-                <InfoRow label="Membership Type" value={currentMembership?.name || 'N/A'} icon={Briefcase} />
-                <InfoRow label="Membership Status" value={memberData.status || 'N/A'} icon={memberData.status === 'Active' ? CheckSquare : AlertTriangle} />
-                <InfoRow label="Member Since" value={memberData.join_date ? format(new Date(memberData.join_date), 'PP') : 'N/A'} icon={CalendarDays} />
-                <InfoRow label="Plan End Date" value={memberData.membership_end_date ? format(new Date(memberData.membership_end_date), 'PP') : 'Ongoing'} icon={CalendarDays} />
-                <InfoRow label="Member ID" value={memberData.system_member_id || memberData.id} icon={Fingerprint} />
-                <CardFooter className="pt-4 px-0">
-                    <Button onClick={() => setIsAssignMembershipDialogOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Assign/Update Membership</Button>
+            <ProfileSectionCard 
+              title="Membership Details" 
+              icon={Briefcase} 
+              description="Overview of member's current plan and status"
+              className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20"
+            >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <InfoRow label="Membership Type" value={currentMembership?.name || 'No Active Plan'} icon={Briefcase} />
+                    <InfoRow label="Membership Status" icon={memberData.status === 'Active' ? CheckSquare : AlertTriangle}>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={statusVariant(memberData.status)} className="px-2 py-1">
+                          {memberData.status || 'Unknown'}
+                        </Badge>
+                        {memberData.status === 'Active' && (
+                          <span className="text-xs text-green-600 dark:text-green-400">● Active</span>
+                        )}
+                      </div>
+                    </InfoRow>
+                    <InfoRow label="Member Since" value={memberData.join_date ? format(new Date(memberData.join_date), 'PP') : 'N/A'} icon={CalendarDays} />
+                    <InfoRow label="Plan End Date" value={memberData.membership_end_date ? format(new Date(memberData.membership_end_date), 'PP') : 'Ongoing'} icon={CalendarDays} />
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <InfoRow label="Member ID" value={memberData.system_member_id || memberData.id} icon={Fingerprint} />
+                    <InfoRow label="Account Type" value={memberData.role === 'admin' ? 'Administrator' : memberData.role === 'staff' ? 'Staff Member' : 'Standard Member'} icon={User} />
+                    {currentMembership && (
+                      <InfoRow label="Plan Category" value={currentMembership.category || 'Standard'} icon={Info} />
+                    )}
+                    {/* Corporate Affiliation - Placeholder for future implementation */}
+                    {/* <InfoRow label="Corporate Affiliation" value="TechCorp Solutions" icon={Briefcase}>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="border-blue-300 text-blue-700 bg-blue-50">
+                          TechCorp Solutions Employee
+                        </Badge>
+                        <Badge variant="outline" className="border-green-300 text-green-700 bg-green-50">
+                          Verified
+                        </Badge>
+                      </div>
+                    </InfoRow> */}
+                  </div>
+                </div>
+                
+                <CardFooter className="pt-6 px-0 flex flex-wrap gap-3">
+                    <Button onClick={() => setIsAssignMembershipDialogOpen(true)} className="flex items-center gap-2">
+                      <PlusCircle className="h-4 w-4" /> 
+                      Assign/Update Membership
+                    </Button>
+                    <Button variant="outline" onClick={() => handleQuickAction('View Billing History')} className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4" /> 
+                      View Billing
+                    </Button>
+                    <Button variant="outline" onClick={() => handleQuickAction('Export Member Data')} className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" /> 
+                      Export Data
+                    </Button>
                 </CardFooter>
             </ProfileSectionCard>
         </TabsContent>
+          <TabsContent value="notes">
+          <StaffNotesSection memberId={memberData.id} staffId={loggedInStaff.id} />
+        </TabsContent>
         
-        <TabsContent value="activity-history">
+        <TabsContent value="history">
           <ProfileSectionCard title="Activity History" icon={CalendarCheck} description="Member's check-ins and class bookings.">
             <Tabs defaultValue="check-ins-sub" className="w-full">
               <TabsList className="grid w-full grid-cols-2 gap-1 mb-3 text-sm">
@@ -618,17 +964,9 @@ const StaffMemberProfilePage = () => {
               </TabsContent>
             </Tabs>
           </ProfileSectionCard>
-        </TabsContent>
-
-        <TabsContent value="billing-payments">
+        </TabsContent>        <TabsContent value="billing-payments">
           <ProfileSectionCard title="Billing & Payments" icon={DollarSign} description="View payment history and manage methods.">
             <p className="text-muted-foreground text-center py-4">Payment history and methods will be shown here. (Coming Soon)</p>
-          </ProfileSectionCard>
-        </TabsContent>
-
-        <TabsContent value="family-dependents">
-          <ProfileSectionCard title="Family & Dependents" icon={Users} description="Manage linked family accounts.">
-            <p className="text-muted-foreground text-center py-4">Family and dependent management will be available here. (Coming Soon)</p>
           </ProfileSectionCard>
         </TabsContent>
       </Tabs>
@@ -651,5 +989,6 @@ const StaffMemberProfilePage = () => {
 };
 
 export default StaffMemberProfilePage;
+
 
 

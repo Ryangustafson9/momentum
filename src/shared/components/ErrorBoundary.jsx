@@ -130,7 +130,7 @@ export const FeatureErrorBoundary = ({
   featureName = 'Feature'
 }) => {
   const handleError = (error, errorInfo) => {
-    console.error(`${featureName} Error:`, error, errorInfo);
+    
     
     // Log to external service in production
     if (process.env.NODE_ENV === 'production') {
@@ -254,3 +254,4 @@ export default FeatureErrorBoundary;
 
 // Named export for main ErrorBoundary (alias for FeatureErrorBoundary)
 export const ErrorBoundary = FeatureErrorBoundary;
+

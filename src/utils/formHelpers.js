@@ -90,3 +90,4 @@ export const calculatePasswordStrength = (password) => {
     requirements
   };
 };
+

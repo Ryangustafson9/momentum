@@ -5,9 +5,9 @@ import { apiService } from '@/services/apiService';
 
 const log = (level, message, ...args) => {
   const prefix = "[InitializationService]";
-  if (level === 'error') console.error(prefix, message, ...args);
-  else if (level === 'warn') console.warn(prefix, message, ...args);
-  else console.log(prefix, message, ...args);
+  if (level === 'error') 
+  else if (level === 'warn') 
+  else 
 };
 
 const initializeEntity = async (supabaseClient, entityName, initialEntities, fetchExistingCountFunc, insertFunc, additionalCheck = () => true, localDataService, localInvalidateCache) => {
@@ -246,5 +246,6 @@ export const initializeAllData = async (supabaseClient, allInitialDataSets) => {
     }
   }
 };
+
 
 

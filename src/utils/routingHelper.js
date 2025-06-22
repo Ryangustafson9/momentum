@@ -7,26 +7,26 @@ import { normalizeRole } from '@/utils/roleUtils.js';
  */
 export const getDashboardRoute = (user) => {
   if (!user || !user.role) {
-    console.warn('⚠️ getDashboardRoute: No user or role provided');
+    
     return '/login';
   }
 
   const role = normalizeRole(user.role);
     switch (role) {
     case 'admin':
-      console.log('🔍 Routing admin to /staff-portal/dashboard');
+      
       return '/staff-portal/dashboard';
     case 'staff':
-      console.log('🔍 Routing staff to /staff-portal/dashboard');
+      
       return '/staff-portal/dashboard';
     case 'member':
-      console.log('🔍 Routing member to /member-portal/dashboard');
+      
       return '/member-portal/dashboard';
     case 'nonmember':
-      console.log('🔍 Routing nonmember to /dashboard');
+      
       return '/dashboard';
     default:
-      console.warn('⚠️ getDashboardRoute: Unknown role:', role);
+      
       return '/dashboard'; // Default fallback for unknown roles
   }
 };
@@ -142,7 +142,6 @@ export const getNavigationItems = (user) => {
     ],
     staff: [
       { path: '/staff-portal/dashboard', label: 'Dashboard', icon: 'Home' },
-      { path: '/staff-portal/members', label: 'Members', icon: 'Users' },
       { path: '/staff-portal/classes', label: 'Classes', icon: 'Calendar' },
       { path: '/staff-portal/reports', label: 'Reports', icon: 'BarChart' },
     ],
@@ -156,3 +155,4 @@ export const getNavigationItems = (user) => {
 
   return navigationMap[role] || [];
 };
+

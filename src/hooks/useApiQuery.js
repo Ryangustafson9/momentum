@@ -17,7 +17,7 @@ export function useApiQuery(key, apiCall, options = {}) {
     cacheTime: 10 * 60 * 1000, // 10 minutes
     retry: 1,
     onError: (error) => {
-      console.error(`Error fetching ${key}:`, error);
+      
       if (options.showErrorToast !== false) {
         toast({
           title: "Error",
@@ -87,3 +87,4 @@ export const useSettings = () =>
     if (error) throw error;
     return data;
   });
+

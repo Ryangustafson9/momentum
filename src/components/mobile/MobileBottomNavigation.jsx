@@ -6,11 +6,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { 
-  Home, 
-  Calendar, 
-  Users, 
-  Settings, 
+import {
+  Home,
+  Calendar,
+  Settings,
   User,
   Activity,
   CreditCard,
@@ -75,12 +74,7 @@ const MobileBottomNavigationContent = ({ className = '' }) => {
     } else {
       // Staff/Admin navigation
       return [
-        ...baseItems,        {
-          id: 'members',
-          label: 'Members',
-          icon: Users,
-          path: '/staff-portal/members',
-        },
+        ...baseItems,
         {
           id: 'classes',
           label: 'Classes',
@@ -198,9 +192,9 @@ const MobileBottomNavigationContent = ({ className = '' }) => {
 
 const MobileBottomNavigation = (props) => {
   return (
-    <ErrorBoundary 
+    <ErrorBoundary
       fallback={<div className="hidden">Navigation error</div>}
-      onError={(error) => console.error('MobileBottomNavigation Error:', error)}
+      onError={(error) => console.error('Mobile navigation error:', error)}
     >
       <MobileBottomNavigationContent {...props} />
     </ErrorBoundary>
@@ -208,3 +202,4 @@ const MobileBottomNavigation = (props) => {
 };
 
 export default MobileBottomNavigation;
+

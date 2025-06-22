@@ -70,7 +70,7 @@ export const useMemberClassesData = () => {
       setAllClasses(Array.isArray(classesResult.data) ? classesResult.data : []);
       setMemberAttendance(Array.isArray(attendanceResult.data) ? attendanceResult.data : []);
     } catch (error) {
-      console.error("Error fetching member classes page data:", error);
+      
       toast({ title: "Error", description: "Could not load class information. Please try again.", variant: "destructive" });
       setAllClasses([]);
       setMemberAttendance([]);
@@ -91,7 +91,7 @@ export const useMemberClassesData = () => {
     useEffect(() => {
     if (!loggedInUser || !realtimeEnabled) {
       if (!realtimeEnabled) {
-        console.info('useMemberClassesData: Realtime disabled, working in poll-only mode');
+        
       }
       return;
     }
@@ -104,14 +104,14 @@ export const useMemberClassesData = () => {
         .channel('public:classes:member-classes-hook')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'classes' },
           (payload) => {
-            console.log('useMemberClassesData: Classes change received!', payload);
+            
             fetchPageData(loggedInUser); 
           }
         )
         .subscribe((status, err) => {
-          if (status === 'SUBSCRIBED') console.log('useMemberClassesData: Subscribed to classes channel');
+          if (status === 'SUBSCRIBED') 
           if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            console.error('useMemberClassesData: Classes channel error:', err);
+            
             realtimeCapability.disable(`useMemberClassesData classes channel error: ${status}`);
           }
         });
@@ -120,19 +120,19 @@ export const useMemberClassesData = () => {
         .channel(`public:attendance:member_id=eq.${loggedInUser.id}:member-classes-hook`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance', filter: `member_id=eq.${loggedInUser.id}` },
           (payload) => {
-            console.log('useMemberClassesData: Attendance change received for user!', payload);
+            
             fetchPageData(loggedInUser); 
           }
         )
         .subscribe((status, err) => {
-          if (status === 'SUBSCRIBED') console.log(`useMemberClassesData: Subscribed to attendance channel for user ${loggedInUser.id}`);
+          if (status === 'SUBSCRIBED') 
           if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            console.error('useMemberClassesData: Attendance channel error:', err);
+            
             realtimeCapability.disable(`useMemberClassesData attendance channel error: ${status}`);
           }
         });
     } catch (error) {
-      console.error('useMemberClassesData: Error setting up realtime channels:', error);
+      
       realtimeCapability.disable(`useMemberClassesData channel setup error: ${error.message}`);
     }
       
@@ -141,17 +141,17 @@ export const useMemberClassesData = () => {
         try {
           supabase.removeChannel(classesChannel);
         } catch (error) {
-          console.warn('useMemberClassesData: Error removing classes channel:', error);
+          
         }
       }
       if (attendanceChannel) {
         try {
           supabase.removeChannel(attendanceChannel);
         } catch (error) {
-          console.warn('useMemberClassesData: Error removing attendance channel:', error);
+          
         }
       }
-      console.log('useMemberClassesData: Unsubscribed from channels');
+      
     };
   }, [loggedInUser, fetchPageData, realtimeEnabled]);
 
@@ -172,7 +172,7 @@ export const useMemberClassesData = () => {
 
       toast({ title: "Class Booked!", description: `You've successfully booked ${classToBook.name}.`, className: "bg-green-500 text-white" });
     } catch (error) {
-      console.error("Error booking class:", error);
+      
       toast({ title: "Booking Failed", description: error.message || "Could not book the class.", variant: "destructive" });
     } finally {
       setIsProcessing(null);
@@ -198,7 +198,7 @@ export const useMemberClassesData = () => {
 
         toast({ title: "Booking Cancelled", description: `Your booking for ${classToCancel.name} has been cancelled.` });
     } catch (error) {
-        console.error("Error cancelling booking:", error);
+        
         toast({ title: "Cancellation Failed", description: error.message || "Could not cancel booking.", variant: "destructive" });
     } finally {
       setIsProcessing(null);
@@ -215,5 +215,6 @@ export const useMemberClassesData = () => {
     handleCancelBooking,
   };
 };
+
 
 

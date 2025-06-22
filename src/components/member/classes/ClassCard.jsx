@@ -52,3 +52,4 @@ const ClassCard = ({ cls, isBooked, spotsLeft, attendanceStatus, onBook, onCance
 export default ClassCard;
 
 
+

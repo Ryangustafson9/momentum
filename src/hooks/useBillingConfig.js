@@ -122,7 +122,7 @@ export const useCreateHouseCharge = () => {
       });
     },
     onError: (error) => {
-      console.error('Create house charge error:', error);
+      
       toast({
         title: "Creation Failed",
         description: error.message || "Failed to create house charge",
@@ -152,7 +152,7 @@ export const useUpdateHouseCharge = () => {
       });
     },
     onError: (error) => {
-      console.error('Update house charge error:', error);
+      
       toast({
         title: "Update Failed",
         description: error.message || "Failed to update house charge",
@@ -181,7 +181,7 @@ export const useDeleteHouseCharge = () => {
       });
     },
     onError: (error) => {
-      console.error('Delete house charge error:', error);
+      
       toast({
         title: "Deletion Failed",
         description: error.message || "Failed to delete house charge",
@@ -216,7 +216,7 @@ export const useAssignHouseCharge = () => {
       });
     },
     onError: (error) => {
-      console.error('Assign house charge error:', error);
+      
       toast({
         title: "Assignment Failed",
         description: error.message || "Failed to assign house charge",
@@ -251,7 +251,7 @@ export const useRemoveHouseCharge = () => {
       });
     },
     onError: (error) => {
-      console.error('Remove house charge error:', error);
+      
       toast({
         title: "Removal Failed",
         description: error.message || "Failed to remove house charge",
@@ -283,3 +283,4 @@ export default {
   useRemoveHouseCharge,
   useProrationCalculation,
 };
+

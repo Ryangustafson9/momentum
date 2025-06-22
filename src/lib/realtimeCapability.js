@@ -140,3 +140,4 @@ export const realtimeCapability = new RealtimeCapabilityManager();
 export const useRealtimeCapability = () => {
   return realtimeCapability.getCapability();
 };
+

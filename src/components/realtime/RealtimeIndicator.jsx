@@ -100,3 +100,4 @@ const RealtimeIndicator = ({
 };
 
 export default RealtimeIndicator;
+

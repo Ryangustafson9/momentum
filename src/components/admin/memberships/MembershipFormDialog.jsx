@@ -77,7 +77,7 @@ const MembershipFormDialog = ({ isOpen, onClose, onSave, membershipData, existin
           if (error) throw error;
           setStaffRoles(data || []);
         } catch (error) {
-          console.error('Error fetching staff roles:', error);
+          
           toast({
             title: "Error",
             description: "Failed to load staff roles",
@@ -781,7 +781,7 @@ const MembershipFormDialog = ({ isOpen, onClose, onSave, membershipData, existin
                 membershipData={formData}
                 onUpdate={(updatedData) => {
                   // Handle any updates from the billing preview if needed
-                  console.log('Billing preview update:', updatedData);
+                  
                 }}
               />
             </TabsContent>
@@ -793,5 +793,6 @@ const MembershipFormDialog = ({ isOpen, onClose, onSave, membershipData, existin
 };
 
 export default MembershipFormDialog;
+
 
 

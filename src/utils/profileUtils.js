@@ -19,8 +19,6 @@ export const fetchMultipleProfiles = async (userIds, options = {}) => {
   const { select = '*', filters = {} } = options;
   
   try {
-    console.log('[profileUtils] 🔍 Fetching multiple profiles:', userIds);
-    
     let query = supabase
       .from('profiles')
       .select(select)
@@ -34,7 +32,6 @@ export const fetchMultipleProfiles = async (userIds, options = {}) => {
     const { data, error } = await query;
     
     if (error) {
-      console.error('[profileUtils] ❌ Error fetching multiple profiles:', error);
       throw error;
     }
     
@@ -44,11 +41,9 @@ export const fetchMultipleProfiles = async (userIds, options = {}) => {
       role: normalizeRole(profile.role || 'nonmember')
     }));
     
-    console.log('[profileUtils] ✅ Fetched profiles:', normalizedProfiles.length);
     return normalizedProfiles;
     
   } catch (error) {
-    console.error('[profileUtils] ❌ Failed to fetch multiple profiles:', error);
     throw error;
   }
 };
@@ -71,8 +66,6 @@ export const searchProfiles = async (searchCriteria = {}) => {
   } = searchCriteria;
   
   try {
-    console.log('[profileUtils] 🔍 Searching profiles:', { query, fields, role, limit });
-    
     let supabaseQuery = supabase
       .from('profiles')
       .select('*')
@@ -96,7 +89,6 @@ export const searchProfiles = async (searchCriteria = {}) => {
     const { data, error } = await supabaseQuery;
     
     if (error) {
-      console.error('[profileUtils] ❌ Error searching profiles:', error);
       throw error;
     }
     
@@ -106,11 +98,9 @@ export const searchProfiles = async (searchCriteria = {}) => {
       role: normalizeRole(profile.role || 'nonmember')
     }));
     
-    console.log('[profileUtils] ✅ Found profiles:', normalizedProfiles.length);
     return normalizedProfiles;
     
   } catch (error) {
-    console.error('[profileUtils] ❌ Failed to search profiles:', error);
     throw error;
   }
 };
@@ -127,8 +117,6 @@ export const updateProfile = async (userId, updates, options = {}) => {
   const { validateRole = true } = options;
   
   try {
-    console.log('[profileUtils] 📝 Updating profile:', userId, updates);
-    
     // Validate role if being updated
     if (validateRole && updates.role) {
       updates.role = normalizeRole(updates.role);
@@ -145,15 +133,12 @@ export const updateProfile = async (userId, updates, options = {}) => {
       .single();
       
     if (error) {
-      console.error('[profileUtils] ❌ Error updating profile:', error);
       throw error;
     }
     
-    console.log('[profileUtils] ✅ Profile updated:', data);
     return data;
     
   } catch (error) {
-    console.error('[profileUtils] ❌ Failed to update profile:', error);
     throw error;
   }
 };
@@ -168,8 +153,6 @@ export const bulkUpdateProfiles = async (profileUpdates, options = {}) => {
   const { validateRole = true } = options;
   
   try {
-    console.log('[profileUtils] 📝 Bulk updating profiles:', profileUpdates.length);
-    
     const updatePromises = profileUpdates.map(({ id, updates }) => 
       updateProfile(id, updates, { validateRole })
     );
@@ -188,13 +171,8 @@ export const bulkUpdateProfiles = async (profileUpdates, options = {}) => {
       }));
     
     if (failed.length > 0) {
-      console.warn('[profileUtils] ⚠️ Some profile updates failed:', failed);
+      
     }
-    
-    console.log('[profileUtils] ✅ Bulk update completed:', {
-      successful: successful.length,
-      failed: failed.length
-    });
     
     return {
       successful,
@@ -203,7 +181,6 @@ export const bulkUpdateProfiles = async (profileUpdates, options = {}) => {
     };
     
   } catch (error) {
-    console.error('[profileUtils] ❌ Failed bulk update:', error);
     throw error;
   }
 };
@@ -214,15 +191,12 @@ export const bulkUpdateProfiles = async (profileUpdates, options = {}) => {
  */
 export const getProfileStats = async () => {
   try {
-    console.log('[profileUtils] 📊 Fetching profile statistics');
-    
     const { data, error } = await supabase
       .from('profiles')
       .select('role')
       .not('role', 'is', null);
       
     if (error) {
-      console.error('[profileUtils] ❌ Error fetching profile stats:', error);
       throw error;
     }
     
@@ -236,11 +210,9 @@ export const getProfileStats = async () => {
     // Add total count
     stats.total = data.length;
     
-    console.log('[profileUtils] ✅ Profile statistics:', stats);
     return stats;
     
   } catch (error) {
-    console.error('[profileUtils] ❌ Failed to get profile stats:', error);
     throw error;
   }
 };
@@ -329,3 +301,4 @@ export default {
   validateProfileData,
   sanitizeProfileData
 };
+

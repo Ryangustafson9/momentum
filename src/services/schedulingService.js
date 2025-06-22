@@ -6,7 +6,7 @@ export const schedulingService = {
   
   // Get all trainers
   async getTrainers(organizationId, filters = {}) {
-    console.log('🔍 SchedulingService: Fetching trainers for org:', organizationId);
+    
     
     let query = supabase
       .from('trainers')
@@ -25,17 +25,17 @@ export const schedulingService = {
     const { data, error } = await query;
 
     if (error) {
-      console.error('❌ SchedulingService: Error fetching trainers:', error);
+      
       throw new Error(`Failed to fetch trainers: ${error.message}`);
     }
 
-    console.log('✅ SchedulingService: Fetched', data?.length || 0, 'trainers');
+    
     return data || [];
   },
 
   // Create trainer
   async createTrainer(organizationId, trainerData) {
-    console.log('🔄 SchedulingService: Creating trainer:', trainerData.email);
+    
     
     const { data, error } = await supabase
       .from('trainers')
@@ -48,17 +48,17 @@ export const schedulingService = {
       .single();
 
     if (error) {
-      console.error('❌ SchedulingService: Error creating trainer:', error);
+      
       throw new Error(`Failed to create trainer: ${error.message}`);
     }
 
-    console.log('✅ SchedulingService: Created trainer:', data.email);
+    
     return data;
   },
 
   // Update trainer
   async updateTrainer(trainerId, updates) {
-    console.log('🔄 SchedulingService: Updating trainer:', trainerId);
+    
 
     const { data, error } = await supabase
       .from('trainers')
@@ -71,17 +71,17 @@ export const schedulingService = {
       .single();
 
     if (error) {
-      console.error('❌ SchedulingService: Error updating trainer:', error);
+      
       throw new Error(`Failed to update trainer: ${error.message}`);
     }
 
-    console.log('✅ SchedulingService: Updated trainer');
+    
     return data;
   },
 
   // Delete trainer (soft delete)
   async deleteTrainer(trainerId) {
-    console.log('🔄 SchedulingService: Deleting trainer:', trainerId);
+    
 
     const { data, error } = await supabase
       .from('trainers')
@@ -94,17 +94,17 @@ export const schedulingService = {
       .single();
 
     if (error) {
-      console.error('❌ SchedulingService: Error deleting trainer:', error);
+      
       throw new Error(`Failed to delete trainer: ${error.message}`);
     }
 
-    console.log('✅ SchedulingService: Deleted trainer');
+    
     return data;
   },
 
   // Get trainer by ID
   async getTrainer(trainerId) {
-    console.log('🔍 SchedulingService: Fetching trainer:', trainerId);
+    
 
     const { data, error } = await supabase
       .from('trainers')
@@ -122,11 +122,11 @@ export const schedulingService = {
       .single();
 
     if (error) {
-      console.error('❌ SchedulingService: Error fetching trainer:', error);
+      
       throw new Error(`Failed to fetch trainer: ${error.message}`);
     }
 
-    console.log('✅ SchedulingService: Fetched trainer:', data.first_name, data.last_name);
+    
     return data;
   },
 
@@ -134,7 +134,7 @@ export const schedulingService = {
   
   // Get all rooms
   async getRooms(organizationId, filters = {}) {
-    console.log('🔍 SchedulingService: Fetching rooms for org:', organizationId);
+    
     
     let query = supabase
       .from('rooms')
@@ -153,17 +153,17 @@ export const schedulingService = {
     const { data, error } = await query;
 
     if (error) {
-      console.error('❌ SchedulingService: Error fetching rooms:', error);
+      
       throw new Error(`Failed to fetch rooms: ${error.message}`);
     }
 
-    console.log('✅ SchedulingService: Fetched', data?.length || 0, 'rooms');
+    
     return data || [];
   },
 
   // Create room
   async createRoom(organizationId, roomData) {
-    console.log('🔄 SchedulingService: Creating room:', roomData.name);
+    
 
     const { data, error } = await supabase
       .from('rooms')
@@ -176,17 +176,17 @@ export const schedulingService = {
       .single();
 
     if (error) {
-      console.error('❌ SchedulingService: Error creating room:', error);
+      
       throw new Error(`Failed to create room: ${error.message}`);
     }
 
-    console.log('✅ SchedulingService: Created room:', data.name);
+    
     return data;
   },
 
   // Update room
   async updateRoom(roomId, updates) {
-    console.log('🔄 SchedulingService: Updating room:', roomId);
+    
 
     const { data, error } = await supabase
       .from('rooms')
@@ -199,17 +199,17 @@ export const schedulingService = {
       .single();
 
     if (error) {
-      console.error('❌ SchedulingService: Error updating room:', error);
+      
       throw new Error(`Failed to update room: ${error.message}`);
     }
 
-    console.log('✅ SchedulingService: Updated room');
+    
     return data;
   },
 
   // Delete room (soft delete)
   async deleteRoom(roomId) {
-    console.log('🔄 SchedulingService: Deleting room:', roomId);
+    
 
     const { data, error } = await supabase
       .from('rooms')
@@ -222,17 +222,17 @@ export const schedulingService = {
       .single();
 
     if (error) {
-      console.error('❌ SchedulingService: Error deleting room:', error);
+      
       throw new Error(`Failed to delete room: ${error.message}`);
     }
 
-    console.log('✅ SchedulingService: Deleted room');
+    
     return data;
   },
 
   // Get room by ID
   async getRoom(roomId) {
-    console.log('🔍 SchedulingService: Fetching room:', roomId);
+    
 
     const { data, error } = await supabase
       .from('rooms')
@@ -251,11 +251,11 @@ export const schedulingService = {
       .single();
 
     if (error) {
-      console.error('❌ SchedulingService: Error fetching room:', error);
+      
       throw new Error(`Failed to fetch room: ${error.message}`);
     }
 
-    console.log('✅ SchedulingService: Fetched room:', data.name);
+    
     return data;
   },
 
@@ -263,7 +263,7 @@ export const schedulingService = {
   
   // Get all equipment
   async getEquipment(organizationId, filters = {}) {
-    console.log('🔍 SchedulingService: Fetching equipment for org:', organizationId);
+    
     
     let query = supabase
       .from('equipment')
@@ -285,11 +285,11 @@ export const schedulingService = {
     const { data, error } = await query;
 
     if (error) {
-      console.error('❌ SchedulingService: Error fetching equipment:', error);
+      
       throw new Error(`Failed to fetch equipment: ${error.message}`);
     }
 
-    console.log('✅ SchedulingService: Fetched', data?.length || 0, 'equipment items');
+    
     return data || [];
   },
 
@@ -297,7 +297,7 @@ export const schedulingService = {
   
   // Check trainer availability
   async checkTrainerAvailability(trainerId, startTime, endTime, excludeClassId = null) {
-    console.log('🔍 SchedulingService: Checking trainer availability:', trainerId);
+    
     
     const { data, error } = await supabase
       .rpc('check_trainer_availability', {
@@ -308,7 +308,7 @@ export const schedulingService = {
       });
 
     if (error) {
-      console.error('❌ SchedulingService: Error checking trainer availability:', error);
+      
       throw new Error(`Failed to check trainer availability: ${error.message}`);
     }
 
@@ -317,7 +317,7 @@ export const schedulingService = {
 
   // Check room availability
   async checkRoomAvailability(roomId, startTime, endTime, excludeBookingId = null) {
-    console.log('🔍 SchedulingService: Checking room availability:', roomId);
+    
     
     const { data, error } = await supabase
       .rpc('check_room_availability', {
@@ -328,7 +328,7 @@ export const schedulingService = {
       });
 
     if (error) {
-      console.error('❌ SchedulingService: Error checking room availability:', error);
+      
       throw new Error(`Failed to check room availability: ${error.message}`);
     }
 
@@ -337,7 +337,7 @@ export const schedulingService = {
 
   // Get trainer availability for a date range
   async getTrainerAvailability(trainerId, startDate, endDate) {
-    console.log('🔍 SchedulingService: Fetching trainer availability:', trainerId);
+    
     
     const { data, error } = await supabase
       .from('trainer_availability')
@@ -348,7 +348,7 @@ export const schedulingService = {
       .order('date', { ascending: true });
 
     if (error) {
-      console.error('❌ SchedulingService: Error fetching trainer availability:', error);
+      
       throw new Error(`Failed to fetch trainer availability: ${error.message}`);
     }
 
@@ -357,7 +357,7 @@ export const schedulingService = {
 
   // Set trainer availability
   async setTrainerAvailability(trainerId, availabilityData) {
-    console.log('🔄 SchedulingService: Setting trainer availability:', trainerId);
+    
     
     const { data, error } = await supabase
       .from('trainer_availability')
@@ -370,7 +370,7 @@ export const schedulingService = {
       .single();
 
     if (error) {
-      console.error('❌ SchedulingService: Error setting trainer availability:', error);
+      
       throw new Error(`Failed to set trainer availability: ${error.message}`);
     }
 
@@ -381,7 +381,7 @@ export const schedulingService = {
   
   // Get enhanced class schedule
   async getClassSchedule(organizationId, filters = {}) {
-    console.log('🔍 SchedulingService: Fetching class schedule for org:', organizationId);
+    
     
     let query = supabase
       .from('classes')
@@ -426,7 +426,7 @@ export const schedulingService = {
     const { data, error } = await query;
 
     if (error) {
-      console.error('❌ SchedulingService: Error fetching class schedule:', error);
+      
       throw new Error(`Failed to fetch class schedule: ${error.message}`);
     }
 
@@ -445,13 +445,13 @@ export const schedulingService = {
       };
     });
 
-    console.log('✅ SchedulingService: Fetched', processedClasses.length, 'classes');
+    
     return processedClasses;
   },
 
   // Create class with resource validation
   async createClassWithResources(organizationId, classData) {
-    console.log('🔄 SchedulingService: Creating class with resources:', classData.name);
+    
     
     // Validate trainer availability
     if (classData.trainerId) {
@@ -503,7 +503,7 @@ export const schedulingService = {
       .single();
 
     if (classError) {
-      console.error('❌ SchedulingService: Error creating class:', classError);
+      
       throw new Error(`Failed to create class: ${classError.message}`);
     }
 
@@ -523,7 +523,7 @@ export const schedulingService = {
       });
     }
 
-    console.log('✅ SchedulingService: Created class with resources:', newClass.name);
+    
     return newClass;
   },
 
@@ -531,7 +531,7 @@ export const schedulingService = {
   
   // Create room booking
   async createRoomBooking(bookingData) {
-    console.log('🔄 SchedulingService: Creating room booking');
+    
     
     const { data, error } = await supabase
       .from('room_bookings')
@@ -543,7 +543,7 @@ export const schedulingService = {
       .single();
 
     if (error) {
-      console.error('❌ SchedulingService: Error creating room booking:', error);
+      
       throw new Error(`Failed to create room booking: ${error.message}`);
     }
 
@@ -554,7 +554,7 @@ export const schedulingService = {
   
   // Create substitution request
   async createSubstitution(substitutionData) {
-    console.log('🔄 SchedulingService: Creating substitution request');
+    
     
     const { data, error } = await supabase
       .from('class_substitutions')
@@ -567,7 +567,7 @@ export const schedulingService = {
       .single();
 
     if (error) {
-      console.error('❌ SchedulingService: Error creating substitution:', error);
+      
       throw new Error(`Failed to create substitution: ${error.message}`);
     }
 
@@ -576,7 +576,7 @@ export const schedulingService = {
 
   // Get pending substitutions
   async getPendingSubstitutions(organizationId) {
-    console.log('🔍 SchedulingService: Fetching pending substitutions');
+    
     
     const { data, error } = await supabase
       .from('class_substitutions')
@@ -592,7 +592,7 @@ export const schedulingService = {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('❌ SchedulingService: Error fetching substitutions:', error);
+      
       throw new Error(`Failed to fetch substitutions: ${error.message}`);
     }
 
@@ -603,7 +603,7 @@ export const schedulingService = {
   
   // Detect schedule conflicts
   async detectScheduleConflicts(organizationId, dateRange = {}) {
-    console.log('🔍 SchedulingService: Detecting schedule conflicts');
+    
     
     const startDate = dateRange.startDate || new Date().toISOString().split('T')[0];
     const endDate = dateRange.endDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -682,7 +682,7 @@ export const schedulingService = {
       }
     });
 
-    console.log('✅ SchedulingService: Detected', conflicts.length, 'conflicts');
+    
     return conflicts;
   },
 
@@ -700,7 +700,7 @@ export const schedulingService = {
   
   // Promote from waitlist
   async promoteFromWaitlist(classId) {
-    console.log('🔄 SchedulingService: Promoting from waitlist for class:', classId);
+    
     
     const { error } = await supabase
       .rpc('promote_from_waitlist', {
@@ -708,13 +708,14 @@ export const schedulingService = {
       });
 
     if (error) {
-      console.error('❌ SchedulingService: Error promoting from waitlist:', error);
+      
       throw new Error(`Failed to promote from waitlist: ${error.message}`);
     }
 
-    console.log('✅ SchedulingService: Promoted members from waitlist');
+    
     return true;
   }
 };
 
 export default schedulingService;
+

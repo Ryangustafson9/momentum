@@ -55,3 +55,4 @@ const RoleCard = ({ role, allPermissionsList, onEditRole, onDeleteRole, isSubmit
 export default RoleCard;
 
 
+

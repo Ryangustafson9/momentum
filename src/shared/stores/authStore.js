@@ -45,7 +45,7 @@ const useAuthStore = create(
 
       const validation = validateUserRole(userData);
       if (validation.warning) {
-        console.warn('⚠️ AuthStore user role warning:', validation.warning);
+        
       }
 
       const safeUser = {
@@ -54,11 +54,7 @@ const useAuthStore = create(
         normalizedRole: validation.role,
       };
 
-      console.log('✅ AuthStore: Setting safe user:', {
-        email: safeUser.email,
-        role: safeUser.role,
-        originalRole: userData.role
-      });
+      
 
       set({ user: safeUser });
     },
@@ -101,7 +97,7 @@ const useAuthStore = create(
 
         return { user: safeUser };
       } catch (error) {
-        console.error('❌ Login error:', error);
+        
         set({ loading: false });
         throw error;
       }
@@ -120,7 +116,7 @@ const useAuthStore = create(
           loading: false 
         });
       } catch (error) {
-        console.error('❌ Logout error:', error);
+        
         set({ loading: false });
         throw error;
       }
@@ -142,7 +138,7 @@ const useAuthStore = create(
         
         return { user: data.user };
       } catch (error) {
-        console.error('❌ Signup error:', error);
+        
         throw error;
       } finally {
         set({ loading: false });
@@ -151,12 +147,12 @@ const useAuthStore = create(
 
     fetchUserProfile: async (authUser) => {
       if (!authUser?.id) {
-        console.warn('🚫 fetchUserProfile: No auth user provided');
+        
         return null;
       }
 
       try {
-        console.log('🔍 Fetching user profile for ID:', authUser.id, 'Email:', authUser.email);
+        
         
         const { data, error } = await supabase
           .from('profiles')
@@ -166,7 +162,7 @@ const useAuthStore = create(
 
         if (error) {
           if (error.code === 'PGRST116') {
-            console.warn('⚠️ No profile found, creating default profile');
+            
             return {
               id: authUser.id,
               email: authUser.email,
@@ -180,10 +176,10 @@ const useAuthStore = create(
           throw error;
         }
 
-        console.log('✅ User profile fetched:', data.email, 'Role:', data.role);
+        
         return data;
       } catch (error) {
-        console.error('❌ fetchUserProfile error:', error);
+        
         throw error;
       }
     },
@@ -192,18 +188,18 @@ const useAuthStore = create(
     initialize: async () => {
       const state = get();
       if (state.authReady) {
-        console.log('🔄 AuthStore: Already initialized, skipping...');
+        
         return;
       }
 
       try {
-        console.log('🔄 AuthStore: Initializing...');
+        
         set({ loading: true });
 
         const { data: { session }, error } = await supabase.auth.getSession();
 
         if (error) {
-          console.error('❌ Session error:', error);
+          
           set({ loading: false, authReady: true });
           return;
         }
@@ -220,9 +216,9 @@ const useAuthStore = create(
           set({ loading: false, authReady: true });
         }
 
-        console.log('✅ AuthStore: Initialization complete');
+        
       } catch (error) {
-        console.error('❌ AuthStore initialization error:', error);
+        
         set({
           user: null,
           session: null,
@@ -234,7 +230,7 @@ const useAuthStore = create(
 
     // Handle auth state changes
     handleAuthStateChange: async (event, session) => {
-      console.log('🔄 AuthStore: Auth state change:', event);
+      
 
       try {
         if (event === 'SIGNED_IN' && session?.user) {
@@ -254,11 +250,11 @@ const useAuthStore = create(
             authReady: true
           });
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-          console.log('🔄 Token refreshed for:', session.user.email);
+          
           set({ session });
         }
       } catch (error) {
-        console.error('❌ Auth state change error:', error);
+        
         set({
           user: null,
           session: null,
@@ -286,3 +282,4 @@ if (!isInitialized) {
 }
 
 export default useAuthStore;
+

@@ -341,3 +341,4 @@ const SchedulingDashboard = ({ organizationId = 'default-org-id' }) => {
 };
 
 export default SchedulingDashboard;
+

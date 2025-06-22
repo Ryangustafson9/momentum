@@ -16,6 +16,8 @@ import ColumnVisibilityDropdown from '@/components/admin/memberships/ColumnVisib
 import DeleteMembershipDialog from '@/components/admin/memberships/DeleteMembershipDialog';
 import BillingScheduleDialog from '@/components/admin/memberships/BillingScheduleDialog';
 import { useDebounce } from '@/hooks/useDebounce.js';
+import StaffPageHeader from '@/components/staff/StaffPageHeader';
+import StaffPageContainer from '@/components/staff/StaffPageContainer';
 
 // Loading Spinner Component
 const LoadingSpinner = ({ text = "Loading...", className = "" }) => (
@@ -71,7 +73,7 @@ const membershipService = {
 
       return mappedData;
     } catch (error) {
-      console.error('Error fetching membership types:', error);
+      
       throw error;
     }
   },
@@ -91,7 +93,7 @@ const membershipService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error adding membership type:', error);
+      
       throw error;
     }
   },
@@ -111,7 +113,7 @@ const membershipService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error updating membership type:', error);
+      
       throw error;
     }
   },
@@ -126,23 +128,18 @@ const membershipService = {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('Error deleting membership type:', error);
+      
       throw error;
     }
   }
 };
 
 const MembershipsPageHeader = React.memo(() => (
-  <div className="p-6 pb-4">
-    <div>
-      <h1 className="text-4xl font-bold tracking-tight flex items-center text-slate-900 dark:text-slate-50">
-        <Award className="mr-3 h-9 w-9 text-primary" /> Membership Plans
-      </h1>
-      <p className="text-muted-foreground mt-1.5">
-        Manage Member Plans, Staff Plans, Add-ons, and Guest Plans. Configure pricing, features, and availability.
-      </p>
-    </div>
-  </div>
+  <StaffPageHeader 
+    title="Membership Plans"
+    description="Manage Member Plans, Staff Plans, Add-ons, and Guest Plans. Configure pricing, features, and availability."
+    className="p-6 pb-4"
+  />
 ));
 MembershipsPageHeader.displayName = 'MembershipsPageHeader';
 
@@ -244,7 +241,7 @@ const StatsCardSkeleton = () => (
       <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-xl"></div>
       <div className="flex-1">
         <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-20 mb-2"></div>
-        <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-12 mb-2"></div>
+        <div className="h-8 bg-slate-200 dark:bg-slate700 rounded w-12 mb-2"></div>
         <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-24"></div>
       </div>
     </div>
@@ -395,13 +392,10 @@ const MembershipsPage = () => {
   const fetchMembershipTypes = useCallback(async () => {
     setIsLoading(true);
     try {
-      console.log('🔄 Fetching membership types from database...');
       const data = await membershipService.getMembershipTypes();
-      console.log('✅ Membership types fetched:', data);
-      console.log('✅ Number of membership types:', data?.length || 0);
       setMembershipTypes(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('❌ Failed to fetch membership types:', error);
+      
       toast({ title: 'Error', description: `Failed to fetch membership types: ${error.message}`, variant: 'destructive' });
       setMembershipTypes([]);
     } finally {
@@ -453,12 +447,11 @@ const MembershipsPage = () => {
   const confirmDelete = useCallback(async () => {
     if (!membershipToDelete) return;
     try {
-      console.log('🗑️ Deleting membership type:', membershipToDelete.id);
       await membershipService.deleteMembershipType(membershipToDelete.id);
       toast({ title: 'Success', description: `Membership type "${membershipToDelete.name}" deleted successfully.` });
       fetchMembershipTypes(); // Refetch after delete
     } catch (error) {
-      console.error('❌ Failed to delete membership type:', error);
+      
       toast({ title: 'Error', description: `Failed to delete membership type: ${error.message}`, variant: 'destructive' });
     } finally {
       setIsDeleteDialogOpen(false);
@@ -468,8 +461,6 @@ const MembershipsPage = () => {
 
   const handleSaveMembershipType = useCallback(async (typeData) => {
     try {
-      console.log('💾 Saving membership type:', typeData);
-
       if (typeData.id) {
         // Update an existing membership type
         await membershipService.updateMembershipType(typeData.id, typeData);
@@ -485,9 +476,9 @@ const MembershipsPage = () => {
             .eq("id", typeData.memberId);
 
           if (profileError) {
-            console.error("Error updating user role:", profileError.message);
+            
           } else {
-            console.log("User role updated to member!");
+            
           }
         }
       }
@@ -500,7 +491,7 @@ const MembershipsPage = () => {
       fetchMembershipTypes(); // Refetch after save
       setIsFormOpen(false);
     } catch (error) {
-      console.error('❌ Failed to save membership type:', error);
+      
       toast({
         title: "Error",
         description: `Failed to save membership type: ${error.message}`,
@@ -569,13 +560,8 @@ const MembershipsPage = () => {
   if (isLoading && membershipTypes.length === 0) {
     return <LoadingSpinner text="Loading membership plans..." className="min-h-[calc(100vh-10rem)]"/>;
   }
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
+    <StaffPageContainer enableAnimation={true}>
       <Card className="bg-card dark:bg-slate-900/80 backdrop-blur-sm shadow-xl border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
         <MembershipsPageHeader />
 
@@ -657,17 +643,16 @@ const MembershipsPage = () => {
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={confirmDelete}
         membershipToDelete={membershipToDelete}
-      />
-
-      <BillingScheduleDialog
+      />      <BillingScheduleDialog
         isOpen={isBillingDialogOpen}
         onClose={() => setIsBillingDialogOpen(false)}
         membershipData={membershipForBilling}
       />
-    </motion.div>
+    </StaffPageContainer>
   );
 };
 
 export default MembershipsPage;
+
 
 

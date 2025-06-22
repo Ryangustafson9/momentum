@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
 import { getGymColors } from '@/utils/gymBranding';
+import CorporatePartnersService from '@/services/corporatePartnersService';
 
 const ConfirmationStep = ({ formData, updateFormData, onPrev }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,7 +76,7 @@ const ConfirmationStep = ({ formData, updateFormData, onPrev }) => {
         .insert([profileData]);
 
       if (profileError) {
-        console.error('Profile creation error:', profileError);
+        
         throw new Error(`Failed to create member profile: ${profileError.message}`);
       }
 
@@ -102,7 +103,7 @@ const ConfirmationStep = ({ formData, updateFormData, onPrev }) => {
           .insert([membershipData]);
 
         if (membershipError) {
-          console.error('Membership creation error:', membershipError);
+          
           // Don't throw here, profile is already created
           toast({
             title: 'Warning',
@@ -110,11 +111,40 @@ const ConfirmationStep = ({ formData, updateFormData, onPrev }) => {
             variant: 'destructive'
           });
         }
-      }      // Step 3: Send welcome email notification (if requested)
+      }
+
+      // Step 3: Create corporate affiliation if provided
+      if (formData.corporateAffiliation) {
+        try {
+          const affiliationData = {
+            member_id: userId,
+            corporate_partner_id: formData.corporateAffiliation.corporate_partner_id,
+            employee_id: formData.corporateAffiliation.employee_id,
+            department: formData.corporateAffiliation.department,
+            job_title: formData.corporateAffiliation.job_title,
+            verification_status: 'pending'
+          };
+
+          const { error: affiliationError } = await CorporatePartnersService.createMemberAffiliation(affiliationData);
+
+          if (affiliationError) {
+            
+            toast({
+              title: 'Warning',
+              description: 'Member created but corporate affiliation setup failed. Please set up manually.',
+              variant: 'destructive'
+            });
+          }
+        } catch (error) {
+          
+        }
+      }
+
+      // Step 4: Send welcome email notification (if requested)
       if (formData.sendWelcomeEmail) {
         // Note: This would typically integrate with your email service
         // For now, we'll just show a note in the success message about contacting the member
-        console.log('Welcome email requested for:', formData.email, 'Staff should provide login details manually');
+        
       }
 
       setNewMemberId(userId);
@@ -127,7 +157,7 @@ const ConfirmationStep = ({ formData, updateFormData, onPrev }) => {
       });
 
     } catch (error) {
-      console.error('Registration error:', error);
+      
       toast({
         title: 'Registration Failed',
         description: error.message || 'An unexpected error occurred',
@@ -139,7 +169,7 @@ const ConfirmationStep = ({ formData, updateFormData, onPrev }) => {
   };
 
   const goToMembersList = () => {
-    navigate('/staff-portal/members');
+    navigate('/staff-portal/dashboard');
   };
 
   const registerAnother = () => {
@@ -282,6 +312,16 @@ const ConfirmationStep = ({ formData, updateFormData, onPrev }) => {
                 </p>
               </div>
             )}
+
+            {formData.corporateAffiliation && (
+              <div>
+                <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Corporate Partner:</span>
+                <p className="font-medium">
+                  {formData.corporateAffiliation.corporate_partner_name || 'Corporate Employee'}
+                  {formData.corporateAffiliation.employee_id && ` (ID: ${formData.corporateAffiliation.employee_id})`}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -392,3 +432,4 @@ const ConfirmationStep = ({ formData, updateFormData, onPrev }) => {
 };
 
 export default ConfirmationStep;
+

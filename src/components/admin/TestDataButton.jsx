@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
 import { Database, Loader2 } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 const TestDataButton = () => {
   const [isCreating, setIsCreating] = useState(false);
@@ -11,7 +12,7 @@ const TestDataButton = () => {
   const createTestMemberships = async () => {
     setIsCreating(true);
     try {
-      console.log('🔄 Creating test memberships for Greg and Lauren...');
+      logger.info('🔄 Creating test memberships for Greg and Lauren...');
 
       // First, get or create a basic membership type
       let { data: membershipTypes, error: typesError } = await supabase
@@ -45,10 +46,10 @@ const TestDataButton = () => {
           throw new Error(`Error creating membership type: ${createTypeError.message}`);
         }
         membershipTypeId = newType.id;
-        console.log('✅ Created Basic Membership type:', membershipTypeId);
+        logger.info('✅ Created Basic Membership type:', membershipTypeId);
       } else {
         membershipTypeId = membershipTypes[0].id;
-        console.log('✅ Using existing Basic Membership type:', membershipTypeId);
+        logger.info('✅ Using existing Basic Membership type:', membershipTypeId);
       }
 
       // Get user IDs from profiles table (they should exist from auth)
@@ -65,7 +66,7 @@ const TestDataButton = () => {
         throw new Error('Greg and Lauren profiles not found. Please ensure they are logged in first.');
       }
 
-      console.log('✅ Found profiles:', profiles);
+      logger.info('✅ Found profiles:', profiles);
 
       // Create memberships for each profile
       const membershipsToCreate = profiles.map(profile => ({
@@ -95,7 +96,7 @@ const TestDataButton = () => {
         }
 
         if (existingMembership && existingMembership.length > 0) {
-          console.log(`✅ Membership already exists for user ${membership.auth_user_id}`);
+          logger.info(`✅ Membership already exists for user ${membership.auth_user_id}`);
           existing++;
           continue;
         }
@@ -112,7 +113,7 @@ const TestDataButton = () => {
           continue;
         }
 
-        console.log(`✅ Created membership for user ${membership.auth_user_id}:`, newMembership.id);
+        logger.info(`✅ Created membership for user ${membership.auth_user_id}:`, newMembership.id);
         created++;
       }
 
@@ -131,7 +132,7 @@ const TestDataButton = () => {
         if (updateError) {
           console.error('Error updating profile:', updateError);
         } else {
-          console.log(`✅ Updated profile for ${profile.email}`);
+          logger.info(`✅ Updated profile for ${profile.email}`);
         }
       }
 
@@ -140,7 +141,7 @@ const TestDataButton = () => {
         description: `Test memberships created! ${created} new, ${existing} existing.`,
       });
 
-      console.log('🎉 Test memberships created successfully!');
+      logger.info('🎉 Test memberships created successfully!');
 
     } catch (error) {
       console.error('❌ Error creating test memberships:', error);

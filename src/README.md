@@ -1,5 +1,5 @@
 
-# Gym Management App (FitTrack)
+# Gym Management App (Momentum)
 
 This is a React-based web application for managing a gym, built with Vite, TailwindCSS, shadcn/ui, and Framer Motion.
 

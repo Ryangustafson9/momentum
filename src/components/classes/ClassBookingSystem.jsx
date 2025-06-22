@@ -554,3 +554,4 @@ const ClassBookingSystem = () => {
 };
 
 export default ClassBookingSystem;
+

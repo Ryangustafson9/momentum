@@ -23,6 +23,8 @@ import {
 } from '@/hooks/useScheduling';
 import { LoadingSpinner } from '@/shared/components/LoadingStates';
 import EmptyState from '@/components/EmptyState.jsx';
+import StaffPageHeader from '@/components/staff/StaffPageHeader';
+import StaffPageContainer from '@/components/staff/StaffPageContainer';
 
 // Service functions for classes and instructors
 const getClasses = async () => {
@@ -43,7 +45,7 @@ const getClasses = async () => {
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error('Error fetching classes:', error);
+    
     throw error;
   }
 };
@@ -59,7 +61,7 @@ const getInstructors = async () => {
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error('Error fetching instructors:', error);
+    
     throw error;
   }
 };
@@ -189,7 +191,7 @@ const ClassFormDialog = ({ isOpen, onClose, onSave, classData, instructors }) =>
       setAvailabilityStatus(newStatus);
 
     } catch (error) {
-      console.error('Error checking availability:', error);
+      
       setAvailabilityStatus(prev => ({ ...prev, checking: false }));
     }
   };
@@ -634,28 +636,19 @@ const Classes = () => {
   if (isLoading) {
     return <LoadingSpinner />;
   }
-
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="container mx-auto py-8 px-4 md:px-6"
-    >
+    <StaffPageContainer>
+      <StaffPageHeader
+        title="Manage Classes"
+        subtitle="Oversee all fitness classes, create new ones, and manage schedules"
+        actions={
+          <Button onClick={handleCreateNew} variant="action">
+            <PlusCircle className="mr-2 h-5 w-5" />
+            Create New Class
+          </Button>        }
+      />
+
       <Card className="bg-white dark:bg-slate-900/80 backdrop-blur-sm shadow-xl border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
-        <CardHeader className="border-b border-slate-200 dark:border-slate-800 p-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-            <div>
-              <CardTitle className="text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-100">Manage Classes</CardTitle>
-              <CardDescription className="text-slate-600 dark:text-slate-400 mt-1">
-                Oversee all fitness classes, create new ones, and manage schedules.
-              </CardDescription>
-            </div>
-            <Button onClick={handleCreateNew} variant="action" className="mt-4 md:mt-0">
-              <PlusCircle className="mr-2 h-5 w-5" /> Create New Class
-            </Button>
-          </div>
-        </CardHeader>
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
             <div className="relative w-full md:max-w-sm">
@@ -753,8 +746,7 @@ const Classes = () => {
                       {columnVisibility.difficulty && <TableCell className="text-slate-600 dark:text-slate-400 whitespace-nowrap">{cls.difficulty}</TableCell>}
                       {columnVisibility.location && <TableCell className="text-slate-600 dark:text-slate-400 whitespace-nowrap">{cls.location}</TableCell>}
                       {columnVisibility.recurring_rule && <TableCell className="text-slate-600 dark:text-slate-400 whitespace-nowrap">{cls.recurring_rule ? 'Yes' : 'No'}</TableCell>}
-                      {columnVisibility.actions && (
-                        <TableCell className="text-right whitespace-nowrap">
+                      {columnVisibility.actions && (                        <TableCell className="text-right whitespace-nowrap">
                           <Button variant="ghost" size="icon" onClick={() => handleEdit(cls)} className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -769,8 +761,6 @@ const Classes = () => {
               </Table>
             </div>
           )}
-        </CardContent>
-      </Card>
 
       <ClassFormDialog 
         isOpen={isFormOpen} 
@@ -787,10 +777,13 @@ const Classes = () => {
           className={classToDelete?.name}
         />
       )}
-    </motion.div>
+        </CardContent>
+      </Card>
+    </StaffPageContainer>
   );
 };
 
 export default Classes;
+
 
 

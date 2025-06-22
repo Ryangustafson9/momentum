@@ -29,7 +29,7 @@ const memberProfileService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error fetching member profile:', error);
+      
       throw error;
     }
   },
@@ -49,7 +49,7 @@ const memberProfileService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error updating member profile:', error);
+      
       throw error;
     }
   },
@@ -68,7 +68,7 @@ const memberProfileService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching membership log:', error);
+      
       return [];
     }
   },
@@ -87,7 +87,7 @@ const memberProfileService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching bookings:', error);
+      
       return [];
     }
   }
@@ -125,7 +125,7 @@ const MemberProfilePage = () => {
         navigate('/');
       }
     } catch (error) {
-      console.error("Error fetching profile data:", error);
+      
       toast({ title: "Error", description: "Failed to load profile data.", variant: "destructive" });
       navigate('/');
     } finally {
@@ -148,7 +148,7 @@ const MemberProfilePage = () => {
       toast({ title: "Success", description: "Profile updated successfully!" });
       setIsEditModalOpen(false);
     } catch (error) {
-      console.error("Error updating profile:", error);
+      
       toast({ title: "Error", description: "Failed to update profile.", variant: "destructive" });
     }
   };
@@ -345,5 +345,6 @@ const MemberProfilePage = () => {
 };
 
 export default MemberProfilePage;
+
 
 

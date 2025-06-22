@@ -171,7 +171,7 @@ const BillingConfigurationManager = () => {
         setConfig(defaultConfig);
       }
     } catch (error) {
-      console.error('Error loading billing config:', error);
+      
       setConfig(defaultConfig);
     } finally {
       setLoading(false);
@@ -1500,3 +1500,4 @@ const BillingConfigurationManager = () => {
 };
 
 export default BillingConfigurationManager;
+

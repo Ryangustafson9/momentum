@@ -39,6 +39,8 @@ import PointOfSale from '@/pages/staff-portal/PointOfSale';
 import POSManagement from '@/pages/staff-portal/POSManagement';
 import StaffMemberProfile from '@/pages/staff-portal/MemberProfile';
 import MemberRegistration from '@/pages/staff-portal/MemberRegistration';
+import CorporateManagement from '@/pages/staff-portal/CorporateManagement';
+import TagManagement from '@/pages/staff-portal/TagManagement';
 
 // Admin pages
 import AdminPanelPage from '@/pages/staff-portal/AdminPanelPage';
@@ -231,6 +233,16 @@ function App() {
                   <Route path="pos/manage" element={<POSManagement />} />
                   <Route path="member/:id" element={<StaffMemberProfile />} />
                   <Route path="register-member" element={<MemberRegistration />} />
+                  <Route path="corporate-management" element={
+                    <PrivateRoute allowedRoles={['admin', 'staff']}>
+                      <CorporateManagement />
+                    </PrivateRoute>
+                  } />
+                  <Route path="tag-management" element={
+                    <PrivateRoute allowedRoles={['admin', 'staff']}>
+                      <TagManagement />
+                    </PrivateRoute>
+                  } />
                   <Route index element={<Navigate to="/staff-portal/dashboard" replace />} />
                 </Route>
 
@@ -306,3 +318,4 @@ function App() {
 }
 
 export default App;
+

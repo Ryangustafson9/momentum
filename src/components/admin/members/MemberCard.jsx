@@ -70,3 +70,4 @@ const MemberCard = ({ member, onEdit, onDelete, onViewProfile }) => (
 export default MemberCard;
 
 
+

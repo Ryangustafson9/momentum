@@ -20,7 +20,7 @@ const NotificationSettingsTabContent = () => {
         const currentSettings = await dataService.getNotificationSettings();
         setSettings(currentSettings);
       } catch (error) {
-        console.error("Failed to load notification settings:", error);
+        
         toast({
           title: "Error",
           description: "Could not load notification settings. Using default values.",
@@ -48,7 +48,7 @@ const NotificationSettingsTabContent = () => {
         className: "bg-green-500 text-white",
       });
     } catch (error) {
-      console.error("Failed to save notification settings:", error);
+      
        toast({
         title: "Error",
         description: "Could not save notification settings. Please try again.",
@@ -101,5 +101,6 @@ const NotificationSettingsTabContent = () => {
 };
 
 export default NotificationSettingsTabContent;
+
 
 

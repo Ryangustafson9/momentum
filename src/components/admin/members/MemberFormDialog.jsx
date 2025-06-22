@@ -71,7 +71,7 @@ const useAdminSettings = () => {
         }
         // If no settings found (empty table), keep default settings
       } catch (error) {
-        console.error("Failed to fetch admin panel settings", error);
+        
         // Use default settings if fetch fails
       }
     };
@@ -347,5 +347,6 @@ const MemberFormDialog = ({ isOpen, onOpenChange, editingMember, onSubmit, membe
 };
 
 export default MemberFormDialog;
+
 
 

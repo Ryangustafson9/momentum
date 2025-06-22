@@ -99,7 +99,7 @@ const BillingConfigurationPanel = ({ organizationId = 'default-org-id' }) => {
       setHasChanges(false);
       setValidationErrors([]);
     } catch (error) {
-      console.error('Save error:', error);
+      
     }
   };
 
@@ -586,3 +586,4 @@ const BillingConfigurationPanel = ({ organizationId = 'default-org-id' }) => {
 };
 
 export default BillingConfigurationPanel;
+

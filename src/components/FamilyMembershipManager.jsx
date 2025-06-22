@@ -86,7 +86,7 @@ const FamilyMembershipManager = ({ membershipData, onUpdate }) => {
         if (error) throw error;
         setFamilyMembers(data || []);
       } catch (error) {
-        console.error('Error fetching family members:', error);
+        
         toast({
           title: "Error",
           description: "Failed to load family members.",
@@ -158,10 +158,10 @@ const FamilyMembershipManager = ({ membershipData, onUpdate }) => {
           .eq('id', existingProfile.id);
 
         if (updateError) {
-          console.warn('Failed to update existing profile role:', updateError);
+          
         }
 
-        console.log('✅ Using existing profile for family member:', existingProfile.email);
+        
       } else {
         // Create new profile for family member with correct member role
         const { data: newProfile, error: profileError } = await supabase
@@ -180,7 +180,7 @@ const FamilyMembershipManager = ({ membershipData, onUpdate }) => {
 
         if (profileError) throw profileError;
         familyMemberProfile = newProfile;
-        console.log('✅ Created new profile for family member:', newProfile.email);
+        
       }
 
       // Add family member relationship
@@ -217,7 +217,7 @@ const FamilyMembershipManager = ({ membershipData, onUpdate }) => {
       if (onUpdate) onUpdate();
 
     } catch (error) {
-      console.error('Error adding family member:', error);
+      
       toast({
         title: "Error",
         description: "Failed to add family member. Please try again.",
@@ -256,7 +256,7 @@ const FamilyMembershipManager = ({ membershipData, onUpdate }) => {
       if (onUpdate) onUpdate();
 
     } catch (error) {
-      console.error('Error removing family member:', error);
+      
       toast({
         title: "Error",
         description: "Failed to remove family member. Please try again.",
@@ -320,7 +320,7 @@ const FamilyMembershipManager = ({ membershipData, onUpdate }) => {
       if (onUpdate) onUpdate();
 
     } catch (error) {
-      console.error('Error updating family member:', error);
+      
       toast({
         title: "Error",
         description: "Failed to update family member. Please try again.",
@@ -720,3 +720,4 @@ const FamilyMembershipManager = ({ membershipData, onUpdate }) => {
 };
 
 export default FamilyMembershipManager;
+

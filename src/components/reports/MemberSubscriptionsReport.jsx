@@ -72,7 +72,7 @@ const MemberSubscriptionsReport = () => {
       setSubscriptions(membershipsData || []);
       setMembershipTypes(typesData || []);
     } catch (error) {
-      console.error('Error fetching subscriptions:', error);
+      
       toast({
         title: 'Error',
         description: `Failed to fetch member subscriptions: ${error.message}`,
@@ -411,3 +411,4 @@ const MemberSubscriptionsReport = () => {
 };
 
 export default MemberSubscriptionsReport;
+

@@ -29,6 +29,9 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
+import StaffPageHeader from '@/components/staff/StaffPageHeader';
+import StaffPageContainer from '@/components/staff/StaffPageContainer';
+import { logger } from '@/utils/logger';
 
 // Icon mapping for categories and products
 const getIconComponent = (iconName) => {
@@ -112,15 +115,15 @@ const PointOfSale = () => {
         throw productsError;
       }
 
-      console.log('Fetched categories:', categoriesData);
-      console.log('Fetched products:', productsData);
-      console.log('Enriched products:', enrichedProducts);
+      logger.info('Fetched categories:', categoriesData);
+      logger.info('Fetched products:', productsData);
+      logger.info('Enriched products:', enrichedProducts);
 
       setCategories([{ name: 'All', slug: 'all' }, ...(categoriesData || [])]);
       setProducts(enrichedProducts);
 
     } catch (error) {
-      console.error('Error fetching POS data:', error);
+      logger.error('Error fetching POS data:', error);
       toast({
         title: "Error loading data",
         description: "Failed to load products and categories",
@@ -134,17 +137,17 @@ const PointOfSale = () => {
   // Test database connection
   const testConnection = async () => {
     try {
-      console.log('Testing database connection...');
+      logger.info('Testing database connection...');
       const { data, error } = await supabase.from('pos_categories').select('count');
-      console.log('Test query result:', { data, error });
+      logger.info('Test query result:', { data, error });
     } catch (err) {
-      console.error('Test connection error:', err);
+      logger.error('Test connection error:', err);
     }
   };
 
   // Load data on component mount
   useEffect(() => {
-    console.log('POS - Component mounted, fetching data...');
+    logger.info('POS - Component mounted, fetching data...');
     testConnection();
     fetchData();
   }, []);
@@ -160,13 +163,15 @@ const PointOfSale = () => {
   });
 
   // Debug logging
-  console.log('POS - Current state:', {
-    products: products.length,
-    categories: categories.length,
-    filteredProducts: filteredProducts.length,
-    selectedCategory,
-    loading
-  });
+  useEffect(() => {
+    logger.info('POS - Current state:', {
+      products: products.length,
+      categories: categories.length,
+      filteredProducts: filteredProducts.length,
+      selectedCategory,
+      loading
+    });
+  }, [products, categories, filteredProducts.length, selectedCategory, loading]);
 
   // Cart calculations
   const subtotal = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
@@ -331,27 +336,26 @@ const PointOfSale = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-8rem)]">
+    <StaffPageContainer>
+      <StaffPageHeader
+        title="Point of Sale"
+        subtitle="Process sales and manage transactions"
+        actions={
+          <Button
+            variant="outline"
+            onClick={() => navigate('/staff-portal/pos/manage')}
+            className="flex items-center gap-2"
+          >
+            <Settings className="h-4 w-4" />
+            Manage
+          </Button>
+        }
+      />
+
+      <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-12rem)]">
         
         {/* Left Panel - Products */}
         <div className="flex-1 flex flex-col">
-          {/* Header */}
-          <div className="mb-6 flex justify-between items-start">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Point of Sale</h1>
-              <p className="text-gray-600">Process sales and manage transactions</p>
-            </div>
-            <Button
-              variant="outline"
-              onClick={() => navigate('/staff-portal/pos/manage')}
-              className="flex items-center gap-2"
-            >
-              <Settings className="h-4 w-4" />
-              Manage
-            </Button>
-          </div>
-
           {/* Search and Categories */}
           <div className="mb-6 space-y-4">
             <div className="relative">
@@ -744,8 +748,7 @@ const PointOfSale = () => {
                 const query = e.target.value;
                 if (query.length > 2) {
                   const results = await searchCustomer(query);
-                  // You would set search results state here
-                  console.log('Search results:', results);
+                  logger.info('Search results:', results);
                 }
               }}
             />
@@ -767,7 +770,7 @@ const PointOfSale = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </StaffPageContainer>
   );
 };
 

@@ -40,11 +40,11 @@ const ResetPassword = () => {
         });
 
         if (error) {
-          console.error('Session error:', error);
+          
           setError('Invalid or expired reset link. Please request a new password reset.');
         }
       } catch (err) {
-        console.error('Reset password session error:', err);
+        
         setError('Invalid or expired reset link. Please request a new password reset.');
       }
     };
@@ -92,7 +92,7 @@ const ResetPassword = () => {
       }, 3000);
 
     } catch (error) {
-      console.error('Password update error:', error);
+      
       setError('Failed to update password. Please try again.');
     } finally {
       setIsLoading(false);
@@ -297,3 +297,4 @@ const ResetPassword = () => {
 };
 
 export default ResetPassword;
+

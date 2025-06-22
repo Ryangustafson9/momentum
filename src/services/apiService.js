@@ -19,7 +19,7 @@ class ApiService {
    */
   async getMembers(filters = {}) {
     try {
-      console.log('🔍 ApiService: Getting members with filters:', filters);
+      
       
       let query = supabase
         .from('profiles')
@@ -64,15 +64,15 @@ class ApiService {
       const { data, error } = await query;
       
       if (error) {
-        console.error('❌ ApiService: Error getting members:', error);
+        
         throw error;
       }
       
-      console.log(`✅ ApiService: Retrieved ${data?.length || 0} members`);
+      
       return data || [];
       
     } catch (error) {
-      console.error('❌ ApiService: getMembers failed:', error);
+      
       throw error;
     }
   }
@@ -83,7 +83,7 @@ class ApiService {
    */
   async getMemberStats() {
     try {
-      console.log('📊 ApiService: Getting member statistics...');
+      
       
       // Get total members count
       const { count: totalMembers, error: totalError } = await supabase
@@ -123,11 +123,11 @@ class ApiService {
         lastUpdated: new Date().toISOString()
       };
       
-      console.log('✅ ApiService: Member stats retrieved:', stats);
+      
       return stats;
       
     } catch (error) {
-      console.error('❌ ApiService: getMemberStats failed:', error);
+      
       // Return default stats on error
       return {
         totalMembers: 0,
@@ -146,7 +146,7 @@ class ApiService {
    */
   async getMember(memberId) {
     try {
-      console.log('🔍 ApiService: Getting member:', memberId);
+      
 
       // ⚡ TIMEOUT FIX: Use fast execution for single record lookup
       const result = await executeFast(
@@ -158,11 +158,11 @@ class ApiService {
         'Get member by ID'
       );
 
-      console.log('✅ ApiService: Member retrieved:', result.data?.email);
+      
       return result.data;
 
     } catch (error) {
-      console.error('❌ ApiService: getMember failed:', getUserFriendlyErrorMessage(error));
+      
       throw error;
     }
   }
@@ -175,7 +175,7 @@ class ApiService {
    */
   async updateMember(memberId, updates) {
     try {
-      console.log('✏️ ApiService: Updating member:', memberId, updates);
+      
       
       const { data, error } = await supabase
         .from('profiles')
@@ -189,11 +189,11 @@ class ApiService {
       
       if (error) throw error;
       
-      console.log('✅ ApiService: Member updated:', data?.email);
+      
       return data;
       
     } catch (error) {
-      console.error('❌ ApiService: updateMember failed:', error);
+      
       throw error;
     }
   }
@@ -206,7 +206,7 @@ class ApiService {
    */
   async deleteMember(memberId, softDelete = true) {
     try {
-      console.log('🗑️ ApiService: Deleting member:', memberId, { softDelete });
+      
       
       if (softDelete) {
         // Soft delete - just mark as inactive
@@ -223,11 +223,11 @@ class ApiService {
         if (error) throw error;
       }
       
-      console.log('✅ ApiService: Member deleted');
+      
       return true;
       
     } catch (error) {
-      console.error('❌ ApiService: deleteMember failed:', error);
+      
       throw error;
     }
   }
@@ -240,7 +240,7 @@ class ApiService {
    */
   async getMembershipTypes() {
     try {
-      console.log('🔍 ApiService: Getting membership types...');
+      
 
       const { data, error } = await supabase
         .from('membership_types')
@@ -249,10 +249,10 @@ class ApiService {
 
       if (error) throw error;
 
-      console.log('✅ ApiService: Membership types retrieved:', data?.length || 0);
+      
       return data || [];
     } catch (error) {
-      console.error('❌ ApiService: getMembershipTypes failed:', error);
+      
       return [];
     }
   }
@@ -273,7 +273,7 @@ class ApiService {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('❌ ApiService: getMembershipTypeById failed:', error);
+      
       return null;
     }
   }
@@ -287,7 +287,7 @@ class ApiService {
    */
   async getClasses(filters = {}) {
     try {
-      console.log('🔍 ApiService: Getting classes with filters:', filters);
+      
 
       let query = supabase
         .from('classes')
@@ -314,10 +314,10 @@ class ApiService {
 
       if (error) throw error;
 
-      console.log('✅ ApiService: Classes retrieved:', data?.length || 0);
+      
       return data || [];
     } catch (error) {
-      console.error('❌ ApiService: getClasses failed:', error);
+      
       return [];
     }
   }
@@ -330,7 +330,7 @@ class ApiService {
    */
   async getStaffRoles() {
     try {
-      console.log('🔍 ApiService: Getting staff roles...');
+      
 
       const { data, error } = await supabase
         .from('staff_roles')
@@ -339,10 +339,10 @@ class ApiService {
 
       if (error) throw error;
 
-      console.log('✅ ApiService: Staff roles retrieved:', data?.length || 0);
+      
       return data || [];
     } catch (error) {
-      console.error('❌ ApiService: getStaffRoles failed:', error);
+      
       return [];
     }
   }
@@ -371,7 +371,7 @@ class ApiService {
    */
   async getInstructors() {
     try {
-      console.log('🔍 ApiService: Getting instructors...');
+      
 
       const { data, error } = await supabase
         .from('profiles')
@@ -381,10 +381,10 @@ class ApiService {
 
       if (error) throw error;
 
-      console.log('✅ ApiService: Instructors retrieved:', data?.length || 0);
+      
       return data || [];
     } catch (error) {
-      console.error('❌ ApiService: getInstructors failed:', error);
+      
       return [];
     }
   }
@@ -405,7 +405,7 @@ class ApiService {
       if (error) throw error;
       return data || {};
     } catch (error) {
-      console.error('❌ ApiService: getSettings failed:', error);
+      
       return {};
     }
   }
@@ -427,7 +427,7 @@ class ApiService {
       if (error) throw error;
       return count || 0;
     } catch (error) {
-      console.error('❌ ApiService: getMemberCount failed:', error);
+      
       return 0;
     }
   }
@@ -462,3 +462,4 @@ export const dataService = {
 };
 
 export default apiService;
+

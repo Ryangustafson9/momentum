@@ -25,7 +25,6 @@ export const ROUTES = {
   },// Staff-specific routes
   STAFF: {
     DASHBOARD: '/staff-portal/dashboard',         // Updated to match new structure
-    MEMBERS: '/staff-portal/members',
     CLASSES: '/staff-portal/classes',
     REPORTS: '/staff-portal/reports',
     SETTINGS: '/staff-portal/settings',
@@ -38,7 +37,6 @@ export const ROUTES = {
   ADMIN: {
     DASHBOARD: '/staff-portal/dashboard',         // Updated to match new structure
     SETTINGS: '/staff-portal/settings',
-    MEMBERS: '/staff-portal/members',
     REPORTS: '/staff-portal/reports',
   },
 };
@@ -163,3 +161,4 @@ export default {
   canAccessRoute,
   validateRouteAccess
 };
+

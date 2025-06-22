@@ -1,20 +1,20 @@
 import React, { Suspense } from 'react';
 import { Navigate } from 'react-router-dom';
 
-// ⭐ LAZY: Load heavy components only when needed
-const StaffHomepage = React.lazy(() => import('@/pages/staff/StaffHomepage.jsx'));
-const Classes = React.lazy(() => import('@/pages/staff/Classes.jsx'));
-const MembersPage = React.lazy(() => import('@/pages/staff/Members.jsx'));
-const ReportsPage = React.lazy(() => import('@/pages/staff/Reports.jsx'));
-const SchedulePage = React.lazy(() => import('@/pages/staff/Schedule.jsx'));
-const MembershipsPage = React.lazy(() => import('@/pages/staff/Memberships.jsx'));
-const TrainersPage = React.lazy(() => import('@/pages/staff/Trainers.jsx'));
-const CheckInPage = React.lazy(() => import('@/pages/staff/CheckIn.jsx'));
-const StaffMemberProfilePage = React.lazy(() => import('@/pages/staff/StaffMemberProfile.jsx'));
-const InstructorDashboardPage = React.lazy(() => import('@/pages/staff/InstructorDashboardPage.jsx'));
-const CommunicationsPage = React.lazy(() => import('@/pages/staff/Communications.jsx'));
-const BillingPage = React.lazy(() => import('@/pages/staff/Billing.jsx'));
-const EquipmentPage = React.lazy(() => import('@/pages/staff/Equipment.jsx'));
+// ⭐ LAZY: Load heavy components only when needed - Updated to use staff-portal paths
+const StaffHomepage = React.lazy(() => import('@/pages/staff-portal/Homepage.jsx'));
+const Classes = React.lazy(() => import('@/pages/staff-portal/Classes.jsx'));
+
+const ReportsPage = React.lazy(() => import('@/pages/staff-portal/Reports.jsx'));
+const SchedulePage = React.lazy(() => import('@/pages/staff-portal/Schedule.jsx'));
+const MembershipsPage = React.lazy(() => import('@/pages/staff-portal/Memberships.jsx'));
+const TrainersPage = React.lazy(() => import('@/pages/staff-portal/Trainers.jsx'));
+const CheckInPage = React.lazy(() => import('@/pages/staff-portal/CheckIn.jsx'));
+const StaffMemberProfilePage = React.lazy(() => import('@/pages/staff-portal/MemberProfile.jsx'));
+const InstructorDashboardPage = React.lazy(() => import('@/pages/staff-portal/InstructorDashboardPage.jsx'));
+const CommunicationsPage = React.lazy(() => import('@/pages/staff-portal/Communications.jsx'));
+const BillingPage = React.lazy(() => import('@/pages/staff-portal/Billing.jsx'));
+const EquipmentPage = React.lazy(() => import('@/pages/staff-portal/Equipment.jsx'));
 
 // ⭐ LOADING: Reusable loading component
 const PageLoadingSpinner = () => (
@@ -35,17 +35,10 @@ const LazyWrapper = ({ Component }) => (
 
 export const staffRoutes = [
   {
-    path: 'dashboard', // Updated to clean path
+    path: 'dashboard',
     element: <LazyWrapper Component={StaffHomepage} />,
     title: 'Staff Dashboard',
     description: 'Staff homepage with overview and quick actions',
-    lazy: true
-  },
-  {
-    path: 'dashboard', // Admin-preferred route
-    element: <LazyWrapper Component={StaffHomepage} />,
-    title: 'Staff Dashboard',
-    description: 'Staff homepage with overview and quick actions (admin route)',
     lazy: true
   },
   { 
@@ -55,13 +48,7 @@ export const staffRoutes = [
     description: 'Manage gym classes, schedules, and instructors',
     lazy: true
   },
-  { 
-    path: 'members', 
-    element: <LazyWrapper Component={MembersPage} />,
-    title: 'Member Management',
-    description: 'View and manage gym members',
-    lazy: true
-  },
+
   { 
     path: 'reports', 
     element: <LazyWrapper Component={ReportsPage} />,
@@ -141,3 +128,4 @@ export const staffRoutes = [
 ];
 
 export default staffRoutes;
+

@@ -518,7 +518,7 @@ const GeneralAdminSettings = () => {
           });
         }
       } catch (error) {
-        console.error("Failed to load admin panel settings:", error);
+        
         toast({
           title: "Error",
           description: "Could not load admin panel settings. Using default values.",
@@ -562,7 +562,7 @@ const GeneralAdminSettings = () => {
         className: "bg-green-500 text-white",
       });
     } catch (error) {
-      console.error("Failed to save admin panel settings:", error);
+      
       toast({
         title: "Error",
         description: "Could not save admin panel settings. Please try again.",
@@ -596,7 +596,7 @@ const GeneralAdminSettings = () => {
         className: "bg-purple-500 text-white",
       });
     } catch (error) {
-      console.error("Failed to save club settings:", error);
+      
       toast({
         title: "Error",
         description: "Could not save club settings. Please try again.",

@@ -183,7 +183,7 @@ const BillingAnalyticsDashboard = ({ organizationId = 'default-org-id' }) => {
 
   const handleExport = () => {
     // In production, this would generate and download a report
-    console.log('Exporting billing analytics...');
+    
   };
 
   return (
@@ -496,3 +496,4 @@ const BillingAnalyticsDashboard = ({ organizationId = 'default-org-id' }) => {
 };
 
 export default BillingAnalyticsDashboard;
+

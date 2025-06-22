@@ -27,6 +27,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import StaffPageHeader from '@/components/staff/StaffPageHeader';
+import StaffPageContainer from '@/components/staff/StaffPageContainer';
 
 const EquipmentPage = () => {
   const { toast } = useToast();
@@ -487,30 +489,27 @@ const EquipmentPage = () => {
       </div>
     </div>
   );
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="container mx-auto py-8 px-4 md:px-6 space-y-6"
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Equipment Management</h1>
-          <p className="text-gray-600 mt-1">
-            Track equipment status, schedule maintenance, and manage inventory
-          </p>
-        </div>
-        
-        <div className="flex items-center space-x-3">
-          <Badge className="bg-blue-100 text-blue-800">
-            <Activity className="w-4 h-4 mr-1" />
-            {equipmentStats.operational} Active
-          </Badge>
-        </div>
-      </div>
+    <StaffPageContainer>      <StaffPageHeader 
+        title="Equipment Management"
+        description="Track equipment status, schedule maintenance, and manage inventory"
+        badges={[
+          {
+            text: `${equipmentStats.operational} Active`,
+            variant: "secondary",
+            icon: Activity,
+            className: "bg-blue-100 text-blue-800"
+          }
+        ]}
+        actions={[
+          {
+            text: "Add Equipment",
+            variant: "default",
+            onClick: () => {}, // Add equipment logic
+            icon: Plus
+          }
+        ]}
+      />
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -529,11 +528,11 @@ const EquipmentPage = () => {
         </TabsContent>
         
         <TabsContent value="maintenance" className="mt-6">
-          <MaintenanceTab />
-        </TabsContent>
+          <MaintenanceTab />        </TabsContent>
       </Tabs>
-    </motion.div>
+    </StaffPageContainer>
   );
 };
 
 export default EquipmentPage;
+

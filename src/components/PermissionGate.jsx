@@ -113,3 +113,4 @@ export const RequirePermission = ({ permission, children, fallback = null, showF
 );
 
 export default PermissionGate;
+

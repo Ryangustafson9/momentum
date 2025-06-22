@@ -334,3 +334,4 @@ const PerformanceMonitor = ({ className = '', showInProduction = false }) => {
 };
 
 export default React.memo(PerformanceMonitor);
+

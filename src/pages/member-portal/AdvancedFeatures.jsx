@@ -97,7 +97,7 @@ const AdvancedFeatures = () => {
 
   const handlePhotoUpdate = (photoUrl) => {
     // Handle photo update
-    console.log('Photo updated:', photoUrl);
+    
   };
 
   return (
@@ -256,3 +256,4 @@ const AdvancedFeatures = () => {
 };
 
 export default AdvancedFeatures;
+

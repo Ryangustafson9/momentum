@@ -125,7 +125,7 @@ export const useCreateTrainer = () => {
       });
     },
     onError: (error) => {
-      console.error('Create trainer error:', error);
+      
       toast({
         title: "Creation Failed",
         description: error.message || "Failed to create trainer",
@@ -156,7 +156,7 @@ export const useUpdateTrainer = () => {
       });
     },
     onError: (error) => {
-      console.error('Update trainer error:', error);
+      
       toast({
         title: "Update Failed",
         description: error.message || "Failed to update trainer",
@@ -186,7 +186,7 @@ export const useDeleteTrainer = () => {
       });
     },
     onError: (error) => {
-      console.error('Delete trainer error:', error);
+      
       toast({
         title: "Deactivation Failed",
         description: error.message || "Failed to deactivate trainer",
@@ -214,7 +214,7 @@ export const useCreateRoom = () => {
       });
     },
     onError: (error) => {
-      console.error('Create room error:', error);
+      
       toast({
         title: "Creation Failed",
         description: error.message || "Failed to create room",
@@ -245,7 +245,7 @@ export const useUpdateRoom = () => {
       });
     },
     onError: (error) => {
-      console.error('Update room error:', error);
+      
       toast({
         title: "Update Failed",
         description: error.message || "Failed to update room",
@@ -275,7 +275,7 @@ export const useCreateClassWithResources = () => {
       });
     },
     onError: (error) => {
-      console.error('Create class error:', error);
+      
       toast({
         title: "Scheduling Failed",
         description: error.message || "Failed to create class",
@@ -317,7 +317,7 @@ export const useSetTrainerAvailability = () => {
       });
     },
     onError: (error) => {
-      console.error('Set availability error:', error);
+      
       toast({
         title: "Update Failed",
         description: error.message || "Failed to update availability",
@@ -344,7 +344,7 @@ export const useCreateSubstitution = () => {
       });
     },
     onError: (error) => {
-      console.error('Create substitution error:', error);
+      
       toast({
         title: "Request Failed",
         description: error.message || "Failed to create substitution request",
@@ -373,7 +373,7 @@ export const usePromoteFromWaitlist = () => {
       });
     },
     onError: (error) => {
-      console.error('Promote waitlist error:', error);
+      
       toast({
         title: "Promotion Failed",
         description: error.message || "Failed to promote from waitlist",
@@ -407,3 +407,4 @@ export default {
   useCreateSubstitution,
   usePromoteFromWaitlist,
 };
+

@@ -62,12 +62,12 @@ const validateEnvironment = () => {
 
   // Report missing variables
   if (missing.length > 0) {
-    console.error('❌ Missing required environment variables:');
+    
     missing.forEach(varName => {
-      console.error(`   - ${varName}`);
+      
     });
-    console.error('\n📝 Please check your .env file and ensure all required variables are set.');
-    console.error('📋 See .env.example for reference.');
+    
+    
     
     if (import.meta.env.MODE !== 'test') {
       throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
@@ -76,15 +76,15 @@ const validateEnvironment = () => {
 
   // Report warnings
   if (warnings.length > 0) {
-    console.warn('⚠️ Environment configuration warnings:');
+    
     warnings.forEach(warning => {
-      console.warn(`   - ${warning}`);
+      
     });
   }
 
   // Success message in development
   if (import.meta.env.MODE === 'development' && missing.length === 0) {
-    console.log('✅ Environment configuration validated successfully');
+    
   }
 };
 
@@ -232,3 +232,4 @@ export { validateEnvironment };
 
 // Default export
 export default env;
+

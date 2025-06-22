@@ -269,3 +269,4 @@ export default defaultLogger;
 // Named exports for convenience
 export const logger = defaultLogger;
 export const createLogger = Logger.create;
+

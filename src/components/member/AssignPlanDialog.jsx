@@ -120,7 +120,7 @@ const AssignPlanDialog = ({ isOpen, onOpenChange, member, onAssignmentSuccess })
       setStaffRoles(Array.isArray(sRolesResult.data) ? sRolesResult.data : []);
 
     } catch (error) {
-      console.error("Error fetching initial data for AssignPlanDialog:", error);
+      
       toast({ title: "Error", description: `Could not load plans or roles: ${error.message}`, variant: "destructive" });
       setAllMembershipTypes([]); // Ensure it's an array on error
       setStaffRoles([]); // Ensure it's an array on error
@@ -342,5 +342,6 @@ const AssignPlanDialog = ({ isOpen, onOpenChange, member, onAssignmentSuccess })
 };
 
 export default AssignPlanDialog;
+
 
 

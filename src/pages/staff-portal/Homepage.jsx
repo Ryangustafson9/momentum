@@ -20,12 +20,11 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { 
-  Calendar, 
-  Users, 
-  CheckSquare, 
-  DollarSign, 
-  TrendingUp, 
+import {
+  Calendar,
+  CheckSquare,
+  DollarSign,
+  TrendingUp,
   Clock,
   AlertTriangle,
   Plus,
@@ -82,26 +81,21 @@ const SortableStatCard = ({ cardConfig, value, trend, navigateTo, description, b
   };
 
   return (
-    <div
-      ref={setNodeRef}
+    <StatCard
+      cardConfig={cardConfig}
+      value={value}
+      trend={trend}
+      navigateTo={navigateTo}
+      description={description}
+      badgeCount={badgeCount}
+      isEditMode={isEditMode}
+      onRemoveCard={onRemoveCard}
+      isDragging={isDragging}
+      listeners={listeners}
+      attributes={attributes}
+      setNodeRef={setNodeRef}
       style={style}
-      {...attributes}
-      className={isDragging ? 'z-50' : ''}
-    >
-      <div {...listeners} className={isEditMode ? 'cursor-grab active:cursor-grabbing' : ''}>
-        <StatCard
-          cardConfig={cardConfig}
-          value={value}
-          trend={trend}
-          navigateTo={navigateTo}
-          description={description}
-          badgeCount={badgeCount}
-          isEditMode={isEditMode}
-          onRemoveCard={onRemoveCard}
-          isDragging={isDragging}
-        />
-      </div>
-    </div>
+    />
   );
 };
 
@@ -184,7 +178,7 @@ const StaffHomepage = () => {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // Require 8px movement before drag starts
+        distance: 1, // Very small distance to start drag
       },
     }),
     useSensor(KeyboardSensor, {
@@ -261,23 +255,18 @@ const StaffHomepage = () => {
       title: "Check-in Members",
       description: "Process member check-ins and track attendance",
       icon: CheckSquare,
-      onClick: () => navigate('/staff/checkin'),
+      onClick: () => navigate('/staff-portal/checkin'),
       color: "green"
     },
     {
       title: "Manage Schedule",
       description: "View and manage class schedules and resources",
       icon: Calendar,
-      onClick: () => navigate('/staff/schedule'),
+      onClick: () => navigate('/staff-portal/schedule'),
       badge: { text: "New Features", type: "default" },
       color: "blue"
     },
-    {      title: "Member Management",
-      description: "View member profiles and manage accounts",
-      icon: Users,
-      onClick: () => navigate('/staff-portal/members'),
-      color: "purple"
-    },
+
     {
       title: "Class Management",
       description: "Create and manage fitness classes",
@@ -374,42 +363,66 @@ const StaffHomepage = () => {
         </div>
       )}
 
-      {/* Stats Cards with Drag and Drop */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={visibleCardIds.filter(id => displayedCardsConfig.find(c => c.id === id && c.dataType === 'stat'))}
-          strategy={rectSortingStrategy}
+      {/* Stats Cards with Conditional Drag and Drop */}
+      {isEditMode ? (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
         >
-          <motion.div
-            layout
-            className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          <SortableContext
+            items={displayedCardsConfig.filter(c => c.dataType === 'stat').map(c => c.id)}
+            strategy={rectSortingStrategy}
           >
-            <AnimatePresence>
-              {displayedCardsConfig.filter(c => c.dataType === 'stat').map(cardConfig => (
-                <SortableStatCard
-                  key={cardConfig.id}
-                  cardConfig={cardConfig}
-                  value={
-                    cardConfig.dataKey === 'monthlyRevenue'
-                      ? stats[cardConfig.dataKey]
-                      : formatters.number(stats[cardConfig.dataKey] ?? 0)
-                  }
-                  trend={stats[cardConfig.trendKey]}
-                  navigateTo={cardConfig.navigateTo}
-                  description={cardConfig.description}
-                  badgeCount={cardConfig.badgeKey ? stats[cardConfig.badgeKey] : 0}
-                  isEditMode={isEditMode}
-                  onRemoveCard={handleRemoveCard}
-                />
-              ))}
-            </AnimatePresence>
-          </motion.div>
-        </SortableContext>
-      </DndContext>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <AnimatePresence>
+                {displayedCardsConfig.filter(c => c.dataType === 'stat').map(cardConfig => (
+                  <SortableStatCard
+                    key={cardConfig.id}
+                    cardConfig={cardConfig}
+                    value={
+                      cardConfig.dataKey === 'monthlyRevenue'
+                        ? stats[cardConfig.dataKey]
+                        : formatters.number(stats[cardConfig.dataKey] ?? 0)
+                    }
+                    trend={stats[cardConfig.trendKey]}
+                    navigateTo={cardConfig.navigateTo}
+                    description={cardConfig.description}
+                    badgeCount={cardConfig.badgeKey ? stats[cardConfig.badgeKey] : 0}
+                    isEditMode={isEditMode}
+                    onRemoveCard={handleRemoveCard}
+                  />
+                ))}
+              </AnimatePresence>
+            </div>
+          </SortableContext>
+        </DndContext>
+      ) : (
+        <motion.div
+          layout
+          className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        >
+          <AnimatePresence>
+            {displayedCardsConfig.filter(c => c.dataType === 'stat').map(cardConfig => (
+              <StatCard
+                key={cardConfig.id}
+                cardConfig={cardConfig}
+                value={
+                  cardConfig.dataKey === 'monthlyRevenue'
+                    ? stats[cardConfig.dataKey]
+                    : formatters.number(stats[cardConfig.dataKey] ?? 0)
+                }
+                trend={stats[cardConfig.trendKey]}
+                navigateTo={cardConfig.navigateTo}
+                description={cardConfig.description}
+                badgeCount={cardConfig.badgeKey ? stats[cardConfig.badgeKey] : 0}
+                isEditMode={isEditMode}
+                onRemoveCard={handleRemoveCard}
+              />
+            ))}
+          </AnimatePresence>
+        </motion.div>
+      )}
 
       {/* Quick Actions */}
       <div className="space-y-4">
@@ -462,3 +475,4 @@ const StaffHomepage = () => {
 };
 
 export default StaffHomepage;
+

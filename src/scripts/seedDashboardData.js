@@ -37,7 +37,7 @@ const sampleClasses = [
 // Function to seed classes
 export const seedClasses = async () => {
   try {
-    console.log('🌱 Seeding sample classes...');
+    
     
     // Check if classes already exist
     const { data: existingClasses } = await supabase
@@ -46,7 +46,7 @@ export const seedClasses = async () => {
       .limit(1);
     
     if (existingClasses && existingClasses.length > 0) {
-      console.log('✅ Classes already exist, skipping seed');
+      
       return;
     }
     
@@ -56,21 +56,21 @@ export const seedClasses = async () => {
       .select();
     
     if (error) {
-      console.error('❌ Error seeding classes:', error);
+      
       return;
     }
     
-    console.log('✅ Successfully seeded classes:', data.length);
+    
     return data;
   } catch (error) {
-    console.error('❌ Error in seedClasses:', error);
+    
   }
 };
 
 // Function to create sample membership for a user
 export const createSampleMembership = async (userId) => {
   try {
-    console.log('🌱 Creating sample membership for user:', userId);
+    
     
     // Check if membership already exists
     const { data: existingMembership } = await supabase
@@ -80,7 +80,7 @@ export const createSampleMembership = async (userId) => {
       .single();
     
     if (existingMembership) {
-      console.log('✅ Membership already exists for user');
+      
       return existingMembership;
     }
     
@@ -100,14 +100,14 @@ export const createSampleMembership = async (userId) => {
       .single();
     
     if (error) {
-      console.error('❌ Error creating membership:', error);
+      
       return null;
     }
     
-    console.log('✅ Successfully created membership');
+    
     return data;
   } catch (error) {
-    console.error('❌ Error in createSampleMembership:', error);
+    
     return null;
   }
 };
@@ -115,7 +115,7 @@ export const createSampleMembership = async (userId) => {
 // Function to create sample attendance records
 export const createSampleAttendance = async (userId) => {
   try {
-    console.log('🌱 Creating sample attendance for user:', userId);
+    
     
     // Check if attendance records already exist
     const { data: existingAttendance } = await supabase
@@ -125,7 +125,7 @@ export const createSampleAttendance = async (userId) => {
       .limit(1);
     
     if (existingAttendance && existingAttendance.length > 0) {
-      console.log('✅ Attendance records already exist for user');
+      
       return;
     }
     
@@ -151,21 +151,21 @@ export const createSampleAttendance = async (userId) => {
       .select();
     
     if (error) {
-      console.error('❌ Error creating attendance records:', error);
+      
       return;
     }
     
-    console.log('✅ Successfully created attendance records:', data.length);
+    
     return data;
   } catch (error) {
-    console.error('❌ Error in createSampleAttendance:', error);
+    
   }
 };
 
 // Function to ensure user has a profile
 export const ensureUserProfile = async (user) => {
   try {
-    console.log('🌱 Ensuring profile exists for user:', user.email);
+    
     
     // Check if profile exists
     const { data: existingProfile } = await supabase
@@ -175,7 +175,7 @@ export const ensureUserProfile = async (user) => {
       .single();
     
     if (existingProfile) {
-      console.log('✅ Profile already exists');
+      
       return existingProfile;
     }
     
@@ -195,14 +195,14 @@ export const ensureUserProfile = async (user) => {
       .single();
     
     if (error) {
-      console.error('❌ Error creating profile:', error);
+      
       return null;
     }
     
-    console.log('✅ Successfully created profile');
+    
     return data;
   } catch (error) {
-    console.error('❌ Error in ensureUserProfile:', error);
+    
     return null;
   }
 };
@@ -210,7 +210,7 @@ export const ensureUserProfile = async (user) => {
 // Main function to set up all sample data for a user
 export const setupSampleDataForUser = async (user) => {
   try {
-    console.log('🚀 Setting up sample data for user:', user.email);
+    
     
     // 1. Ensure user has a profile
     await ensureUserProfile(user);
@@ -224,10 +224,10 @@ export const setupSampleDataForUser = async (user) => {
     // 4. Create attendance records for user
     await createSampleAttendance(user.id);
     
-    console.log('✅ Sample data setup complete!');
+    
     return true;
   } catch (error) {
-    console.error('❌ Error setting up sample data:', error);
+    
     return false;
   }
 };
@@ -240,3 +240,4 @@ export default {
   ensureUserProfile,
   setupSampleDataForUser
 };
+

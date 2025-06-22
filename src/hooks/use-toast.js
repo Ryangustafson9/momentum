@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 const TOAST_LIMIT = 3;
 const TOAST_DURATION = 5000; // ms before auto-dismiss
@@ -126,3 +126,4 @@ export function useToast() {
     update,
   };
 }
+

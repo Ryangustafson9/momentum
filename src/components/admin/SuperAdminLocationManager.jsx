@@ -91,7 +91,7 @@ const SuperAdminLocationManager = ({ organizationId }) => {
       setLocations(locationsResult.data || []);
       setTemplates(templatesResult.data || []);
     } catch (error) {
-      console.error('Error loading data:', error);
+      
       toast({
         title: "Error",
         description: "Failed to load location data. Please try again.",
@@ -147,7 +147,7 @@ const SuperAdminLocationManager = ({ organizationId }) => {
 
       loadData(); // Refresh the list
     } catch (error) {
-      console.error('Error creating location:', error);
+      
       toast({
         title: "Error",
         description: "Failed to create location. Please try again.",
@@ -465,7 +465,7 @@ const LocationConfigurationModal = ({ location, onClose, onUpdate }) => {
       setBillingConfig(billingResult.data);
       // setPaymentConfig(paymentResult.data);
     } catch (error) {
-      console.error('Error loading location config:', error);
+      
     } finally {
       setLoading(false);
     }
@@ -655,3 +655,4 @@ const LocationAnalytics = ({ locationId }) => {
 };
 
 export default SuperAdminLocationManager;
+

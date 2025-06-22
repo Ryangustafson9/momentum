@@ -34,7 +34,7 @@ export const getClubSettings = async (forceRefresh = false) => {
       .single();
 
     if (error) {
-      console.error('Error fetching club settings:', error);
+      
       // Return default settings on error
       return getDefaultSettings();
     }
@@ -53,7 +53,7 @@ export const getClubSettings = async (forceRefresh = false) => {
 
     return clubSettings;
   } catch (error) {
-    console.error('Failed to fetch club settings:', error);
+    
     return getDefaultSettings();
   }
 };
@@ -130,7 +130,7 @@ export const updateClubSettings = async (newSettings) => {
     
     return { success: true };
   } catch (error) {
-    console.error('Failed to update club settings:', error);
+    
     return { success: false, error };
   }
 };
@@ -162,7 +162,7 @@ export const useClubSettings = () => {
           table: 'general_settings' 
         }, 
         (payload) => {
-          console.log('Club settings updated:', payload);
+          
           // Clear cache and reload settings
           clearSettingsCache();
           loadSettings();
@@ -221,3 +221,4 @@ export default {
   useClubSettings,
   clubSettingsUtils
 };
+

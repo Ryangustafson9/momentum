@@ -35,10 +35,38 @@ import AdvancedMemberSearchModal from '@/components/admin/topnav_parts/AdvancedM
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/hooks/useTheme.jsx';
 
+const ClubHeader = ({ currentClub = 'Nordic Fitness', location = 'Oklahoma City' }) => {
+  const [selectedLocation, setSelectedLocation] = useState(location);
+
+  return (
+    <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
+        <img 
+          src="/assets/NordicFitness.png" 
+          alt="Nordic Fitness Logo" 
+          className="h-10 w-auto object-contain"
+        />
+        <div>
+          <select
+            value={selectedLocation}
+            onChange={(e) => setSelectedLocation(e.target.value)}
+            className="text-sm text-gray-500 dark:text-gray-400 py-1 px-3 bg-gray-100 dark:bg-gray-700 rounded-md min-h-[32px] border-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-gray-600"
+          >
+            <option value="Oklahoma City">Oklahoma City</option>
+            <option value="Tulsa">Tulsa</option>
+            <option value="Norman">Norman</option>
+            <option value="Edmond">Edmond</option>
+            <option value="Broken Arrow">Broken Arrow</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const pageTitles = {
   '/': 'Dashboard',
   '/dashboard': 'Admin Panel',
-  '/members': 'Members Management',
   '/check-in': 'Member Check-In',
   '/memberships': 'Membership Plans',
   '/classes': 'Class Management',
@@ -48,11 +76,12 @@ const pageTitles = {
   '/settings': 'Application Settings',
   '/admin-panel': 'Admin Panel',
   '/trainers': 'Trainers Management',
+  '/corporate-management': 'Corporate Partners',
 };
 
 const getPageTitle = (pathname) => {
   if (pathname.startsWith('/member/')) return 'Member Profile';
-  return pageTitles[pathname] || 'GymPro Admin';
+  return pageTitles[pathname] || null; // Return null for default club header
 };
 
 const NotificationsButton = () => (
@@ -113,9 +142,7 @@ const UserProfileDropdown = ({ user, onLogout, startRoleImpersonation }) => {
             </Badge>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem onClick={() => navigate('/staff/settings')}>
+        <DropdownMenuSeparator />        <DropdownMenuItem onClick={() => navigate('/staff-portal/settings')}>
           <UserCircle className="mr-2 h-4 w-4" />
           Profile Settings
         </DropdownMenuItem>
@@ -239,10 +266,13 @@ const TopNavbar = ({ user, onLogout, startRoleImpersonation, allMembers = [] }) 
       <header className={cn(
         "sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-card dark:bg-slate-900 px-4 md:px-6 transition-shadow duration-200 print:hidden",
         isScrolled ? "shadow-md" : "shadow-sm"
-      )}>
-        <div className="flex items-center">
+      )}>        <div className="flex items-center">
           {/* Mobile sidebar toggle button removed as per request */}
-          <h1 className="text-lg md:text-xl font-semibold text-foreground whitespace-nowrap">{currentPathTitle}</h1>
+          {currentPathTitle ? (
+            <h1 className="text-lg md:text-xl font-semibold text-foreground whitespace-nowrap">{currentPathTitle}</h1>
+          ) : (
+            <ClubHeader />
+          )}
         </div>
         
         <div className="flex-1" />
@@ -273,5 +303,6 @@ const TopNavbar = ({ user, onLogout, startRoleImpersonation, allMembers = [] }) 
 };
 
 export default TopNavbar;
+
 
 

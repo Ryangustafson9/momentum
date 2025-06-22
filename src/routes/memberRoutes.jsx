@@ -72,3 +72,4 @@ export const memberRoutes = [
 ];
 
 export default memberRoutes;
+

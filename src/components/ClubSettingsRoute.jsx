@@ -53,7 +53,7 @@ const ClubSettingsRoute = ({
         
         setIsAllowed(allowed);
       } catch (error) {
-        console.error('Failed to check club settings:', error);
+        
         // Default to allowing access if settings can't be loaded
         setIsAllowed(true);
       } finally {
@@ -71,7 +71,7 @@ const ClubSettingsRoute = ({
 
   // If access is denied, redirect with state
   if (!isAllowed) {
-    console.log(`🚫 Club setting '${settingKey}' is disabled, redirecting to ${redirectTo}`);
+    
     
     // Pass information about why access was denied
     const state = {
@@ -126,7 +126,7 @@ export const useClubFeature = (settingKey) => {
         
         setIsEnabled(enabled);
       } catch (error) {
-        console.error('Failed to check club feature:', error);
+        
         setIsEnabled(true); // Default to enabled
       } finally {
         setLoading(false);
@@ -140,3 +140,4 @@ export const useClubFeature = (settingKey) => {
 };
 
 export default ClubSettingsRoute;
+

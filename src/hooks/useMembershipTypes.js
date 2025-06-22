@@ -42,7 +42,7 @@ export function useMembershipTypes(filters = {}) {
     staleTime: 10 * 60 * 1000, // 10 minutes (membership types change rarely)
     cacheTime: 30 * 60 * 1000, // 30 minutes
     onError: (error) => {
-      console.error('Error fetching membership types:', error);
+      
       toast({
         title: "Error",
         description: `Failed to load membership types: ${error.message}`,
@@ -62,7 +62,7 @@ export function useMembershipType(id) {
     enabled: !!id, // Only run if ID is provided
     staleTime: 10 * 60 * 1000,
     onError: (error) => {
-      console.error('Error fetching membership type:', error);
+      
       showToast.error('Failed to load membership type', error.message);
     },
   });
@@ -82,7 +82,7 @@ export function useCreateMembershipType() {
       showToast.success('Membership type created successfully');
     },
     onError: (error) => {
-      console.error('Error creating membership type:', error);
+      
       showToast.error('Failed to create membership type', error.message);
     },
   });
@@ -104,7 +104,7 @@ export function useUpdateMembershipType() {
       showToast.success('Membership type updated successfully');
     },
     onError: (error) => {
-      console.error('Error updating membership type:', error);
+      
       showToast.error('Failed to update membership type', error.message);
     },
   });
@@ -126,8 +126,9 @@ export function useDeleteMembershipType() {
       showToast.success('Membership type deleted successfully');
     },
     onError: (error) => {
-      console.error('Error deleting membership type:', error);
+      
       showToast.error('Failed to delete membership type', error.message);
     },
   });
 }
+

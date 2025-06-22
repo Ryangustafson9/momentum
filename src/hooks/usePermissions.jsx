@@ -225,3 +225,4 @@ export const withPermissions = (requiredPermissions, requireAll = false) => {
 };
 
 export default usePermissions;
+

@@ -60,7 +60,7 @@ const Header = () => {
       await logout();
       navigate('/login');
     } catch (error) {
-      console.error('Logout error:', error);
+      
     }
   }, [logout, navigate]);
 
@@ -158,6 +158,7 @@ const Header = () => {
 
 // ⭐ MEMOIZED: Prevent unnecessary re-renders
 export default React.memo(Header);
+
 
 
 

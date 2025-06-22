@@ -272,3 +272,4 @@ export const useResponsiveModal = () => {
       : 'relative bg-background rounded-lg shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto',
   };
 };
+

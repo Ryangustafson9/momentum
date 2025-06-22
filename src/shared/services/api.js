@@ -12,7 +12,7 @@ class ApiService {
    * Generic error handler
    */
   handleError(error, context = '') {
-    console.error(`API Error in ${context}:`, error);
+    
     
     // Enhance error with additional context
     const enhancedError = {
@@ -305,3 +305,4 @@ export const {
 } = apiService;
 
 export default apiService;
+

@@ -276,7 +276,7 @@ const MemberSidebar = ({ isExpanded, toggleSidebar, onLogout }) => {
         await logout();
         navigate('/login');
       } catch (error) {
-        console.error('Sign out error:', error);
+        
       }
     }
   };
@@ -495,3 +495,4 @@ const MemberSidebar = ({ isExpanded, toggleSidebar, onLogout }) => {
 };
 
 export default MemberSidebar;
+

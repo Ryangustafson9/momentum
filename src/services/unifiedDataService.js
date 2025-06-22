@@ -4,7 +4,7 @@ import { validateUserRole, normalizeRole } from '@/utils/accessControl';
 
 // ⭐ ERROR HANDLING UTILITY
 const handleSupabaseError = (error, operation) => {
-  console.error(`❌ ${operation} error:`, error);
+  
   throw new Error(error.message || `Failed to ${operation.toLowerCase()}`);
 };
 
@@ -510,3 +510,4 @@ export const unifiedDataService = {
 };
 
 export default unifiedDataService;
+

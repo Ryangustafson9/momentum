@@ -147,7 +147,7 @@ const MemberAnalyticsReport = () => {
       });
 
     } catch (error) {
-      console.error('Error fetching analytics data:', error);
+      
       toast({
         title: 'Error',
         description: `Failed to fetch analytics data: ${error.message}`,
@@ -355,3 +355,4 @@ const MemberAnalyticsReport = () => {
 };
 
 export default MemberAnalyticsReport;
+

@@ -39,7 +39,7 @@ const Login = () => {
 
     await withLoading(async () => {
       try {
-        console.log(`🔧 Dev login as ${userType}:`, devEmail);
+        
         const { user } = await login(devEmail, devPassword);
 
         if (!user) {
@@ -54,7 +54,7 @@ const Login = () => {
         navigate(defaultRoute);
 
       } catch (error) {
-        console.error(`Dev ${userType} login error:`, error);
+        
         setLoginError(`Dev ${userType} login failed: ${error.message}`);
       }
     });
@@ -62,7 +62,7 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('🔄 Login form submitted with:', { email, hasPassword: !!password });
+    
 
     // Clear previous errors
     setFormErrors({});
@@ -86,7 +86,7 @@ const Login = () => {
 
     await withLoading(async () => {
       try {
-        console.log('🔑 Starting login process...');
+        
         const { user } = await login(email, password);
 
         if (!user) {
@@ -94,22 +94,22 @@ const Login = () => {
           return;
         }
 
-        console.log('🎯 Login successful, user ID:', user.id);
-        console.log('🔍 DEBUG: User role (raw):', user?.role);
+        
+        
 
         const normalizedRole = normalizeRole(user.role || 'member');
-        console.log('🔍 DEBUG: Normalized role:', normalizedRole);
+        
 
         const defaultRoute = getDefaultRoute(normalizedRole);
-        console.log('🔍 DEBUG: Default route for role:', defaultRoute);
+        
 
         showToast.success("Welcome back!", "Successfully logged in!");
 
-        console.log(`🎯 Navigating ${normalizedRole} user to: ${defaultRoute}`);
+        
         navigate(defaultRoute);
 
       } catch (error) {
-        console.error('Login error:', error);
+        
 
         // Set user-friendly error messages
         if (error.message.includes('Invalid login credentials')) {
@@ -341,3 +341,4 @@ const Login = () => {
 };
 
 export default Login;
+

@@ -40,3 +40,4 @@ export default {
   filterMenuByPermissions,
   filterActionsByPermissions,
 };
+

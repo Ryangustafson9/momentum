@@ -24,7 +24,7 @@ const AppearanceSettingsTabContent = () => {
         const layoutSettings = await dataService.getLayoutSettings();
         setSettings(layoutSettings);
       } catch (error) {
-        console.error("Failed to load layout settings:", error);
+        
         toast({
           title: "Error",
           description: "Could not load appearance settings. Using defaults.",
@@ -59,7 +59,7 @@ const AppearanceSettingsTabContent = () => {
         className: "bg-green-500 text-white",
       });
     } catch (error) {
-      console.error("Failed to save layout settings:", error);
+      
       toast({
         title: "Error Saving Layout",
         description: "Could not save sidebar preference.",
@@ -119,5 +119,6 @@ const AppearanceSettingsTabContent = () => {
 };
 
 export default AppearanceSettingsTabContent;
+
 
 

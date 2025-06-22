@@ -118,7 +118,7 @@ export const productionConfig = {
  */
 export const initializeProductionOptimizations = () => {
   if (!env.PROD) {
-    console.warn('Production optimizations should only be used in production');
+    
     return;
   }
 
@@ -131,13 +131,13 @@ export const initializeProductionOptimizations = () => {
   // Set up error reporting
   if (env.SENTRY.DSN) {
     // Sentry configuration would go here
-    console.log('Sentry error reporting initialized');
+    
   }
 
   // Set up performance monitoring
   if (productionConfig.analytics.enabled) {
     // Performance monitoring setup would go here
-    console.log('Performance monitoring initialized');
+    
   }
 
   // Set up security headers (if running in a web context)
@@ -149,7 +149,7 @@ export const initializeProductionOptimizations = () => {
     document.head.appendChild(meta);
   }
 
-  console.log('✅ Production optimizations initialized');
+  
 };
 
 /**
@@ -190,14 +190,14 @@ export const validatePerformance = () => {
   });
 
   if (totalSize > 1000000) { // 1MB threshold
-    console.warn('Bundle size may be too large for optimal performance');
+    
   }
 
   // Check for memory leaks
   if (performance.memory) {
     const memoryInfo = performance.memory;
     if (memoryInfo.usedJSHeapSize > 50000000) { // 50MB threshold
-      console.warn('High memory usage detected');
+      
     }
   }
 
@@ -207,7 +207,7 @@ export const validatePerformance = () => {
     const slowResources = resources.filter(resource => resource.duration > 1000);
     
     if (slowResources.length > 0) {
-      console.warn('Slow loading resources detected:', slowResources.length);
+      
     }
   }
 };
@@ -262,3 +262,4 @@ export const performHealthCheck = async () => {
 // ==================== EXPORTS ====================
 
 export default productionConfig;
+

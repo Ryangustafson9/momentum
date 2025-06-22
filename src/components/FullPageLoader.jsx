@@ -133,3 +133,4 @@ export const ErrorLoader = ({ message, subtitle }) => (
     variant="error" 
   />
 );
+

@@ -36,3 +36,4 @@ export const useAuthPerformance = () => {
 };
 
 export default useAuthPerformance;
+

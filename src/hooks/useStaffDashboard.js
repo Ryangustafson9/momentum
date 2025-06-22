@@ -70,7 +70,7 @@ const staffService = {
         pendingPayments: 0, // This would need a payments table
       };
     } catch (error) {
-      console.error('Error fetching staff stats:', error);
+      
       throw new Error(`Failed to fetch staff dashboard stats: ${error.message}`);
     }
   },
@@ -145,7 +145,7 @@ const staffService = {
         }
       };
     } catch (error) {
-      console.error('Error fetching billing overview:', error);
+      
       throw new Error(`Failed to fetch billing overview: ${error.message}`);
     }
   },
@@ -176,3 +176,4 @@ export default {
   useStaffStats,
   useBillingOverview,
 };
+

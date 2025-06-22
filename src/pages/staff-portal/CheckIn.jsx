@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
@@ -12,6 +11,11 @@ import { Badge } from '@/components/ui/badge.jsx';
 import { format } from 'date-fns';
 import { LoadingSpinner } from '@/shared/components/LoadingStates';
 import { realtimeCapability } from '@/lib/realtimeCapability';
+import { matchesSearchTerm, getSearchRelevanceScore, HIGHLIGHT_COLORS } from '@/utils/searchHighlight.jsx';
+import HighlightedText from '@/components/ui/HighlightedText';
+import StaffPageHeader from '@/components/staff/StaffPageHeader';
+import StaffPageContainer from '@/components/staff/StaffPageContainer';
+import { logger } from '@/utils/logger';
 
 const CheckInPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -79,11 +83,10 @@ const CheckInPage = () => {
 
       if (membersError) throw membersError;
       await fetchRecentCheckInsData(); 
-      
-      const validMembersData = Array.isArray(membersData) ? membersData : [];
+        const validMembersData = Array.isArray(membersData) ? membersData : [];
+      logger.info('👥 Sample member data:', validMembersData.slice(0, 2)); // Debug log
       setAllMembers(validMembersData);
-      
-      const initialSlice = validMembersData.slice(0, 5);
+        const initialSlice = validMembersData.slice(0, 5);
       if (initialSlice.length > 0) {
         const membersWithAttendance = await Promise.all(initialSlice.map(async (member) => {
           const { data: memberAttendance, error } = await supabase
@@ -93,10 +96,12 @@ const CheckInPage = () => {
 
           if (error) {
             console.error('Error fetching attendance for member:', member.id, error);
-            return { ...member, isFirstVisit: true };
+            const displayName = member.name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email || 'Unknown Member';
+            return { ...member, displayName, isFirstVisit: true };
           }
 
-          return { ...member, isFirstVisit: Array.isArray(memberAttendance) && memberAttendance.length === 0 };
+          const displayName = member.name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email || 'Unknown Member';
+          return { ...member, displayName, isFirstVisit: Array.isArray(memberAttendance) && memberAttendance.length === 0 };
         }));
         setFilteredMembers(membersWithAttendance);
       } else {
@@ -187,7 +192,6 @@ const CheckInPage = () => {
       }
     };
   }, [fetchAllPageData, fetchRecentCheckInsData, realtimeEnabled]);
-
   useEffect(() => {
     const updateFilteredMembers = async () => {
       if (!Array.isArray(allMembers)) {
@@ -198,13 +202,41 @@ const CheckInPage = () => {
       if (searchTerm) {
         setIsSearching(true);
         const lowerSearchTerm = searchTerm.toLowerCase();
-        const filtered = allMembers.filter(member =>
-          member.name.toLowerCase().includes(lowerSearchTerm) ||
-          (member.system_member_id && String(member.system_member_id).toLowerCase().includes(lowerSearchTerm))
-        );
+          // Enhanced filtering with multiple field search and relevance scoring
+        const filtered = allMembers
+          .filter(member => {
+            // Construct display name properly
+            const displayName = member.name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email || 'Unknown Member';
+            
+            // Check multiple fields for matches
+            const nameMatch = matchesSearchTerm(displayName, searchTerm);
+            const emailMatch = matchesSearchTerm(member.email || '', searchTerm);
+            const idMatch = matchesSearchTerm(String(member.system_member_id || ''), searchTerm);
+            const firstNameMatch = matchesSearchTerm(member.first_name || '', searchTerm);
+            const lastNameMatch = matchesSearchTerm(member.last_name || '', searchTerm);
+            
+            return nameMatch || emailMatch || idMatch || firstNameMatch || lastNameMatch;
+          })
+          .map(member => {
+            // Add constructed display name to member object
+            const displayName = member.name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email || 'Unknown Member';
+            return {
+              ...member,
+              displayName,
+              relevanceScore: Math.max(
+                getSearchRelevanceScore(displayName, searchTerm),
+                getSearchRelevanceScore(member.email || '', searchTerm),
+                getSearchRelevanceScore(String(member.system_member_id || ''), searchTerm),
+                getSearchRelevanceScore(member.first_name || '', searchTerm),
+                getSearchRelevanceScore(member.last_name || '', searchTerm)
+              )
+            };
+          })
+          .sort((a, b) => b.relevanceScore - a.relevanceScore) // Sort by relevance
+          .slice(0, 10); // Limit to top 10 results
 
         try {
-          const membersWithAttendance = await Promise.all(filtered.slice(0, 10).map(async (member) => {
+          const membersWithAttendance = await Promise.all(filtered.map(async (member) => {
             const { data: memberAttendance, error } = await supabase
               .from('attendance')
               .select('*')
@@ -217,11 +249,13 @@ const CheckInPage = () => {
 
             return { ...member, isFirstVisit: Array.isArray(memberAttendance) && memberAttendance.length === 0 };
           }));
-          setFilteredMembers(membersWithAttendance);
-        } catch (error) {
+          setFilteredMembers(membersWithAttendance);        } catch (error) {
           console.error("Error fetching attendance for search results:", error);
           toast({ title: "Search Error", description: "Could not fetch full member details for search.", variant: "destructive" });
-          setFilteredMembers(filtered.slice(0,10).map(m => ({...m, isFirstVisit: true}))); 
+          setFilteredMembers(filtered.slice(0,10).map(m => {
+            const displayName = m.displayName || m.name || `${m.first_name || ''} ${m.last_name || ''}`.trim() || m.email || 'Unknown Member';
+            return {...m, displayName, isFirstVisit: true};
+          })); 
         } finally {
           setIsSearching(false);
         }
@@ -229,8 +263,7 @@ const CheckInPage = () => {
         setIsSearching(true);
         const initialSlice = allMembers.slice(0, 5);
         if (initialSlice.length > 0) {
-            try {
-                const membersWithAttendance = await Promise.all(initialSlice.map(async (member) => {
+            try {                const membersWithAttendance = await Promise.all(initialSlice.map(async (member) => {
                     const { data: memberAttendance, error } = await supabase
                       .from('attendance')
                       .select('*')
@@ -238,15 +271,19 @@ const CheckInPage = () => {
 
                     if (error) {
                       console.error('Error fetching attendance for member:', member.id, error);
-                      return { ...member, isFirstVisit: true };
+                      const displayName = member.name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email || 'Unknown Member';
+                      return { ...member, displayName, isFirstVisit: true };
                     }
 
-                    return { ...member, isFirstVisit: Array.isArray(memberAttendance) && memberAttendance.length === 0 };
+                    const displayName = member.name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email || 'Unknown Member';
+                    return { ...member, displayName, isFirstVisit: Array.isArray(memberAttendance) && memberAttendance.length === 0 };
                 }));
-                setFilteredMembers(membersWithAttendance);
-            } catch (error) {
+                setFilteredMembers(membersWithAttendance);            } catch (error) {
                 console.error("Error fetching attendance for initial display:", error);
-                setFilteredMembers(initialSlice.map(m => ({...m, isFirstVisit: true}))); 
+                setFilteredMembers(initialSlice.map(m => {
+                  const displayName = m.name || `${m.first_name || ''} ${m.last_name || ''}`.trim() || m.email || 'Unknown Member';
+                  return {...m, displayName, isFirstVisit: true};
+                })); 
             } finally {
                 setIsSearching(false);
             }
@@ -267,7 +304,23 @@ const CheckInPage = () => {
 
   const handleCheckIn = async (member) => {
     setIsCheckingIn(member.id);
+    const memberStatus = (member.status || '').toLowerCase();
+    const memberDisplayName = member.displayName || member.name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email || 'Unknown Member';
     try {
+      // Log the attempt
+      logger.info(`[Check-In Attempt] Member: ${memberDisplayName} (ID: ${member.id}), Status: ${member.status}`);
+      if (memberStatus !== 'active') {
+        // Log failed attempt
+        logger.warn(`[Check-In Blocked] Member: ${memberDisplayName} (ID: ${member.id}), Status: ${member.status}`);
+        toast({
+          title: 'Check-In Blocked',
+          description: `This member does not have an active membership. Current status: ${member.status}. Please contact management or update their membership before allowing access.`,
+          variant: 'destructive',
+        });
+        setIsCheckingIn(null);
+        return;
+      }
+      // Proceed with check-in for active members
       const { error } = await supabase
         .from('attendance')
         .insert([{
@@ -275,13 +328,19 @@ const CheckInPage = () => {
           check_in_time: new Date().toISOString(),
           status: 'checked_in'
         }]);
-
       if (error) throw error;
-
+      // Update last visit date
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ last_visit: new Date().toISOString() })
+        .eq('id', member.id);
+      if (updateError) logger.error('[Check-In] Failed to update last visit:', updateError);
+      // Log success
+      logger.info(`[Check-In Success] Member: ${memberDisplayName} (ID: ${member.id}) checked in.`);
       toast({
-        title: "Check-In Successful",
-        description: `${member.name} has been checked in. ${member.isFirstVisit ? 'This is their first visit!' : ''}`,
-        className: "bg-green-500 text-white",
+        title: 'Check-In Successful',
+        description: `${memberDisplayName} has been checked in. ${member.isFirstVisit ? 'This is their first visit!' : ''}`,
+        className: 'bg-green-500 text-white',
       });
       if (!supabase) { 
         fetchRecentCheckInsData();
@@ -290,11 +349,11 @@ const CheckInPage = () => {
         setAllMembers(prev => prev.map(m => m.id === member.id ? updatedMember : m));
       }
     } catch (error) {
-      console.error("Error during check-in:", error);
+      logger.error('[Check-In Error]', error);
       toast({
-        title: "Check-In Failed",
-        description: `Could not check in ${member.name}. ${error.message || 'Please try again.'}`,
-        variant: "destructive",
+        title: 'Check-In Failed',
+        description: `Could not check in ${memberDisplayName}. ${error.message || 'Please try again.'}`,
+        variant: 'destructive',
       });
     } finally {
       setIsCheckingIn(null);
@@ -308,28 +367,20 @@ const CheckInPage = () => {
       </div>
     );
   }
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6 p-4 md:p-6"
-    >
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        <div className="flex-grow">
-          <h1 className="text-3xl font-bold tracking-tight flex items-center text-slate-800 dark:text-slate-100">
-            <CheckSquare className="mr-3 h-8 w-8 text-primary" /> Member Check-In
-          </h1>
-          <p className="text-muted-foreground mt-1">Search for members to check them in or view recent activity.</p>
-        </div>
-        <Button 
-          onClick={() => navigate('/members')} 
-          className="w-full md:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
-        >
-          <UserPlus className="mr-2 h-4 w-4" /> Add/Manage Members
-        </Button>
-      </div>
+    <StaffPageContainer className="space-y-6 p-4 md:p-6">      <StaffPageHeader 
+        title="Member Check-In"
+        description="Search for members to check them in or view recent activity."
+        actions={[
+          {
+            text: "Add/Manage Members",
+            variant: "default",
+            onClick: () => navigate('/members'),
+            icon: UserPlus,
+            className: "w-full md:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
+          }
+        ]}
+      />
 
       <Card className="shadow-xl bg-white/80 dark:bg-slate-800/70 backdrop-blur-sm border-slate-300/50 dark:border-slate-700/50">
         <CardHeader>
@@ -347,53 +398,76 @@ const CheckInPage = () => {
               className="pl-10 w-full bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 focus:ring-primary focus:border-primary"
             />
           </div>
-          {isSearching && <div className="mt-3 text-center"><LoadingSpinner text="Searching..." /></div>}
-          {!isSearching && searchTerm && filteredMembers.length > 0 && (
+          {isSearching && <div className="mt-3 text-center"><LoadingSpinner text="Searching..." /></div>}          {!isSearching && searchTerm && filteredMembers.length > 0 && (
             <ul className="mt-3 border border-slate-200 dark:border-slate-700 rounded-md max-h-60 overflow-y-auto bg-slate-50 dark:bg-slate-800/50">
               {filteredMembers.map(member => (
                 <li key={member.id} className="flex items-center justify-between p-3 hover:bg-slate-100 dark:hover:bg-slate-700/80 border-b border-slate-200 dark:border-slate-700 last:border-b-0 transition-colors">
-                  <div>
-                    <p className="font-medium text-slate-800 dark:text-slate-100 flex items-center">
+                  <div>                    <p className="font-medium text-slate-800 dark:text-slate-100 flex items-center">
                         <UserCircle className="h-4 w-4 mr-2 text-muted-foreground dark:text-slate-400"/>
-                        {member.name} 
+                        <HighlightedText
+                          text={member.displayName || member.name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email || 'Unknown Member'}
+                          searchTerm={searchTerm}
+                          highlightClass={HIGHLIGHT_COLORS.MEMBER_SEARCH}
+                        />
                         <Badge variant={member.status === 'Active' ? 'default' : 'secondary'} className="ml-2 scale-90">{member.status}</Badge>
                         {member.isFirstVisit && <Badge variant="outline" className="ml-2 scale-90 border-yellow-500 text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-600"><Star className="h-3 w-3 mr-1"/>First Visit!</Badge>}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">ID: {member.system_member_id} | Status: {member.status}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      ID: <HighlightedText
+                        text={String(member.system_member_id || '')}
+                        searchTerm={searchTerm}
+                        highlightClass={HIGHLIGHT_COLORS.MEMBER_SEARCH}
+                      /> | Status: {member.status}
+                      {member.email && (
+                        <span> | Email: <HighlightedText
+                          text={member.email}
+                          searchTerm={searchTerm}
+                          highlightClass={HIGHLIGHT_COLORS.MEMBER_SEARCH}
+                        /></span>
+                      )}
+                    </p>
                   </div>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     onClick={() => handleCheckIn(member)}
+                    disabled={isCheckingIn === member.id}
                     className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white"
-                    disabled={member.status !== 'Active' || isCheckingIn === member.id}
                   >
-                    {isCheckingIn === member.id ? <LoadingSpinner size="sm" /> : 'Check In'}
+                    {isCheckingIn === member.id ? (
+                      <LoadingSpinner size="sm" />
+                    ) : (
+                      'Check In'
+                    )}
                   </Button>
                 </li>
               ))}
             </ul>
-          )}
-           {!isSearching && searchTerm && filteredMembers.length === 0 && (
-             <p className="text-muted-foreground text-sm mt-3 text-center py-4">No members found matching "{searchTerm}".</p>
+          )}           {!isSearching && searchTerm && filteredMembers.length === 0 && (
+             <p className="text-muted-foreground text-sm mt-3 text-center py-4">
+               No members found matching "<HighlightedText
+                 text={searchTerm}
+                 searchTerm={searchTerm}
+                 highlightClass={HIGHLIGHT_COLORS.MEMBER_SEARCH}
+               />".
+             </p>
            )}
            {!searchTerm && !isSearching && filteredMembers.length > 0 && ( 
              <ul className="mt-3 border border-slate-200 dark:border-slate-700 rounded-md max-h-60 overflow-y-auto bg-slate-50 dark:bg-slate-800/50">
               {filteredMembers.map(member => (
                 <li key={member.id} className="flex items-center justify-between p-3 hover:bg-slate-100 dark:hover:bg-slate-700/80 border-b border-slate-200 dark:border-slate-700 last:border-b-0 transition-colors">
-                  <div>
-                    <p className="font-medium text-slate-800 dark:text-slate-100 flex items-center">
+                  <div>                    <p className="font-medium text-slate-800 dark:text-slate-100 flex items-center">
                         <UserCircle className="h-4 w-4 mr-2 text-muted-foreground dark:text-slate-400"/>
-                        {member.name} 
+                        {member.displayName || member.name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email || 'Unknown Member'}
                         <Badge variant={member.status === 'Active' ? 'default' : 'secondary'} className="ml-2 scale-90">{member.status}</Badge>
                         {member.isFirstVisit && <Badge variant="outline" className="ml-2 scale-90 border-yellow-500 text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-600"><Star className="h-3 w-3 mr-1"/>First Visit!</Badge>}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">ID: {member.system_member_id} | Status: {member.status}</p>
                   </div>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     onClick={() => handleCheckIn(member)}
+                    disabled={isCheckingIn === member.id}
                     className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white"
-                    disabled={member.status !== 'Active' || isCheckingIn === member.id}
                   >
                     {isCheckingIn === member.id ? <LoadingSpinner size="sm" /> : 'Check In'}
                   </Button>
@@ -428,13 +502,12 @@ const CheckInPage = () => {
             </ul>
           ) : (
             !isLoading && <div className="text-center py-6">
-              <CalendarClock className="mx-auto h-10 w-10 text-muted-foreground dark:text-slate-500 mb-2" />
-              <p className="text-muted-foreground dark:text-slate-400">No recent check-ins recorded.</p>
+              <CalendarClock className="mx-auto h-10 w-10 text-muted-foreground dark:text-slate-500 mb-2" />              <p className="text-muted-foreground dark:text-slate-400">No recent check-ins recorded.</p>
             </div>
           )}
         </CardContent>
       </Card>
-    </motion.div>
+    </StaffPageContainer>
   );
 };
 

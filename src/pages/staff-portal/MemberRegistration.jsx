@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ArrowLeft, ArrowRight, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getGymColors } from '@/utils/gymBranding';
+import { useSearchParams } from 'react-router-dom';
 
 // Step Components
 import ChoosePlanStep from './components/ChoosePlanStep';
@@ -17,12 +18,13 @@ const STEPS = [
 ];
 
 const MemberRegistration = () => {
+  const [searchParams] = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     // Step 1: Membership Plan
     membershipTypeId: null,
     membershipType: null,
-    
+
     // Step 2: Personal Info
     firstName: '',
     lastName: '',
@@ -35,14 +37,45 @@ const MemberRegistration = () => {
     city: '',
     state: '',
     zipCode: '',
-    
+
     // Step 3: Additional Options
     startDate: new Date().toISOString().split('T')[0],
     notes: '',
-    sendWelcomeEmail: true
+    sendWelcomeEmail: true,
+
+    // Corporate Affiliation
+    corporateAffiliation: null
   });
 
   const gymColors = getGymColors();
+
+  // Parse name from URL parameters and pre-populate form
+  useEffect(() => {
+    const nameParam = searchParams.get('firstName') || searchParams.get('name');
+    const lastNameParam = searchParams.get('lastName');
+
+    if (nameParam || lastNameParam) {
+      const updates = {};
+
+      if (nameParam && !lastNameParam) {
+        // Parse full name from single parameter
+        const nameParts = nameParam.trim().split(/\s+/);
+        updates.firstName = nameParts[0] || '';
+        updates.lastName = nameParts.slice(1).join(' ') || '';
+      } else {
+        // Use separate parameters
+        if (nameParam) updates.firstName = nameParam;
+        if (lastNameParam) updates.lastName = lastNameParam;
+      }
+
+      setFormData(prev => ({ ...prev, ...updates }));
+
+      // If we have name data, skip to step 2 (Personal Info)
+      if (updates.firstName || updates.lastName) {
+        setCurrentStep(2);
+      }
+    }
+  }, [searchParams]);
 
   const updateFormData = (newData) => {
     setFormData(prev => ({ ...prev, ...newData }));
@@ -226,3 +259,4 @@ const MemberRegistration = () => {
 };
 
 export default MemberRegistration;
+

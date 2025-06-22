@@ -31,7 +31,7 @@ const BillingSettingsTabContent = () => {
         setStripePriceId(storedPriceId);
 
       } catch (error) {
-        console.error("Failed to load billing settings:", error);
+        
         toast({
           title: "Error",
           description: "Could not load billing settings. Using default values.",
@@ -79,7 +79,7 @@ const BillingSettingsTabContent = () => {
         className: "bg-green-500 text-white",
       });
     } catch (error) {
-      console.error("Failed to save billing settings:", error);
+      
       toast({
         title: "Error",
         description: "Could not save billing settings. Please try again.",
@@ -169,5 +169,6 @@ const BillingSettingsTabContent = () => {
 };
 
 export default BillingSettingsTabContent;
+
 
 

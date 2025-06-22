@@ -60,7 +60,7 @@ export async function executeWithTimeout(queryFn, options = {}) {
   
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      console.log(`[RequestUtils] 🔄 ${operation} (attempt ${attempt}/${retries})`);
+      
       
       const query = queryFn();
       const result = await withTimeout(query, timeout, operation);
@@ -69,16 +69,16 @@ export async function executeWithTimeout(queryFn, options = {}) {
         throw new Error(result.error.message || 'Database query failed');
       }
       
-      console.log(`[RequestUtils] ✅ ${operation} completed successfully`);
+      
       return result;
       
     } catch (error) {
       lastError = error;
-      console.warn(`[RequestUtils] ⚠️ ${operation} failed (attempt ${attempt}/${retries}):`, error.message);
+      
       
       // Don't retry on certain errors
       if (error.message.includes('timeout') && attempt < retries) {
-        console.log(`[RequestUtils] 🔄 Retrying ${operation} in ${retryDelay}ms...`);
+        
         await new Promise(resolve => setTimeout(resolve, retryDelay));
         continue;
       }
@@ -276,3 +276,4 @@ export default {
   getUserFriendlyErrorMessage,
   supabaseQuery
 };
+

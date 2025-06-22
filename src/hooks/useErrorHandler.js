@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { showToast } from '@/utils/toastUtils';
 
 /**
@@ -7,7 +7,7 @@ import { showToast } from '@/utils/toastUtils';
 
 export const useErrorHandler = () => {
   const handleError = useCallback((error, context = '') => {
-    console.error(`Error in ${context}:`, error);
+    
 
     // Handle different error types
     if (error?.message?.includes('network')) {
@@ -45,3 +45,4 @@ export const useErrorHandler = () => {
 };
 
 export default useErrorHandler;
+

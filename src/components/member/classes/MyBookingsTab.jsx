@@ -45,3 +45,4 @@ const MyBookingsTab = ({ memberAttendance, allClasses, onCancel, onDetails, isCa
 export default MyBookingsTab;
 
 
+

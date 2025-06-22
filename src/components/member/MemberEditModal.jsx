@@ -80,7 +80,7 @@ const MemberEditModal = ({
       onMemberUpdated?.(updatedMember);
       onClose();
     } catch (error) {
-      console.error('Error updating member:', error);
+      
       toast({
         title: "Error",
         description: `Failed to update profile: ${error.message}`,
@@ -209,3 +209,4 @@ const MemberEditModal = ({
 };
 
 export default MemberEditModal;
+

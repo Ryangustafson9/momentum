@@ -55,7 +55,7 @@ const MembershipSuccess = () => {
           .single();
 
         if (planError || !plan) {
-          console.error('Error fetching plan:', planError);
+          
           navigate('/dashboard');
           return;
         }
@@ -72,7 +72,7 @@ const MembershipSuccess = () => {
           .single();
 
         if (membershipError) {
-          console.error('Error fetching membership:', membershipError);
+          
           // Continue anyway - we have the plan data
         }
 
@@ -105,7 +105,7 @@ const MembershipSuccess = () => {
           accessCardNumber: cardNumber
         });
       } catch (error) {
-        console.error('Error:', error);
+        
         navigate('/dashboard');
       } finally {
         setLoading(false);
@@ -366,3 +366,4 @@ const MembershipSuccess = () => {
 };
 
 export default MembershipSuccess;
+

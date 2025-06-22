@@ -9,7 +9,7 @@ export const storage = {
       try {
         localStorage.setItem(key, JSON.stringify(value));
       } catch (error) {
-        console.error('LocalStorage set error:', error);
+        
       }
     },
 
@@ -18,7 +18,7 @@ export const storage = {
         const item = localStorage.getItem(key);
         return item ? JSON.parse(item) : defaultValue;
       } catch (error) {
-        console.error('LocalStorage get error:', error);
+        
         return defaultValue;
       }
     },
@@ -27,7 +27,7 @@ export const storage = {
       try {
         localStorage.removeItem(key);
       } catch (error) {
-        console.error('LocalStorage remove error:', error);
+        
       }
     },
 
@@ -35,7 +35,7 @@ export const storage = {
       try {
         localStorage.clear();
       } catch (error) {
-        console.error('LocalStorage clear error:', error);
+        
       }
     }
   },
@@ -46,7 +46,7 @@ export const storage = {
       try {
         sessionStorage.setItem(key, JSON.stringify(value));
       } catch (error) {
-        console.error('SessionStorage set error:', error);
+        
       }
     },
 
@@ -55,7 +55,7 @@ export const storage = {
         const item = sessionStorage.getItem(key);
         return item ? JSON.parse(item) : defaultValue;
       } catch (error) {
-        console.error('SessionStorage get error:', error);
+        
         return defaultValue;
       }
     },
@@ -64,7 +64,7 @@ export const storage = {
       try {
         sessionStorage.removeItem(key);
       } catch (error) {
-        console.error('SessionStorage remove error:', error);
+        
       }
     },
 
@@ -72,7 +72,7 @@ export const storage = {
       try {
         sessionStorage.clear();
       } catch (error) {
-        console.error('SessionStorage clear error:', error);
+        
       }
     }
   }
@@ -88,3 +88,4 @@ export const STORAGE_KEYS = {
 };
 
 export default storage;
+
