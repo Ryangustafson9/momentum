@@ -436,9 +436,9 @@ const StaffMemberProfilePage = () => {
         // Now fetch attendance and membership log using the actual member ID
         try {
           const [attendanceData, membershipLogData] = await Promise.all([            supabase
-              .from('attendance')
+              .from('checkin_history')
               .select('*')
-              .eq('member_id', combinedData.id)
+              .eq('profile_id', combinedData.id)
               .order('check_in_time', { ascending: false })
               .then(({ data, error }) => {
                 if (error) throw error;

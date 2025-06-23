@@ -11,7 +11,7 @@ const attendanceService = {
     const today = new Date().toISOString().split('T')[0];
     
     const { data, error } = await supabase
-      .from('attendance')
+      .from('checkin_history')
       .select(`
         *,
         member:profiles!member_id(first_name, last_name, email)
@@ -27,7 +27,7 @@ const attendanceService = {
   // Get member's attendance history
   async getMemberAttendance(memberId, limit = 50) {
     const { data, error } = await supabase
-      .from('attendance')
+      .from('checkin_history')
       .select('*')
       .eq('member_id', memberId)
       .order('check_in_time', { ascending: false })
@@ -45,11 +45,11 @@ const attendanceService = {
     
     const [todayResult, weekResult] = await Promise.allSettled([
       supabase
-        .from('attendance')
+        .from('checkin_history')
         .select('id', { count: 'exact' })
         .gte('check_in_time', today),
       supabase
-        .from('attendance')
+        .from('checkin_history')
         .select('id', { count: 'exact' })
         .gte('check_in_time', thisWeek.toISOString())
     ]);

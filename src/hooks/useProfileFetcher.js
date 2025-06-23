@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { storage } from '@/utils/storageUtils';
 import { normalizeRole } from '@/utils/roleUtils';

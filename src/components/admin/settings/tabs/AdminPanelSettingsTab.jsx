@@ -47,6 +47,7 @@ import PaymentProcessorHub from '@/components/admin/PaymentProcessorHub';
 import MigrationWorkflowManager from '@/components/admin/MigrationWorkflowManager';
 import BillingConfigurationPanel from '@/components/admin/BillingConfigurationPanel';
 import BillingAnalyticsDashboard from '@/components/admin/BillingAnalyticsDashboard';
+import MultiLocationManagementSimple from '@/components/admin/MultiLocationManagementSimple';
 
 // Mock data for super admin overview
 const mockSuperAdminData = {
@@ -243,7 +244,7 @@ const AdminPanelSettingsTab = () => {
         </CardHeader>
         <CardContent className="p-0">
           <Tabs defaultValue="dashboard" className="w-full">
-            <TabsList className="grid w-full grid-cols-8 rounded-none border-b dark:border-slate-700">
+            <TabsList className="grid w-full grid-cols-5 lg:grid-cols-9 rounded-none border-b dark:border-slate-700">
               <TabsTrigger
                 value="dashboard"
                 className="py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none"
@@ -261,6 +262,12 @@ const AdminPanelSettingsTab = () => {
                 className="py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none"
               >
                 <Shield className="mr-2 h-4 w-4" /> Permissions
+              </TabsTrigger>
+              <TabsTrigger
+                value="multi-location"
+                className="py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none"
+              >
+                <Building2 className="mr-2 h-4 w-4" /> Multi-Location
               </TabsTrigger>
               <TabsTrigger
                 value="locations"
@@ -307,6 +314,10 @@ const AdminPanelSettingsTab = () => {
             
             <TabsContent value="permissions" className="p-4 md:p-6">
               <StaffPermissionsManagement />
+            </TabsContent>
+
+            <TabsContent value="multi-location" className="p-4 md:p-6">
+              <MultiLocationManagementSimple />
             </TabsContent>
 
             <TabsContent value="locations" className="p-4 md:p-6">
@@ -518,7 +529,7 @@ const GeneralAdminSettings = () => {
           });
         }
       } catch (error) {
-        
+        console.error("Failed to load admin panel settings:", error);
         toast({
           title: "Error",
           description: "Could not load admin panel settings. Using default values.",
@@ -562,7 +573,7 @@ const GeneralAdminSettings = () => {
         className: "bg-green-500 text-white",
       });
     } catch (error) {
-      
+      console.error("Failed to save admin panel settings:", error);
       toast({
         title: "Error",
         description: "Could not save admin panel settings. Please try again.",
@@ -596,7 +607,7 @@ const GeneralAdminSettings = () => {
         className: "bg-purple-500 text-white",
       });
     } catch (error) {
-      
+      console.error("Failed to save club settings:", error);
       toast({
         title: "Error",
         description: "Could not save club settings. Please try again.",

@@ -99,13 +99,13 @@ export const initializeAdminPanelSettings = async (supabaseClient, initialSettin
    if (!initialSettings) { log('info', "No initial admin panel settings provided."); return; }
 
   if (supabaseClient) {
-    const { data: existing, error } = await supabaseClient.from('admin_panel_settings').select('id').eq('id', 1).maybeSingle();
-    if (error && error.code !== 'PGRST116' && error.code !== '42P01') { log('error', "Error fetching admin_panel_settings:", error.message); return; }
+    const { data: existing, error } = await supabaseClient.from('general_settings').select('id').eq('id', 1).maybeSingle();
+    if (error && error.code !== 'PGRST116' && error.code !== '42P01') { log('error', "Error fetching general_settings:", error.message); return; }
     if (!existing || error?.code === '42P01') {
-      const { error: insertErr } = await supabaseClient.from('admin_panel_settings').insert([{ ...initialSettings, id: 1, updated_at: new Date().toISOString() }]);
-      if (insertErr) log('error', "Error initializing admin_panel_settings in Supabase:", insertErr.message);
-      else log('info', "Initialized admin_panel_settings in Supabase.");
-    } else { log('info', "Admin panel settings already exist in Supabase."); }
+      const { error: insertErr } = await supabaseClient.from('general_settings').insert([{ ...initialSettings, id: 1, updated_at: new Date().toISOString() }]);
+      if (insertErr) log('error', "Error initializing general_settings in Supabase:", insertErr.message);
+      else log('info', "Initialized general_settings in Supabase.");
+    } else { log('info', "General settings already exist in Supabase."); }
   } else {
     log('warn', "Supabase N/A. Initializing admin_panel_settings in localStorage.");
     await localSettingsService?.updateAdminPanel(initialSettings);

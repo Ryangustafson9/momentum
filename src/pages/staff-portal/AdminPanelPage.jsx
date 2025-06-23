@@ -2,12 +2,12 @@ import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import StaffPermissionsManagement from '@/components/admin/StaffPermissionsManagement';
-import SuperAdminLocationManager from '@/components/admin/SuperAdminLocationManager';
 import ConfigurationTemplatesManager from '@/components/admin/ConfigurationTemplatesManager';
 import BillingConfigurationManager from '@/components/admin/BillingConfigurationManager';
 import PaymentProcessorHub from '@/components/admin/PaymentProcessorHub';
 import MigrationWorkflowManager from '@/components/admin/MigrationWorkflowManager';
 import BillingConfigurationPanel from '@/components/admin/BillingConfigurationPanel';
+import MultiLocationManagement from '@/components/admin/MultiLocationManagement';
 import { motion } from 'framer-motion';
 import { 
   SlidersHorizontal, 
@@ -47,10 +47,10 @@ const AdminPanelPage = () => {
                 <Shield className="mr-1 h-3 w-3" /> Permissions
               </TabsTrigger>
               <TabsTrigger
-                value="locations"
+                value="multi-location"
                 className="py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none text-xs"
               >
-                <Building2 className="mr-1 h-3 w-3" /> Locations
+                <Building2 className="mr-1 h-3 w-3" /> Multi-Location
               </TabsTrigger>
               <TabsTrigger
                 value="templates"
@@ -82,8 +82,8 @@ const AdminPanelPage = () => {
               <StaffPermissionsManagement />
             </TabsContent>
 
-            <TabsContent value="locations" className="p-4 md:p-6">
-              <SuperAdminLocationManager organizationId={user?.organization_id} />
+            <TabsContent value="multi-location" className="p-4 md:p-6">
+              <MultiLocationManagement />
             </TabsContent>
 
             <TabsContent value="templates" className="p-4 md:p-6">
@@ -107,4 +107,3 @@ const AdminPanelPage = () => {
 };
 
 export default AdminPanelPage;
-

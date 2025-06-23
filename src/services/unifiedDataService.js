@@ -157,7 +157,7 @@ export const memberService = {
   async checkInMember(memberId) {
     try {
       const { data, error } = await supabase
-        .from('attendance')
+        .from('checkin_history')
         .insert({
           member_id: memberId,
           check_in_time: new Date().toISOString(),

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +10,7 @@ import { getDefaultRoute, normalizeRole } from '@/utils/roleUtils';
 import { showToast } from '@/utils/toastUtils';
 import { useLoading } from '@/hooks/useLoading';
 import PasswordResetModal from '@/components/PasswordResetModal';
+import { brandingService } from '@/services/brandingService.js';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -19,6 +20,7 @@ const Login = () => {
   const [formErrors, setFormErrors] = useState({});
   const [loginError, setLoginError] = useState('');
   const [showPasswordReset, setShowPasswordReset] = useState(false);
+  const [branding, setBranding] = useState({ logo_url: '' });
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -26,6 +28,20 @@ const Login = () => {
 
   // Get club name
   const clubName = getGymName();
+
+  // Fetch branding information
+  useEffect(() => {
+    brandingService.getBranding().then(setBranding).catch(() => {});
+  }, []);
+
+  // Add this effect to refetch branding when the window regains focus
+  useEffect(() => {
+    const handleFocus = () => {
+      brandingService.getBranding().then(setBranding).catch(() => {});
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   // Dev login function for quick testing
   const handleDevLogin = async (userType) => {
@@ -144,7 +160,7 @@ const Login = () => {
             <div className="text-center mb-5">
               {!clubLogoError ? (
                 <img
-                  src="/assets/NordicFitness.png"
+                  src={branding.logo_url || "/assets/NordicFitness.png"}
                   alt="Club Logo"
                   className="h-16 mx-auto mb-4 object-contain drop-shadow-lg"
                   onError={() => setClubLogoError(true)}

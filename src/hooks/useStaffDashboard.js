@@ -26,7 +26,7 @@ const staffService = {
 
         // Check-ins today
         supabase
-          .from('attendance')
+          .from('checkin_history')
           .select('id', { count: 'exact' })
           .gte('check_in_time', today)
           .lt('check_in_time', today + 'T23:59:59'),

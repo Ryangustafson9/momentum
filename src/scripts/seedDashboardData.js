@@ -119,7 +119,7 @@ export const createSampleAttendance = async (userId) => {
     
     // Check if attendance records already exist
     const { data: existingAttendance } = await supabase
-      .from('attendance')
+      .from('checkin_history')
       .select('id')
       .eq('member_id', userId)
       .limit(1);
@@ -146,7 +146,7 @@ export const createSampleAttendance = async (userId) => {
     }
     
     const { data, error } = await supabase
-      .from('attendance')
+      .from('checkin_history')
       .insert(attendanceRecords)
       .select();
     

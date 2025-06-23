@@ -47,15 +47,15 @@ export const initializeNotificationSettingsPart = async (supabase, initialSettin
 };
 
 export const initializeAdminPanelSettingsPart = async (supabase, initialSettings) => {
-  const { data: existingSettings, error: fetchError } = await supabase.from('admin_panel_settings').select('id').limit(1).maybeSingle();
+  const { data: existingSettings, error: fetchError } = await supabase.from('general_settings').select('id').limit(1).maybeSingle();
 
   if (fetchError) {
-    
+
     return;
   }
 
   if (!existingSettings && initialSettings) {
-    const { error: insertError } = await supabase.from('admin_panel_settings').insert([{
+    const { error: insertError } = await supabase.from('general_settings').insert([{
       id: 1,
       require_first_name: initialSettings.requireFirstName !== undefined ? initialSettings.requireFirstName : true,
       require_last_name: initialSettings.requireLastName !== undefined ? initialSettings.requireLastName : true,

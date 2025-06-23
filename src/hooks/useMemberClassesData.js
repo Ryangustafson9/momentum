@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast.js';
@@ -58,7 +57,7 @@ export const useMemberClassesData = () => {
 
         // Get attendance records
         supabase
-          .from('attendance')
+          .from('checkin_history')
           .select('*')
           .eq('member_id', currentUser.id)
           .order('check_in_time', { ascending: false })

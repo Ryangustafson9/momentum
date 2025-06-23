@@ -216,7 +216,7 @@ class ApiService {
   async getAttendanceRecords(filters = {}) {
     return this.executeQuery(async () => {
       let query = this.supabase
-        .from('attendance')
+        .from('checkin_history')
         .select(`
           *,
           member:profiles!attendance_member_id_fkey(

@@ -8,6 +8,7 @@ import SecuritySettingsTab from '@/components/admin/settings/tabs/SecuritySettin
 import BillingSettingsTab from '@/components/admin/settings/tabs/BillingSettingsTab.jsx';
 import ReportingSettingsTab from '@/components/admin/settings/tabs/ReportingSettingsTab.jsx';
 import AppearanceSettingsTab from '@/components/admin/settings/tabs/AppearanceSettingsTab.jsx';
+import BrandingSettingsTab from '@/components/admin/settings/tabs/BrandingSettingsTab.jsx';
 
 import { TabsContent } from '@/components/ui/tabs';
 import { initializeGymBranding } from '@/utils/gymBranding.js';
@@ -54,6 +55,13 @@ const settingsTabsConfig = [
     Icon: Palette,
     component: <AppearanceSettingsTab />,
     description: "Manage themes, branding, and UI customization."
+  },
+  {
+    value: "branding",
+    label: "Branding",
+    Icon: Palette,
+    component: <BrandingSettingsTab />,
+    description: "Upload your club's logo and avatar for display in the app."
   }
 ];
 
@@ -89,6 +97,5 @@ const AdminSettingsPage = () => {
 };
 
 export default AdminSettingsPage;
-
 
 

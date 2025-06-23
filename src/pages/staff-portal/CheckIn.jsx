@@ -51,14 +51,20 @@ const CheckInPage = () => {
   const fetchRecentCheckInsData = useCallback(async () => {
     try {
       const { data: checkInsData, error } = await supabase
-        .from('attendance')
+        .from('checkin_history')
         .select(`
           *,
-          member:profiles!attendance_member_id_fkey(
+          profile:profiles!checkin_history_profile_id_fkey(
             id,
             first_name,
             last_name,
-            email
+            email,
+            status,
+            display_name
+          ),
+          membership:memberships!checkin_history_member_id_fkey(
+            id,
+            status as membership_status
           )
         `)
         .order('check_in_time', { ascending: false })
@@ -66,7 +72,30 @@ const CheckInPage = () => {
 
       if (error) throw error;
 
-      setRecentCheckIns(Array.isArray(checkInsData) ? checkInsData : []);
+      // Transform the data to match the expected format, handle missing memberships/profiles
+      const transformedData = checkInsData?.map(checkIn => {
+        let memberName = 'Unknown Member';
+        let memberStatus = 'Unknown';
+
+        // Use profile data directly (new structure)
+        if (checkIn.profile) {
+          memberName = checkIn.profile.display_name ||
+                      `${checkIn.profile.first_name || ''} ${checkIn.profile.last_name || ''}`.trim() ||
+                      checkIn.profile.email || 'Unknown Member';
+          memberStatus = checkIn.profile.status || 'Unknown';
+        }
+        // Fallback to stored member_name if no profile
+        else if (checkIn.member_name) {
+          memberName = checkIn.member_name;
+        }
+
+        return {
+          ...checkIn,
+          member_name: memberName,
+          member_status: memberStatus
+        };
+      }) || [];
+      setRecentCheckIns(transformedData);
     } catch (error) {
       console.error("Error fetching recent check-ins:", error);
       toast({ title: "Error", description: "Could not load recent check-ins.", variant: "destructive" });
@@ -132,33 +161,33 @@ const CheckInPage = () => {
     try {
       if (supabase) {
         attendanceChannel = supabase
-          .channel('public:attendance')
-          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'attendance' }, 
+          .channel('public:checkin_history')
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'checkin_history' },
             (payload) => {
               fetchRecentCheckInsData();
-              if (payload.new && payload.new.member_id) {
-                const memberId = payload.new.member_id;
-                setFilteredMembers(prev => prev.map(m => 
-                  m.id === memberId ? { ...m, isFirstVisit: false } : m
+              if (payload.new && payload.new.profile_id) {
+                const profileId = payload.new.profile_id;
+                setFilteredMembers(prev => prev.map(m =>
+                  m.id === profileId ? { ...m, isFirstVisit: false } : m
                 ));
-                setAllMembers(prev => prev.map(m => 
-                  m.id === memberId ? { ...m, isFirstVisit: false } : m
+                setAllMembers(prev => prev.map(m =>
+                  m.id === profileId ? { ...m, isFirstVisit: false } : m
                 ));
               }
             }
           )
           .subscribe((status, err) => {
             if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-                console.error('Attendance channel error or timed out:', err);
-                realtimeCapability.disable(`CheckIn attendance channel error: ${status}`);
+                console.error('Check-in history channel error or timed out:', err);
+                realtimeCapability.disable(`CheckIn checkin_history channel error: ${status}`);
             }
           });
 
         membersChannel = supabase
-          .channel('public:members')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'members' },
-            (payload) => {
-              fetchAllPageData(); 
+          .channel('public:profiles')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' },
+            () => {
+              fetchAllPageData();
             }
           )
           .subscribe((status, err) => {
@@ -201,8 +230,7 @@ const CheckInPage = () => {
 
       if (searchTerm) {
         setIsSearching(true);
-        const lowerSearchTerm = searchTerm.toLowerCase();
-          // Enhanced filtering with multiple field search and relevance scoring
+        // Enhanced filtering with multiple field search and relevance scoring
         const filtered = allMembers
           .filter(member => {
             // Construct display name properly
@@ -238,12 +266,12 @@ const CheckInPage = () => {
         try {
           const membersWithAttendance = await Promise.all(filtered.map(async (member) => {
             const { data: memberAttendance, error } = await supabase
-              .from('attendance')
+              .from('checkin_history')
               .select('*')
-              .eq('member_id', member.id);
+              .eq('profile_id', member.id);
 
             if (error) {
-              console.error('Error fetching attendance for member:', member.id, error);
+              console.error('Error fetching check-in history for member:', member.id, error);
               return { ...member, isFirstVisit: true };
             }
 
@@ -265,12 +293,12 @@ const CheckInPage = () => {
         if (initialSlice.length > 0) {
             try {                const membersWithAttendance = await Promise.all(initialSlice.map(async (member) => {
                     const { data: memberAttendance, error } = await supabase
-                      .from('attendance')
+                      .from('checkin_history')
                       .select('*')
-                      .eq('member_id', member.id);
+                      .eq('profile_id', member.id);
 
                     if (error) {
-                      console.error('Error fetching attendance for member:', member.id, error);
+                      console.error('Error fetching check-in history for member:', member.id, error);
                       const displayName = member.name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email || 'Unknown Member';
                       return { ...member, displayName, isFirstVisit: true };
                     }
@@ -302,84 +330,76 @@ const CheckInPage = () => {
 
   }, [searchTerm, allMembers, toast]);
 
+  // Remove method param, default to button for future extensibility but do not store in DB
   const handleCheckIn = async (member) => {
     setIsCheckingIn(member.id);
     const memberStatus = (member.status || '').toLowerCase();
     const memberDisplayName = member.displayName || member.name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email || 'Unknown Member';
     try {
-      // Log the attempt
-      logger.info(`[Check-In Attempt] Member: ${memberDisplayName} (ID: ${member.id}), Status: ${member.status}`);
+      logger.info(`[Check-In Attempt] Member: ${memberDisplayName} (ID: ${member.id}), Status: ${member.status}, Role: ${member.role}`);
+
+      // Check for non-active status (will be handled by UI logic)
       if (memberStatus !== 'active') {
-        // Log failed attempt
-        logger.warn(`[Check-In Blocked] Member: ${memberDisplayName} (ID: ${member.id}), Status: ${member.status}`);
-        toast({
-          title: 'Check-In Blocked',
-          description: `This member does not have an active membership. Current status: ${member.status}. Please contact management or update their membership before allowing access.`,
-          variant: 'destructive',
-        });
-        setIsCheckingIn(null);
-        return;
+        logger.warn(`[Check-In] Non-active member attempting check-in: ${memberDisplayName}, Status: ${memberStatus}`);
       }
-      // Proceed with check-in for active members
+
+      // Create check-in data with profile reference and optional membership reference
+      let checkinData = {
+        check_in_time: new Date().toISOString(),
+        status: 'checked_in',
+        profile_id: member.id, // Always associate with profile
+        member_name: memberDisplayName // Store name for quick reference
+      };
+
+      // If user is a member, try to get membership id for the foreign key
+      if ((member.role || '').toLowerCase() === 'member') {
+        const { data: membershipArray, error: membershipError } = await supabase
+          .from('memberships')
+          .select('id')
+          .eq('auth_user_id', member.id)
+          .limit(1);
+        if (!membershipError && membershipArray && membershipArray.length > 0) {
+          checkinData.member_id = membershipArray[0].id; // Use member_id for foreign key
+        }
+      }
+
+      // Insert into checkin_history
       const { error } = await supabase
-        .from('attendance')
-        .insert([{
-          member_id: member.id,
-          check_in_time: new Date().toISOString(),
-          status: 'checked_in'
-        }]);
+        .from('checkin_history')
+        .insert([checkinData]);
       if (error) throw error;
-      // Update last visit date
+
+      // Update last_visit timestamp
+      const profileUpdates = { last_visit: new Date().toISOString() };
+      if ((member.role || '').toLowerCase() === 'nonmember') {
+        profileUpdates.role = 'member';
+      }
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ last_visit: new Date().toISOString() })
+        .update(profileUpdates)
         .eq('id', member.id);
-      if (updateError) logger.error('[Check-In] Failed to update last visit:', updateError);
-      // Log success
-      logger.info(`[Check-In Success] Member: ${memberDisplayName} (ID: ${member.id}) checked in.`);
-      toast({
-        title: 'Check-In Successful',
-        description: `${memberDisplayName} has been checked in. ${member.isFirstVisit ? 'This is their first visit!' : ''}`,
-        className: 'bg-green-500 text-white',
-      });
-      if (!supabase) { 
-        fetchRecentCheckInsData();
-        const updatedMember = { ...member, isFirstVisit: false };
-        setFilteredMembers(prev => prev.map(m => m.id === member.id ? updatedMember : m));
-        setAllMembers(prev => prev.map(m => m.id === member.id ? updatedMember : m));
-      }
+      if (updateError) logger.error('[Check-In] Failed to update profile:', updateError);
+
+      // Show success toast
+      toast({ description: `Checked in ${memberDisplayName}`, variant: "success" });
+
+      // Navigate to member profile or refresh data
+      setTimeout(() => {
+        navigate(`/staff/members/${member.id}`);
+      }, 1000);
     } catch (error) {
-      logger.error('[Check-In Error]', error);
-      toast({
-        title: 'Check-In Failed',
-        description: `Could not check in ${memberDisplayName}. ${error.message || 'Please try again.'}`,
-        variant: 'destructive',
-      });
+      console.error('Error during check-in:', error);
+      toast({ title: "Check-in Error", description: "An error occurred during check-in. Please try again.", variant: "destructive" });
     } finally {
       setIsCheckingIn(null);
     }
   };
 
-  if (isLoading && !searchTerm && filteredMembers.length === 0) { 
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <LoadingSpinner size="xl" text="Loading Check-In..." />
-      </div>
-    );
-  }
   return (
-    <StaffPageContainer className="space-y-6 p-4 md:p-6">      <StaffPageHeader 
+    <StaffPageContainer className="space-y-6 p-4 md:p-6">
+      <StaffPageHeader 
         title="Member Check-In"
         description="Search for members to check them in or view recent activity."
-        actions={[
-          {
-            text: "Add/Manage Members",
-            variant: "default",
-            onClick: () => navigate('/members'),
-            icon: UserPlus,
-            className: "w-full md:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
-          }
-        ]}
       />
 
       <Card className="shadow-xl bg-white/80 dark:bg-slate-800/70 backdrop-blur-sm border-slate-300/50 dark:border-slate-700/50">
@@ -398,19 +418,21 @@ const CheckInPage = () => {
               className="pl-10 w-full bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 focus:ring-primary focus:border-primary"
             />
           </div>
-          {isSearching && <div className="mt-3 text-center"><LoadingSpinner text="Searching..." /></div>}          {!isSearching && searchTerm && filteredMembers.length > 0 && (
+          {isSearching && <div className="mt-3 text-center"><LoadingSpinner text="Searching..." /></div>}
+          {!isSearching && searchTerm && filteredMembers.length > 0 && (
             <ul className="mt-3 border border-slate-200 dark:border-slate-700 rounded-md max-h-60 overflow-y-auto bg-slate-50 dark:bg-slate-800/50">
               {filteredMembers.map(member => (
                 <li key={member.id} className="flex items-center justify-between p-3 hover:bg-slate-100 dark:hover:bg-slate-700/80 border-b border-slate-200 dark:border-slate-700 last:border-b-0 transition-colors">
-                  <div>                    <p className="font-medium text-slate-800 dark:text-slate-100 flex items-center">
-                        <UserCircle className="h-4 w-4 mr-2 text-muted-foreground dark:text-slate-400"/>
-                        <HighlightedText
-                          text={member.displayName || member.name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email || 'Unknown Member'}
-                          searchTerm={searchTerm}
-                          highlightClass={HIGHLIGHT_COLORS.MEMBER_SEARCH}
-                        />
-                        <Badge variant={member.status === 'Active' ? 'default' : 'secondary'} className="ml-2 scale-90">{member.status}</Badge>
-                        {member.isFirstVisit && <Badge variant="outline" className="ml-2 scale-90 border-yellow-500 text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-600"><Star className="h-3 w-3 mr-1"/>First Visit!</Badge>}
+                  <div>
+                    <p className="font-medium text-slate-800 dark:text-slate-100 flex items-center">
+                      <UserCircle className="h-4 w-4 mr-2 text-muted-foreground dark:text-slate-400"/>
+                      <HighlightedText
+                        text={member.displayName || member.name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email || 'Unknown Member'}
+                        searchTerm={searchTerm}
+                        highlightClass={HIGHLIGHT_COLORS.MEMBER_SEARCH}
+                      />
+                      <Badge variant={member.status === 'Active' ? 'default' : 'secondary'} className="ml-2 scale-90">{member.status}</Badge>
+                      {member.isFirstVisit && <Badge variant="outline" className="ml-2 scale-90 border-yellow-500 text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-600"><Star className="h-3 w-3 mr-1"/>First Visit!</Badge>}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
                       ID: <HighlightedText
@@ -442,24 +464,26 @@ const CheckInPage = () => {
                 </li>
               ))}
             </ul>
-          )}           {!isSearching && searchTerm && filteredMembers.length === 0 && (
-             <p className="text-muted-foreground text-sm mt-3 text-center py-4">
-               No members found matching "<HighlightedText
-                 text={searchTerm}
-                 searchTerm={searchTerm}
-                 highlightClass={HIGHLIGHT_COLORS.MEMBER_SEARCH}
-               />".
-             </p>
-           )}
-           {!searchTerm && !isSearching && filteredMembers.length > 0 && ( 
-             <ul className="mt-3 border border-slate-200 dark:border-slate-700 rounded-md max-h-60 overflow-y-auto bg-slate-50 dark:bg-slate-800/50">
+          )}
+          {!isSearching && searchTerm && filteredMembers.length === 0 && (
+            <p className="text-muted-foreground text-sm mt-3 text-center py-4">
+              No members found matching "<HighlightedText
+                text={searchTerm}
+                searchTerm={searchTerm}
+                highlightClass={HIGHLIGHT_COLORS.MEMBER_SEARCH}
+              />".
+            </p>
+          )}
+          {!searchTerm && !isSearching && filteredMembers.length > 0 && (
+            <ul className="mt-3 border border-slate-200 dark:border-slate-700 rounded-md max-h-60 overflow-y-auto bg-slate-50 dark:bg-slate-800/50">
               {filteredMembers.map(member => (
                 <li key={member.id} className="flex items-center justify-between p-3 hover:bg-slate-100 dark:hover:bg-slate-700/80 border-b border-slate-200 dark:border-slate-700 last:border-b-0 transition-colors">
-                  <div>                    <p className="font-medium text-slate-800 dark:text-slate-100 flex items-center">
-                        <UserCircle className="h-4 w-4 mr-2 text-muted-foreground dark:text-slate-400"/>
-                        {member.displayName || member.name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email || 'Unknown Member'}
-                        <Badge variant={member.status === 'Active' ? 'default' : 'secondary'} className="ml-2 scale-90">{member.status}</Badge>
-                        {member.isFirstVisit && <Badge variant="outline" className="ml-2 scale-90 border-yellow-500 text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-600"><Star className="h-3 w-3 mr-1"/>First Visit!</Badge>}
+                  <div>
+                    <p className="font-medium text-slate-800 dark:text-slate-100 flex items-center">
+                      <UserCircle className="h-4 w-4 mr-2 text-muted-foreground dark:text-slate-400"/>
+                      {member.displayName || member.name || `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email || 'Unknown Member'}
+                      <Badge variant={member.status === 'Active' ? 'default' : 'secondary'} className="ml-2 scale-90">{member.status}</Badge>
+                      {member.isFirstVisit && <Badge variant="outline" className="ml-2 scale-90 border-yellow-500 text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-600"><Star className="h-3 w-3 mr-1"/>First Visit!</Badge>}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">ID: {member.system_member_id} | Status: {member.status}</p>
                   </div>
@@ -474,7 +498,7 @@ const CheckInPage = () => {
                 </li>
               ))}
             </ul>
-           )}
+          )}
         </CardContent>
       </Card>
 
@@ -493,7 +517,6 @@ const CheckInPage = () => {
                     <p className="font-semibold text-slate-800 dark:text-slate-100">{checkIn.member_name || 'Unknown Member'}</p>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
                       Checked in at {format(new Date(checkIn.check_in_time), 'PPpp')}
-                      {checkIn.class_name && checkIn.class_name !== 'General Check-in' && ` for ${checkIn.class_name}`}
                     </p>
                   </div>
                   <Badge variant="outline" className="text-xs border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300">{checkIn.status}</Badge>
@@ -502,7 +525,8 @@ const CheckInPage = () => {
             </ul>
           ) : (
             !isLoading && <div className="text-center py-6">
-              <CalendarClock className="mx-auto h-10 w-10 text-muted-foreground dark:text-slate-500 mb-2" />              <p className="text-muted-foreground dark:text-slate-400">No recent check-ins recorded.</p>
+              <CalendarClock className="mx-auto h-10 w-10 text-muted-foreground dark:text-slate-500 mb-2" />
+              <p className="text-muted-foreground dark:text-slate-400">No recent check-ins recorded.</p>
             </div>
           )}
         </CardContent>

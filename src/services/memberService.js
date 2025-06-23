@@ -167,7 +167,7 @@ export const memberService = {
     // Check if already checked in today
     const today = new Date().toISOString().split('T')[0];
     const { data: existingCheckIn } = await supabase
-      .from('attendance')
+      .from('checkin_history')
       .select('*')
       .eq('member_id', memberId)
       .gte('check_in_time', today)
@@ -179,7 +179,7 @@ export const memberService = {
     }
 
     const { data, error } = await supabase
-      .from('attendance')
+      .from('checkin_history')
       .insert({
         member_id: memberId,
         member_name: memberName,
@@ -204,7 +204,7 @@ export const memberService = {
     
     
     const { data, error } = await supabase
-      .from('attendance')
+      .from('checkin_history')
       .update({
         check_out_time: new Date().toISOString(),
         status: 'Left'

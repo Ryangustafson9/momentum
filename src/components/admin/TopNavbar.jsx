@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -34,16 +33,30 @@ import MemberSearch from '@/components/admin/topnav_parts/MemberSearch.jsx';
 import AdvancedMemberSearchModal from '@/components/admin/topnav_parts/AdvancedMemberSearchModal.jsx';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/hooks/useTheme.jsx';
+import { brandingService } from '@/services/brandingService.js';
 
 const ClubHeader = ({ currentClub = 'Nordic Fitness', location = 'Oklahoma City' }) => {
   const [selectedLocation, setSelectedLocation] = useState(location);
+  const [branding, setBranding] = useState({ logo_url: '', avatar_url: '' });
+  useEffect(() => {
+    brandingService.getBranding().then(setBranding).catch(() => {});
+  }, []);
+
+  // Add this effect to refetch branding when the window regains focus
+  useEffect(() => {
+    const handleFocus = () => {
+      brandingService.getBranding().then(setBranding).catch(() => {});
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   return (
     <div className="flex items-center gap-4">
       <div className="flex items-center gap-3">
-        <img 
-          src="/assets/NordicFitness.png" 
-          alt="Nordic Fitness Logo" 
+        <img
+          src={branding.logo_url || "/assets/NordicFitness.png"}
+          alt="Club Logo"
           className="h-10 w-auto object-contain"
         />
         <div>
