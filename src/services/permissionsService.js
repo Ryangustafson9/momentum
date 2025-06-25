@@ -3,27 +3,75 @@
  * 
  * This service connects Staff Plans to the detailed permissions system,
  * allowing fine-grained access control based on assigned staff roles.
+ * 
+ * ✅ SECURITY FIXES APPLIED:
+ * - Enhanced parameter validation and null checks
+ * - Improved error handling with safe fallbacks
+ * - Added user validation helpers
+ * - Better logging for debugging access issues
  */
 
 import { supabase } from '@/lib/supabaseClient';
+import { sanitizeError } from '@/utils/requestUtils';
+
+/**
+ * Validates if a user ID is valid
+ * @param {any} userId - User ID to validate
+ * @returns {boolean} - Whether user ID is valid
+ */
+const isValidUserId = (userId) => {
+  return (
+    userId !== null &&
+    userId !== undefined &&
+    (typeof userId === 'string' || typeof userId === 'number') &&
+    String(userId).trim().length > 0
+  );
+};
+
+/**
+ * Validates if a permission name is valid
+ * @param {any} permissionName - Permission name to validate
+ * @returns {boolean} - Whether permission name is valid
+ */
+const isValidPermissionName = (permissionName) => {
+  return (
+    permissionName !== null &&
+    permissionName !== undefined &&
+    typeof permissionName === 'string' &&
+    permissionName.trim().length > 0 &&
+    permissionName.length < 100 // Reasonable limit
+  );
+};
 
 export class PermissionsService {
   /**
    * Get all permissions for a user based on their staff role
    */
   static async getUserPermissions(userId) {
+    // ✅ SECURITY FIX: Validate user ID parameter
+    if (!isValidUserId(userId)) {
+      console.warn('Invalid userId provided to getUserPermissions:', userId);
+      return [];
+    }
+
     try {
       const { data, error } = await supabase
         .rpc('get_user_permissions', { user_id: userId });
 
       if (error) {
-        
+        console.error('Error getting user permissions:', sanitizeError(error, 'Get user permissions'));
         return [];
       }
 
-      return Array.isArray(data) ? data : [];
+      // ✅ SECURITY FIX: Validate response data
+      if (!Array.isArray(data)) {
+        console.warn('Invalid permissions data received for user:', userId);
+        return [];
+      }
+
+      return data;
     } catch (error) {
-      
+      console.error('Exception in getUserPermissions:', sanitizeError(error, 'Get user permissions'));
       return [];
     }
   }
@@ -32,6 +80,17 @@ export class PermissionsService {
    * Check if a user has a specific permission
    */
   static async userHasPermission(userId, permissionName) {
+    // ✅ SECURITY FIX: Validate parameters
+    if (!isValidUserId(userId)) {
+      console.warn('Invalid userId provided to userHasPermission:', userId);
+      return false;
+    }
+
+    if (!isValidPermissionName(permissionName)) {
+      console.warn('Invalid permissionName provided to userHasPermission:', permissionName);
+      return false;
+    }
+
     try {
       const { data, error } = await supabase
         .rpc('user_has_permission', { 
@@ -40,21 +99,27 @@ export class PermissionsService {
         });
 
       if (error) {
-        
+        console.error('Error checking user permission:', sanitizeError(error, 'Check user permission'));
         return false;
       }
 
+      // ✅ SECURITY FIX: Ensure boolean result
       return Boolean(data);
     } catch (error) {
-      
+      console.error('Exception in userHasPermission:', sanitizeError(error, 'Check user permission'));
       return false;
     }
   }
-
   /**
    * Get user's complete role and permission information
    */
   static async getUserRoleInfo(userId) {
+    // ✅ SECURITY FIX: Validate user ID parameter
+    if (!isValidUserId(userId)) {
+      console.warn('Invalid userId provided to getUserRoleInfo:', userId);
+      return null;
+    }
+
     try {
       const { data, error } = await supabase
         .from('user_role_permissions')
@@ -63,13 +128,19 @@ export class PermissionsService {
         .single();
 
       if (error) {
-        
+        console.error('Error getting user role info:', sanitizeError(error, 'Get user role info'));
+        return null;
+      }
+
+      // ✅ SECURITY FIX: Validate returned data structure
+      if (!data || typeof data !== 'object') {
+        console.warn('Invalid role info data received for user:', userId);
         return null;
       }
 
       return data;
     } catch (error) {
-      
+      console.error('Exception in getUserRoleInfo:', sanitizeError(error, 'Get user role info'));
       return null;
     }
   }
@@ -78,6 +149,17 @@ export class PermissionsService {
    * Assign a staff role to a user
    */
   static async assignStaffRole(userId, staffRoleId) {
+    // ✅ SECURITY FIX: Validate parameters
+    if (!isValidUserId(userId)) {
+      console.warn('Invalid userId provided to assignStaffRole:', userId);
+      return { success: false, error: 'Invalid user ID' };
+    }
+
+    if (!isValidUserId(staffRoleId)) {
+      console.warn('Invalid staffRoleId provided to assignStaffRole:', staffRoleId);
+      return { success: false, error: 'Invalid staff role ID' };
+    }
+
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -86,21 +168,28 @@ export class PermissionsService {
         .select();
 
       if (error) {
-        
-        return { success: false, error };
+        const sanitizedError = sanitizeError(error, 'Assign staff role');
+        console.error('Error assigning staff role:', sanitizedError);
+        return { success: false, error: sanitizedError.message };
       }
 
       return { success: true, data };
     } catch (error) {
-      
-      return { success: false, error };
+      const sanitizedError = sanitizeError(error, 'Assign staff role');
+      console.error('Exception in assignStaffRole:', sanitizedError);
+      return { success: false, error: sanitizedError.message };
     }
   }
-
   /**
    * Remove staff role from a user
    */
   static async removeStaffRole(userId) {
+    // ✅ SECURITY FIX: Validate user ID parameter
+    if (!isValidUserId(userId)) {
+      console.warn('Invalid userId provided to removeStaffRole:', userId);
+      return { success: false, error: 'Invalid user ID' };
+    }
+
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -109,14 +198,16 @@ export class PermissionsService {
         .select();
 
       if (error) {
-        
-        return { success: false, error };
+        const sanitizedError = sanitizeError(error, 'Remove staff role');
+        console.error('Error removing staff role:', sanitizedError);
+        return { success: false, error: sanitizedError.message };
       }
 
       return { success: true, data };
     } catch (error) {
-      
-      return { success: false, error };
+      const sanitizedError = sanitizeError(error, 'Remove staff role');
+      console.error('Exception in removeStaffRole:', sanitizedError);
+      return { success: false, error: sanitizedError.message };
     }
   }
 
@@ -131,13 +222,19 @@ export class PermissionsService {
         .order('name');
 
       if (error) {
-        
+        console.error('Error getting staff roles:', sanitizeError(error, 'Get staff roles'));
         return [];
       }
 
-      return data || [];
+      // ✅ SECURITY FIX: Validate response data
+      if (!Array.isArray(data)) {
+        console.warn('Invalid staff roles data received');
+        return [];
+      }
+
+      return data;
     } catch (error) {
-      
+      console.error('Exception in getAllStaffRoles:', sanitizeError(error, 'Get staff roles'));
       return [];
     }
   }

@@ -126,10 +126,9 @@ export const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error, query) => {
       logger.error(`Query cache error for ${query.queryKey}:`, error);
-    },
-    onSuccess: (data, query) => {
+    },    onSuccess: (data, query) => {
       // Log successful cache hits for monitoring
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         logger.debug(`Cache hit for ${query.queryKey}`);
       }
     },

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,12 +13,9 @@ import {
   Trash2, 
   AlertTriangle, 
   MapPin, 
-  Users, 
+  Users,
   UserCheck,
-  Info,
-  CheckCircle,
-  XCircle,
-  Settings
+  Info
 } from 'lucide-react';
 import {
   Dialog,
@@ -42,8 +39,9 @@ import {
 } from '@/components/ui/alert-dialog';
 
 // Import the service and location manager
+import { LocationService } from '@/lib/services/locationService';
 import { MultiLocationService } from '@/services/multiLocationService';
-import SuperAdminLocationManager from '@/components/admin/SuperAdminLocationManager';
+
 import { useAuth } from '@/contexts/AuthContext';
 
 const MultiLocationManagement = () => {
@@ -78,8 +76,8 @@ const MultiLocationManagement = () => {
       setMultiLocationEnabled(settings?.multi_location_enabled || false);
 
       // Load locations if multi-location is enabled
-      if (settings?.multi_location_enabled) {
-        const { data: locationsData, error: locationsError } = await MultiLocationService.getLocations();
+      if (settings?.multi_location_enabled && user?.organization_id) {
+        const { data: locationsData, error: locationsError } = await LocationService.getOrganizationLocations(user.organization_id);
         if (locationsError) throw locationsError;
         setLocations(locationsData || []);
       }
@@ -178,12 +176,23 @@ const MultiLocationManagement = () => {
   const handleSaveLocation = async () => {
     try {
       if (editingLocation) {
-        // Update existing location
-        const { error } = await MultiLocationService.updateLocation(editingLocation.id, locationForm);
+        // Update existing location using LocationService
+        const { error } = await LocationService.updateLocation(editingLocation.id, {
+          ...locationForm,
+          organization_id: user.organization_id
+        });
         if (error) throw error;
       } else {
-        // Create new location
-        const { error } = await MultiLocationService.createLocation(locationForm);
+        // Create new location using LocationService
+        const locationData = {
+          ...locationForm,
+          organization_id: user.organization_id,
+          slug: await LocationService.generateLocationSlug(user.organization_id, locationForm.name),
+          is_active: true,
+          status: 'active'
+        };
+
+        const { error } = await LocationService.createLocation(locationData);
         if (error) throw error;
       }
 
@@ -230,7 +239,7 @@ const MultiLocationManagement = () => {
 
   const handleDeleteLocation = async (locationId) => {
     try {
-      const { error } = await MultiLocationService.deleteLocation(locationId);
+      const { error } = await LocationService.deleteLocation(locationId);
       if (error) throw error;
 
       await loadMultiLocationData(); // Refresh locations
@@ -501,21 +510,7 @@ const MultiLocationManagement = () => {
           </CardContent>
         </Card>
 
-        {/* Advanced Location Management - SuperAdminLocationManager Integration */}
-        <Card className="shadow-lg border-none">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              Advanced Location Management
-            </CardTitle>
-            <CardDescription>
-              Advanced location configuration, organization management, and system-level settings
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <SuperAdminLocationManager organizationId={user?.organization_id} />
-          </CardContent>
-        </Card>
+
         </>
       )}
     </div>
@@ -532,7 +527,7 @@ const LocationCard = ({ location, onEdit, onDelete }) => {
 
   const loadLocationStats = async () => {
     try {
-      const { data } = await MultiLocationService.getLocationStats(location.id);
+      const { data } = await LocationService.getLocationAnalytics(location.id);
       setStats(data);
     } catch (error) {
       console.error('Error loading location stats:', error);

@@ -24,12 +24,12 @@ const LOG_LEVEL_NAMES = {
 // ==================== CONFIGURATION ====================
 
 const config = {
-  // Environment-based log level
-  level: import.meta.env.MODE === 'production' ? LOG_LEVELS.WARN : LOG_LEVELS.DEBUG,
-  
+  // Environment-based log level - reduced verbosity in development
+  level: import.meta.env.MODE === 'production' ? LOG_LEVELS.WARN : LOG_LEVELS.WARN,
+
   // Enable/disable console output
   enableConsole: import.meta.env.MODE !== 'production',
-  
+
   // Enable/disable external logging (Sentry, etc.)
   enableExternal: import.meta.env.MODE === 'production',
   

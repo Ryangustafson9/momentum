@@ -10,6 +10,9 @@ export class MemberProfileService {
    */
   static async createTemporaryProfile(profileData) {
     try {
+      // Generate a unique system member ID
+      const systemMemberId = await this.generateSystemMemberId();
+
       const { data, error } = await supabase
         .from('profiles')
         .insert({
@@ -18,7 +21,8 @@ export class MemberProfileService {
           email: profileData.email || null,
           phone: profileData.phone || null,
           role: 'member',
-          status: 'draft', // Mark as draft/incomplete
+          status: 'active', // Use valid status instead of 'draft'
+          system_member_id: systemMemberId,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -26,11 +30,9 @@ export class MemberProfileService {
         .single();
 
       if (error) throw error;
-      
-      
+
       return { data, error: null };
     } catch (error) {
-      
       return { data: null, error };
     }
   }
@@ -42,22 +44,7 @@ export class MemberProfileService {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          memberships(
-            id,
-            status,
-            start_date,
-            end_date,
-            membership_types(
-              id,
-              name,
-              category,
-              price,
-              billing_cycle
-            )
-          )
-        `)
+        .select('*')
         .eq('system_member_id', systemMemberId)
         .single();
 
@@ -183,15 +170,51 @@ export class MemberProfileService {
   }
 
   /**
+   * Generate a unique system member ID
+   */
+  static async generateSystemMemberId() {
+    try {
+      // Get the highest existing system_member_id
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('system_member_id')
+        .not('system_member_id', 'is', null)
+        .order('system_member_id', { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      // If no existing members, start with 1
+      if (!data || data.length === 0) {
+        return 1;
+      }
+
+      // Return the next available ID
+      const highestId = parseInt(data[0].system_member_id) || 0;
+      return highestId + 1;
+    } catch (error) {
+      console.error('Error generating system member ID:', error);
+      // Fallback to timestamp-based ID if there's an error
+      return Date.now();
+    }
+  }
+
+  /**
    * Create temporary profile from search query
    */
   static async createFromSearchQuery(searchQuery) {
+    console.log('🔧 MemberProfileService.createFromSearchQuery called with:', searchQuery);
+
     const { firstName, lastName } = this.parseNameFromQuery(searchQuery);
-    
-    return await this.createTemporaryProfile({
+    console.log('📝 Parsed name:', { firstName, lastName });
+
+    const result = await this.createTemporaryProfile({
       firstName,
       lastName
     });
+
+    console.log('📋 createTemporaryProfile result:', result);
+    return result;
   }
 
   /**

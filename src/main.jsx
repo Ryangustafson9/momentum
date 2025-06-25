@@ -17,9 +17,17 @@ import {
   performHealthCheck
 } from '@/config/production';
 import { createLogger } from '@/lib/logger';
+import { autoMigrateStorage } from '@/utils/storageMigration';
 
 // Create logger for main application
 const logger = createLogger('Main');
+
+// Auto-migrate storage for security improvements
+autoMigrateStorage().then(() => {
+  logger.info('🔐 Storage migration completed');
+}).catch(error => {
+  logger.warn('⚠️ Storage migration failed:', error);
+});
 
 // Initialize production optimizations
 if (env.PROD) {

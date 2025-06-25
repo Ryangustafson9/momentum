@@ -18,10 +18,7 @@ import {
   CreditCard,   
   ArrowRightLeft
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-
 const AdminPanelPage = () => {
-  const { user } = useAuth();
 
   return (
     <motion.div

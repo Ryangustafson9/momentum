@@ -103,7 +103,7 @@ const AdminDashboardLayout = ({ children }) => {
           startRoleImpersonation={handleStartImpersonation}
           allMembers={allMembers}
         />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8 bg-background dark:bg-slate-900">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8 bg-slate-50 dark:bg-slate-900">
           <div className="w-full">
             {children ? children : <Outlet key={location.pathname} />}
           </div>

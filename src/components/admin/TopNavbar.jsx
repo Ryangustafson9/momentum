@@ -34,10 +34,11 @@ import AdvancedMemberSearchModal from '@/components/admin/topnav_parts/AdvancedM
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/hooks/useTheme.jsx';
 import { brandingService } from '@/services/brandingService.js';
-
-const ClubHeader = ({ currentClub = 'Nordic Fitness', location = 'Oklahoma City' }) => {
-  const [selectedLocation, setSelectedLocation] = useState(location);
+import LocationSwitcher from './LocationSwitcher';
+const ClubHeader = () => {
   const [branding, setBranding] = useState({ logo_url: '', avatar_url: '' });
+  // LocationSwitcher will handle its own location context
+
   useEffect(() => {
     brandingService.getBranding().then(setBranding).catch(() => {});
   }, []);
@@ -59,19 +60,7 @@ const ClubHeader = ({ currentClub = 'Nordic Fitness', location = 'Oklahoma City'
           alt="Club Logo"
           className="h-10 w-auto object-contain"
         />
-        <div>
-          <select
-            value={selectedLocation}
-            onChange={(e) => setSelectedLocation(e.target.value)}
-            className="text-sm text-gray-500 dark:text-gray-400 py-1 px-3 bg-gray-100 dark:bg-gray-700 rounded-md min-h-[32px] border-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-gray-600"
-          >
-            <option value="Oklahoma City">Oklahoma City</option>
-            <option value="Tulsa">Tulsa</option>
-            <option value="Norman">Norman</option>
-            <option value="Edmond">Edmond</option>
-            <option value="Broken Arrow">Broken Arrow</option>
-          </select>
-        </div>
+        <LocationSwitcher variant="dropdown" className="ml-2" />
       </div>
     </div>
   );
@@ -202,15 +191,16 @@ const UserProfileDropdown = ({ user, onLogout, startRoleImpersonation }) => {
 };
 
 const StaffSearch = ({ allMembers, navigate, onOpenAdvancedSearch }) => (
-  <div className="relative hidden sm:flex items-center gap-2">
+  <div className="flex items-center gap-2">
     <div className="relative">
       <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-      <MemberSearch 
-        allMembers={allMembers} 
-        navigate={navigate} 
-        inputClassName="pl-8 sm:w-[180px] md:w-[220px] lg:w-[280px] rounded-lg h-9" 
+      <MemberSearch
+        allMembers={allMembers}
+        navigate={navigate}
+        inputClassName="pl-8 sm:w-[180px] md:w-[220px] lg:w-[280px] rounded-lg h-9"
       />
-    </div>    <Button
+    </div>
+    <Button
       variant="outline"
       size="sm"
       onClick={onOpenAdvancedSearch}
@@ -279,21 +269,23 @@ const TopNavbar = ({ user, onLogout, startRoleImpersonation, allMembers = [] }) 
       <header className={cn(
         "sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-card dark:bg-slate-900 px-4 md:px-6 transition-shadow duration-200 print:hidden",
         isScrolled ? "shadow-md" : "shadow-sm"
-      )}>        <div className="flex items-center">
-          {/* Mobile sidebar toggle button removed as per request */}
+      )}>
+        {/* Left side - Logo/Title */}
+        <div className="flex items-center">
           {currentPathTitle ? (
             <h1 className="text-lg md:text-xl font-semibold text-foreground whitespace-nowrap">{currentPathTitle}</h1>
           ) : (
             <ClubHeader />
           )}
         </div>
-        
+
         <div className="flex-1" />
 
+        {/* Right side - Search, Notifications and User Profile */}
         <div className="flex items-center gap-2 md:gap-3">
-          <StaffSearch 
-            allMembers={allMembers} 
-            navigate={navigate} 
+          <StaffSearch
+            allMembers={allMembers}
+            navigate={navigate}
             onOpenAdvancedSearch={handleOpenAdvancedSearch}
           />
           <NotificationsButton />

@@ -15,6 +15,7 @@ const InstructorDashboardPage = React.lazy(() => import('@/pages/staff-portal/In
 const CommunicationsPage = React.lazy(() => import('@/pages/staff-portal/Communications.jsx'));
 const BillingPage = React.lazy(() => import('@/pages/staff-portal/Billing.jsx'));
 const EquipmentPage = React.lazy(() => import('@/pages/staff-portal/Equipment.jsx'));
+const SuperAdminPanel = React.lazy(() => import('@/pages/staff-portal/SuperAdminPanel.jsx'));
 
 // ⭐ LOADING: Reusable loading component
 const PageLoadingSpinner = () => (
@@ -119,8 +120,17 @@ export const staffRoutes = [
     title: 'Equipment Management',
     description: 'Track equipment status and maintenance',
     lazy: true
-  },  { 
-    path: '*', 
+  },
+  {
+    path: 'adminpanel',
+    element: <LazyWrapper Component={SuperAdminPanel} />,
+    title: 'Admin Panel',
+    description: 'Administrative control panel with system settings',
+    lazy: true,
+    heavy: true
+  },
+  {
+    path: '*',
     element: <Navigate to="/staff-portal/dashboard" replace />, // Updated redirect path
     title: 'Redirect',
     description: 'Redirect to staff dashboard'

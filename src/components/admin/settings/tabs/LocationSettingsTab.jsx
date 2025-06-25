@@ -3,7 +3,7 @@
  * Manages locations and location templates within the settings interface
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Building2,
@@ -32,9 +32,9 @@ const LocationSettingsTab = () => {
 
   useEffect(() => {
     loadInitialData();
-  }, []);
+  }, [loadInitialData]);
 
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     setLoading(true);
     try {
       // For now, we'll create/get the default organization
@@ -45,7 +45,7 @@ const LocationSettingsTab = () => {
         await loadLocationData(defaultOrg.id);
       }
     } catch (error) {
-      
+      console.error('Error loading initial data:', error);
       toast({
         title: "Error",
         description: "Failed to load location data. Please refresh the page.",
@@ -54,9 +54,9 @@ const LocationSettingsTab = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const getOrCreateDefaultOrganization = async () => {
+  const getOrCreateDefaultOrganization = useCallback(async () => {
     try {
       // First try to get existing organizations
       const result = await LocationService.getOrganizations();
@@ -65,20 +65,20 @@ const LocationSettingsTab = () => {
         return result.data[0]; // Use the first organization
       }
       
-      // If no organizations exist, we'll use the one that should be created by the migration
-      // The migration creates a 'momentum' organization
+      // If no organizations exist, we'll use a fallback that should work with the system
+      // Note: In production, this should trigger organization creation
       return {
-        id: 'default', // We'll handle this in the service calls
-        name: 'Momentum Fitness',
-        slug: 'momentum'
+        id: 'default',
+        name: 'Default Organization',
+        slug: 'default'
       };
     } catch (error) {
-      
+      console.error('Error getting default organization:', error);
       return null;
     }
-  };
+  }, []);
 
-  const loadLocationData = async (organizationId) => {
+  const loadLocationData = useCallback(async (organizationId) => {
     try {
       const [locationsResult, templatesResult] = await Promise.all([
         LocationService.getOrganizationLocations(organizationId),
@@ -88,9 +88,22 @@ const LocationSettingsTab = () => {
       setLocations(locationsResult.data || []);
       setTemplates(templatesResult.data || []);
     } catch (error) {
-      
+      console.error('Error loading location data:', error);
+      toast({
+        title: "Warning",
+        description: "Some location data could not be loaded. Please try refreshing the page.",
+        variant: "destructive"
+      });
     }
-  };
+  }, [toast]);
+
+  // Memoized computed values for better performance
+  const locationStats = useMemo(() => ({
+    activeCount: locations.length,
+    templateCount: templates.length,
+    hasLocations: locations.length > 0,
+    hasTemplates: templates.length > 0
+  }), [locations.length, templates.length]);
 
   if (loading) {
     return (
@@ -124,9 +137,9 @@ const LocationSettingsTab = () => {
             <div className="flex items-center">
               <Building2 className="h-8 w-8 text-blue-600 mr-3" />
               <div>
-                <div className="text-2xl font-bold">{locations.length}</div>
+                <div className="text-2xl font-bold">{locationStats.activeCount}</div>
                 <p className="text-xs text-muted-foreground">
-                  {locations.length === 1 ? 'Location' : 'Locations'} configured
+                  {locationStats.activeCount === 1 ? 'Location' : 'Locations'} configured
                 </p>
               </div>
             </div>
@@ -141,7 +154,7 @@ const LocationSettingsTab = () => {
             <div className="flex items-center">
               <Settings className="h-8 w-8 text-green-600 mr-3" />
               <div>
-                <div className="text-2xl font-bold">{templates.length}</div>
+                <div className="text-2xl font-bold">{locationStats.templateCount}</div>
                 <p className="text-xs text-muted-foreground">
                   Setup templates ready
                 </p>
@@ -169,7 +182,7 @@ const LocationSettingsTab = () => {
       </div>
 
       {/* Setup Status */}
-      {templates.length === 0 && (
+      {!locationStats.hasTemplates && (
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
@@ -179,7 +192,7 @@ const LocationSettingsTab = () => {
         </Alert>
       )}
 
-      {locations.length === 0 && (
+      {!locationStats.hasLocations && (
         <Alert>
           <MapPin className="h-4 w-4" />
           <AlertDescription>
@@ -218,4 +231,3 @@ const LocationSettingsTab = () => {
 };
 
 export default LocationSettingsTab;
-

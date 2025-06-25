@@ -20,7 +20,7 @@ export class LocationService {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      
+      console.error('Error fetching organizations:', error);
       return { data: null, error };
     }
   }
@@ -39,7 +39,7 @@ export class LocationService {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      
+      console.error('Error fetching organization by slug:', error);
       return { data: null, error };
     }
   }
@@ -47,17 +47,13 @@ export class LocationService {
   // ==================== LOCATION MANAGEMENT ====================
 
   /**
-   * Get all locations for an organization
+   * Get all locations for an organization (admin access)
    */
   static async getOrganizationLocations(organizationId) {
     try {
       const { data, error } = await supabase
         .from('locations')
-        .select(`
-          *,
-          location_billing_configs(*),
-          location_payment_configs(*)
-        `)
+        .select('*')
         .eq('organization_id', organizationId)
         .eq('is_active', true)
         .order('name');
@@ -65,7 +61,72 @@ export class LocationService {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      
+      console.error('Error fetching organization locations:', error);
+      return { data: null, error };
+    }
+  }
+
+  /**
+   * Get accessible locations for a user based on their role and permissions
+   */
+  static async getUserAccessibleLocations(userId) {
+    try {
+      // First get the user's profile to check their role and organization
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, role, organization_id, location_access_level, default_location_id')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (!userProfile.organization_id) {
+        return { data: [], error: null };
+      }
+
+      // If user is admin with global access, return all organization locations
+      if (userProfile.role === 'admin' && userProfile.location_access_level === 'global') {
+        return await this.getOrganizationLocations(userProfile.organization_id);
+      }
+
+      // For staff users with restricted access, get only permitted locations
+      if (userProfile.role === 'staff' && userProfile.location_access_level === 'restricted') {
+        const { data, error } = await supabase
+          .from('locations')
+          .select(`
+            *,
+            staff_location_access!inner(
+              access_level,
+              is_active
+            )
+          `)
+          .eq('organization_id', userProfile.organization_id)
+          .eq('is_active', true)
+          .eq('staff_location_access.user_id', userId)
+          .eq('staff_location_access.is_active', true)
+          .order('name');
+
+        if (error) throw error;
+        return { data, error: null };
+      }
+
+      // For single location access, return only the default location
+      if (userProfile.location_access_level === 'single' && userProfile.default_location_id) {
+        const { data, error } = await supabase
+          .from('locations')
+          .select('*')
+          .eq('id', userProfile.default_location_id)
+          .eq('is_active', true)
+          .single();
+
+        if (error) throw error;
+        return { data: data ? [data] : [], error: null };
+      }
+
+      // Fallback: no access
+      return { data: [], error: null };
+    } catch (error) {
+      console.error('Error fetching user accessible locations:', error);
       return { data: null, error };
     }
   }
@@ -89,7 +150,7 @@ export class LocationService {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      
+      console.error('Error fetching location details:', error);
       return { data: null, error };
     }
   }
@@ -114,7 +175,7 @@ export class LocationService {
       // Get the created location with full details
       return await this.getLocationDetails(data);
     } catch (error) {
-      
+      console.error('Error creating location:', error);
       return { data: null, error };
     }
   }
@@ -137,7 +198,30 @@ export class LocationService {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      
+      console.error('Error updating location:', error);
+      return { data: null, error };
+    }
+  }
+
+  /**
+   * Delete a location (soft delete by setting is_active to false)
+   */
+  static async deleteLocation(locationId) {
+    try {
+      const { data, error } = await supabase
+        .from('locations')
+        .update({
+          is_active: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', locationId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error deleting location:', error);
       return { data: null, error };
     }
   }
@@ -162,7 +246,7 @@ export class LocationService {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      
+      console.error('Error updating billing config:', error);
       return { data: null, error };
     }
   }
@@ -181,7 +265,7 @@ export class LocationService {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      
+      console.error('Error fetching billing config:', error);
       return { data: null, error };
     }
   }
@@ -209,7 +293,7 @@ export class LocationService {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      
+      console.error('Error updating payment config:', error);
       return { data: null, error };
     }
   }
@@ -263,7 +347,7 @@ export class LocationService {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      
+      console.error('Error fetching location templates:', error);
       return { data: null, error };
     }
   }
@@ -282,7 +366,7 @@ export class LocationService {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      
+      console.error('Error creating location template:', error);
       return { data: null, error };
     }
   }
@@ -340,7 +424,7 @@ export class LocationService {
 
       return { data: migration, error: null };
     } catch (error) {
-      
+      console.error('Error applying template to location:', error);
       return { data: null, error };
     }
   }
@@ -365,7 +449,7 @@ export class LocationService {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      
+      console.error('Error creating billing migration:', error);
       return { data: null, error };
     }
   }
@@ -390,14 +474,14 @@ export class LocationService {
           const result = await this.executeMigration(migration);
           results.push(result);
         } catch (migrationError) {
-          
+          console.error(`Migration ${migration.id} failed:`, migrationError);
           results.push({ id: migration.id, success: false, error: migrationError });
         }
       }
 
       return { data: results, error: null };
     } catch (error) {
-      
+      console.error('Error executing pending migrations:', error);
       return { data: null, error };
     }
   }
@@ -472,6 +556,151 @@ export class LocationService {
     }
   }
 
+  // ==================== STAFF LOCATION PERMISSIONS ====================
+
+  /**
+   * Grant location access to a staff member
+   */
+  static async grantLocationAccess(staffUserId, locationId, grantedBy, accessLevel = 'full', notes = '') {
+    try {
+      // First revoke any existing active access
+      await this.revokeLocationAccess(staffUserId, locationId, grantedBy, 'Replaced with new access level');
+
+      // Grant new access
+      const { data, error } = await supabase
+        .from('staff_location_access')
+        .insert([{
+          user_id: staffUserId,
+          location_id: locationId,
+          granted_by: grantedBy,
+          access_level: accessLevel,
+          notes: notes,
+          is_active: true
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error granting location access:', error);
+      return { data: null, error };
+    }
+  }
+
+  /**
+   * Revoke location access from a staff member
+   */
+  static async revokeLocationAccess(staffUserId, locationId, revokedBy, reason = '') {
+    try {
+      const { data, error } = await supabase
+        .from('staff_location_access')
+        .update({
+          is_active: false,
+          revoked_at: new Date().toISOString(),
+          revoked_by: revokedBy,
+          notes: reason
+        })
+        .eq('user_id', staffUserId)
+        .eq('location_id', locationId)
+        .eq('is_active', true)
+        .select();
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error revoking location access:', error);
+      return { data: null, error };
+    }
+  }
+
+  /**
+   * Get staff location permissions for a specific user
+   */
+  static async getStaffLocationPermissions(staffUserId) {
+    try {
+      const { data, error } = await supabase
+        .from('staff_location_access')
+        .select(`
+          *,
+          location:locations(*),
+          granted_by_user:profiles!staff_location_access_granted_by_fkey(id, name, email),
+          revoked_by_user:profiles!staff_location_access_revoked_by_fkey(id, name, email)
+        `)
+        .eq('user_id', staffUserId)
+        .order('granted_at', { ascending: false });
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error fetching staff location permissions:', error);
+      return { data: null, error };
+    }
+  }
+
+  /**
+   * Get all staff members and their location permissions for an organization
+   */
+  static async getOrganizationStaffPermissions(organizationId) {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          name,
+          email,
+          role,
+          location_access_level,
+          default_location_id,
+          staff_location_access(
+            id,
+            location_id,
+            access_level,
+            is_active,
+            granted_at,
+            revoked_at,
+            notes,
+            location:locations(id, name, slug)
+          )
+        `)
+        .eq('organization_id', organizationId)
+        .eq('role', 'staff')
+        .order('name');
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error fetching organization staff permissions:', error);
+      return { data: null, error };
+    }
+  }
+
+  /**
+   * Bulk update staff location permissions
+   */
+  static async bulkUpdateStaffPermissions(updates, updatedBy) {
+    try {
+      const results = [];
+
+      for (const update of updates) {
+        const { staffUserId, locationId, action, accessLevel, notes } = update;
+
+        if (action === 'grant') {
+          const result = await this.grantLocationAccess(staffUserId, locationId, updatedBy, accessLevel, notes);
+          results.push({ ...update, result });
+        } else if (action === 'revoke') {
+          const result = await this.revokeLocationAccess(staffUserId, locationId, updatedBy, notes);
+          results.push({ ...update, result });
+        }
+      }
+
+      return { data: results, error: null };
+    } catch (error) {
+      console.error('Error bulk updating staff permissions:', error);
+      return { data: null, error };
+    }
+  }
+
   // ==================== UTILITY METHODS ====================
 
   /**
@@ -542,7 +771,7 @@ export class LocationService {
         error: null
       };
     } catch (error) {
-      
+      console.error('Error fetching location analytics:', error);
       return { data: null, error };
     }
   }
@@ -568,4 +797,3 @@ export class LocationService {
 }
 
 export default LocationService;
-

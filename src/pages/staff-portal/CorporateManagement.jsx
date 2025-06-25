@@ -100,7 +100,7 @@ const CorporateManagement = () => {
       try {
         return JSON.parse(saved);
       } catch (e) {
-        
+        console.error('Error parsing saved column preferences:', e);
       }
     }
     return {
@@ -176,7 +176,7 @@ const CorporateManagement = () => {
 
       setPartners(data || []);
     } catch (error) {
-      
+      console.error('Error loading partners:', error);
       toast({
         title: "Error",
         description: "Failed to load corporate partners",
@@ -192,13 +192,13 @@ const CorporateManagement = () => {
       const { data, error } = await CorporatePartnersService.getPartnershipAnalytics();
       
       if (error) {
-        
+        console.error('Error loading analytics:', error);
         return;
       }
 
       setAnalytics(data);
     } catch (error) {
-      
+      console.error('Error loading analytics:', error);
     }
   };
 
@@ -245,7 +245,7 @@ const CorporateManagement = () => {
           successCount++;
         }
       } catch (error) {
-        
+        console.error('Error activating partner:', error);
       }
     }
 
@@ -272,7 +272,7 @@ const CorporateManagement = () => {
           successCount++;
         }
       } catch (error) {
-        
+        console.error('Error deactivating partner:', error);
       }
     }
 
@@ -367,7 +367,7 @@ const CorporateManagement = () => {
 
       loadPartners();
     } catch (error) {
-      
+      console.error('Error toggling status:', error);
       toast({
         title: "Error",
         description: "Failed to update partner status",
@@ -984,4 +984,3 @@ const CorporateManagement = () => {
 };
 
 export default CorporateManagement;
-

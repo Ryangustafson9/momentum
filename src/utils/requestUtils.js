@@ -207,6 +207,115 @@ export function getUserFriendlyErrorMessage(error) {
 }
 
 /**
+ * Sanitizes error before exposing to client
+ * Prevents sensitive database information from being leaked
+ * @param {Error} error - Raw error from database/API
+ * @param {string} operation - Operation that failed (for logging)
+ * @returns {Error} Sanitized error safe for client consumption
+ */
+export function sanitizeError(error, operation = 'Operation') {
+  // Log the raw error for debugging (server-side only)
+  console.error(`[${operation}] Raw error:`, error);
+  
+  // Create sanitized error for client
+  const sanitizedMessage = getSanitizedErrorMessage(error);
+  const sanitizedError = new Error(sanitizedMessage);
+  
+  // Preserve error type for proper handling
+  sanitizedError.name = error.name;
+  sanitizedError.code = getSafeErrorCode(error.code);
+  
+  return sanitizedError;
+}
+
+/**
+ * Gets sanitized error message that's safe to show to users
+ * @param {Error} error - Original error
+ * @returns {string} Sanitized error message
+ */
+function getSanitizedErrorMessage(error) {
+  const message = error.message?.toLowerCase() || '';
+  
+  // Check for specific error patterns and return user-friendly messages
+  if (message.includes('timeout') || message.includes('aborted')) {
+    return 'Request timed out. Please check your connection and try again.';
+  }
+  
+  if (message.includes('network') || message.includes('fetch')) {
+    return 'Network error. Please check your internet connection.';
+  }
+  
+  if (message.includes('duplicate key') || message.includes('unique constraint')) {
+    return 'This record already exists. Please use different information.';
+  }
+  
+  if (message.includes('foreign key') || message.includes('constraint')) {
+    return 'Cannot complete this action due to data dependencies.';
+  }
+  
+  if (message.includes('permission denied') || message.includes('unauthorized')) {
+    return 'You do not have permission to perform this action.';
+  }
+  
+  if (message.includes('not found') || message.includes('no rows')) {
+    return 'The requested information was not found.';
+  }
+  
+  if (message.includes('invalid input') || message.includes('syntax error')) {
+    return 'Invalid data provided. Please check your input and try again.';
+  }
+  
+  if (message.includes('connection') || message.includes('server')) {
+    return 'Unable to connect to the server. Please try again later.';
+  }
+  
+  // For any database-specific errors, return generic message
+  if (message.includes('postgres') || message.includes('sql') || message.includes('database')) {
+    return 'A database error occurred. Please try again later.';
+  }
+  
+  // Default safe message for unknown errors
+  return 'An unexpected error occurred. Please try again later.';
+}
+
+/**
+ * Gets safe error code that doesn't expose internal details
+ * @param {string|number} code - Original error code
+ * @returns {string} Safe error code
+ */
+function getSafeErrorCode(code) {
+  if (!code) return 'UNKNOWN_ERROR';
+  
+  // Map internal codes to safe external codes
+  const safeCodeMap = {
+    '23505': 'DUPLICATE_ENTRY', // Unique constraint violation
+    '23503': 'DEPENDENCY_ERROR', // Foreign key constraint violation
+    '42P01': 'RESOURCE_NOT_FOUND', // Table does not exist
+    '42703': 'INVALID_REQUEST', // Column does not exist
+    '28P01': 'AUTHENTICATION_ERROR', // Invalid password
+    '3D000': 'RESOURCE_NOT_FOUND', // Database does not exist
+  };
+  
+  return safeCodeMap[code] || 'GENERAL_ERROR';
+}
+
+/**
+ * Wraps API service methods with error sanitization
+ * @param {Function} apiMethod - API method to wrap
+ * @param {string} operation - Operation name for logging
+ * @returns {Function} Wrapped method with error sanitization
+ */
+export function withErrorSanitization(apiMethod, operation) {
+  return async (...args) => {
+    try {
+      return await apiMethod(...args);
+    } catch (error) {
+      throw sanitizeError(error, operation);
+    }
+  };
+}
+
+/**
  * Enhanced Supabase query wrapper with automatic timeout and error handling
  * @param {Object} table - Supabase table reference
  * @param {string} operation - Operation type (select, insert, update, delete)

@@ -16,6 +16,8 @@ import {
   hasStaffAccess,
   hasMemberAccess,
   getUnauthorizedRedirect,
+  isValidRole,
+  isValidUser,
 } from './roleUtils';
 
 // ⭐ IMPORT: All route definitions from routeUtils
@@ -37,15 +39,23 @@ export {
   canAccessRoute,
   validateRouteAccess,
   getUnauthorizedRedirect,
+  // ✅ SECURITY FIX: Export validation helpers
+  isValidRole,
+  isValidUser,
 };
 
 // Additional convenience functions
 export const hasElevatedAccess = (user) => {
-  return hasStaffAccess(user?.role) || hasAdminAccess(user?.role);
+  // ✅ SECURITY FIX: Validate user parameter
+  if (!isValidUser(user) || !isValidRole(user.role)) {
+    return false;
+  }
+  return hasStaffAccess(user.role) || hasAdminAccess(user.role);
 };
 
 export const getDashboardRoute = (user) => {
-  if (!user || !user.role) {
+  // ✅ SECURITY FIX: Validate user parameter
+  if (!isValidUser(user) || !isValidRole(user.role)) {
     return '/login';
   }
   return getDefaultRoute(user.role);
@@ -53,15 +63,28 @@ export const getDashboardRoute = (user) => {
 
 // validateUserRole function that components expect
 export const validateUserRole = (user) => {
-  if (!user) {
-    return { role: 'member', isValid: false };
+  // ✅ SECURITY FIX: Enhanced user validation
+  if (!isValidUser(user)) {
+    return { role: 'member', isValid: false, error: 'Invalid user object' };
   }
   
-  const role = normalizeRole(user.role || 'member');
+  if (!isValidRole(user.role)) {
+    return { 
+      role: 'member', 
+      isValid: false, 
+      originalRole: user.role,
+      error: 'Invalid role value'
+    };
+  }
+  
+  const role = normalizeRole(user.role);
+  const validRoles = ['admin', 'staff', 'member', 'nonmember'];
+  
   return {
     role,
-    isValid: ['admin', 'staff', 'member'].includes(role),
-    originalRole: user.role
+    isValid: validRoles.includes(role),
+    originalRole: user.role,
+    error: validRoles.includes(role) ? null : 'Unrecognized role'
   };
 };
 
@@ -80,5 +103,8 @@ export default {
   hasElevatedAccess,
   getDashboardRoute,
   validateUserRole,
+  // ✅ SECURITY FIX: Include validation helpers
+  isValidRole,
+  isValidUser,
 };
 

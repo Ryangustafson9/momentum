@@ -45,7 +45,7 @@ const getClasses = async () => {
     if (error) throw error;
     return data || [];
   } catch (error) {
-    
+    console.error('Error fetching classes:', error);
     throw error;
   }
 };
@@ -61,7 +61,7 @@ const getInstructors = async () => {
     if (error) throw error;
     return data || [];
   } catch (error) {
-    
+    console.error('Error fetching instructors:', error);
     throw error;
   }
 };
@@ -191,7 +191,7 @@ const ClassFormDialog = ({ isOpen, onClose, onSave, classData, instructors }) =>
       setAvailabilityStatus(newStatus);
 
     } catch (error) {
-      
+      console.error('Error checking availability:', error);
       setAvailabilityStatus(prev => ({ ...prev, checking: false }));
     }
   };
@@ -784,6 +784,5 @@ const Classes = () => {
 };
 
 export default Classes;
-
 
 

@@ -63,7 +63,7 @@ const AdvancedMemberSearchModal = ({
           .order('name');
         setMembershipTypes(data || []);
       } catch (error) {
-        
+        console.error('Error fetching membership types:', error);
       }
     };
 
@@ -158,7 +158,7 @@ const AdvancedMemberSearchModal = ({
 
       setResults(processedResults);
     } catch (error) {
-      
+      console.error('Error performing advanced search:', error);
       setResults([]);
       setTotalCount(0);
     } finally {
@@ -237,7 +237,7 @@ const AdvancedMemberSearchModal = ({
       onClose();
 
     } catch (error) {
-      
+      console.error('Error creating temporary profile:', error);
       toast({
         title: "Error",
         description: `Failed to create profile: ${error.message}`,
@@ -310,6 +310,11 @@ const AdvancedMemberSearchModal = ({
                 placeholder="Name, email, phone..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+                data-form-type="other"
                 className="w-full"
               />
             </div>
@@ -558,4 +563,3 @@ const AdvancedMemberSearchModal = ({
 };
 
 export default AdvancedMemberSearchModal;
-

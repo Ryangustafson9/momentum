@@ -1,5 +1,6 @@
 // 🚀 MEMBER SERVICE - Centralized data fetching for React Query
 import { supabase } from '@/lib/supabaseClient';
+import { sanitizeError } from '@/utils/requestUtils';
 
 export const memberService = {
   // Get all members with optional filtering
@@ -36,11 +37,8 @@ export const memberService = {
       query = query.limit(filters.limit);
     }
 
-    const { data, error } = await query;
-
-    if (error) {
-      
-      throw new Error(`Failed to fetch members: ${error.message}`);
+    const { data, error } = await query;    if (error) {
+      throw sanitizeError(error, 'Get members');
     }
 
     
@@ -54,11 +52,8 @@ export const memberService = {
     const { count, error } = await supabase
       .from('profiles')
       .select('*', { count: 'exact', head: true })
-      .eq('role', 'member');
-
-    if (error) {
-      
-      throw new Error(`Failed to fetch member count: ${error.message}`);
+      .eq('role', 'member');    if (error) {
+      throw sanitizeError(error, 'Get member count');
     }
 
     
@@ -83,11 +78,8 @@ export const memberService = {
         )
       `)
       .eq('id', memberId)
-      .single();
-
-    if (error) {
-      
-      throw new Error(`Failed to fetch member profile: ${error.message}`);
+      .single();    if (error) {
+      throw sanitizeError(error, 'Get member profile');
     }
 
     
@@ -105,11 +97,8 @@ export const memberService = {
         membership_type:membership_types!current_membership_type_id(*)
       `)
       .eq('auth_user_id', memberId)
-      .maybeSingle();
-
-    if (error) {
-      
-      throw new Error(`Failed to fetch membership: ${error.message}`);
+      .maybeSingle();    if (error) {
+      throw sanitizeError(error, 'Get member membership');
     }
 
     
@@ -126,11 +115,8 @@ export const memberService = {
         *,
         addon_type:membership_types!addon_type_id(*)
       `)
-      .eq('member_id', memberId);
-
-    if (error) {
-      
-      throw new Error(`Failed to fetch add-ons: ${error.message}`);
+      .eq('member_id', memberId);    if (error) {
+      throw sanitizeError(error, 'Get member add-ons');
     }
 
     
@@ -149,11 +135,8 @@ export const memberService = {
       })
       .eq('id', memberId)
       .select()
-      .single();
-
-    if (error) {
-      
-      throw new Error(`Failed to update member: ${error.message}`);
+      .single();    if (error) {
+      throw sanitizeError(error, 'Update member');
     }
 
     
@@ -172,9 +155,7 @@ export const memberService = {
       .eq('member_id', memberId)
       .gte('check_in_time', today)
       .lt('check_in_time', today + 'T23:59:59')
-      .maybeSingle();
-
-    if (existingCheckIn) {
+      .maybeSingle();    if (existingCheckIn) {
       throw new Error('Member is already checked in today');
     }
 
@@ -191,8 +172,7 @@ export const memberService = {
       .single();
 
     if (error) {
-      
-      throw new Error(`Failed to check in member: ${error.message}`);
+      throw sanitizeError(error, 'Check in member');
     }
 
     
@@ -211,11 +191,8 @@ export const memberService = {
       })
       .eq('id', attendanceId)
       .select()
-      .single();
-
-    if (error) {
-      
-      throw new Error(`Failed to check out member: ${error.message}`);
+      .single();    if (error) {
+      throw sanitizeError(error, 'Check out member');
     }
 
     
@@ -232,11 +209,8 @@ export const memberService = {
         *,
         family_member:profiles!family_member_id(*)
       `)
-      .eq('primary_member_id', primaryMemberId);
-
-    if (error) {
-      
-      throw new Error(`Failed to fetch family members: ${error.message}`);
+      .eq('primary_member_id', primaryMemberId);    if (error) {
+      throw sanitizeError(error, 'Get family members');
     }
 
     

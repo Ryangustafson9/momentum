@@ -216,9 +216,8 @@ export const useRenderCount = (componentName = 'Component') => {
   const renderCount = useRef(0);
   
   useEffect(() => {
-    renderCount.current += 1;
-    
-    if (process.env.NODE_ENV === 'development') {
+    renderCount.current += 1;    
+    if (import.meta.env.DEV) {
       
     }
   });
@@ -242,9 +241,8 @@ export const useWhyDidYouUpdate = (name, props) => {
             to: props[key],
           };
         }
-      });
-      
-      if (Object.keys(changedProps).length && process.env.NODE_ENV === 'development') {
+      });      
+      if (Object.keys(changedProps).length && import.meta.env.DEV) {
         
       }
     }

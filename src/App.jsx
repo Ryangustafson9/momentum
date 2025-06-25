@@ -23,7 +23,7 @@ import AdvancedFeatures from '@/pages/member-portal/AdvancedFeatures';
 
 // Staff pages - Updated to correct staff-portal paths
 import StaffDashboard from '@/pages/staff-portal/Dashboard';
-// import Members from '@/pages/staff-portal/Members'; // DEACTIVATED: Member search available in navbar
+
 import Classes from '@/pages/staff-portal/Classes';
 import CheckIn from '@/pages/staff-portal/CheckIn';
 import Memberships from '@/pages/staff-portal/Memberships';
@@ -41,6 +41,7 @@ import StaffMemberProfile from '@/pages/staff-portal/MemberProfile';
 import MemberRegistration from '@/pages/staff-portal/MemberRegistration';
 import CorporateManagement from '@/pages/staff-portal/CorporateManagement';
 import TagManagement from '@/pages/staff-portal/TagManagement';
+import LocationManagement from '@/pages/admin/LocationManagement';
 
 // Admin pages
 import AdminPanelPage from '@/pages/staff-portal/AdminPanelPage';
@@ -217,7 +218,7 @@ function App() {
                     </PrivateRoute>
                   }
                 >                  <Route path="dashboard" element={<StaffDashboard />} />
-                  {/* <Route path="members" element={<Members />} /> */} {/* DEACTIVATED: Member search available in navbar */}
+
                   <Route path="classes" element={<Classes />} />
                   <Route path="checkin" element={<CheckIn />} />
                   <Route path="memberships" element={<Memberships />} />
@@ -243,9 +244,68 @@ function App() {
                       <TagManagement />
                     </PrivateRoute>
                   } />
+                  <Route path="location-management" element={
+                    <PrivateRoute allowedRoles={['admin']}>
+                      <LocationManagement />
+                    </PrivateRoute>
+                  } />
                   <Route index element={<Navigate to="/staff-portal/dashboard" replace />} />
                 </Route>
 
+                {/* Multi-location staff routes - /:location/staff-portal/* */}
+                <Route
+                  path="/:location/staff-portal"
+                  element={
+                    <PrivateRoute allowedRoles={['staff', 'admin']}>
+                      <StaffDashboardLayout />
+                    </PrivateRoute>
+                  }
+                >
+                  <Route path="dashboard" element={<StaffDashboard />} />
+                  <Route path="classes" element={<Classes />} />
+                  <Route path="checkin" element={<CheckIn />} />
+                  <Route path="memberships" element={<Memberships />} />
+                  <Route path="schedule" element={<Schedule />} />
+                  <Route path="attendance" element={<Attendance />} />
+                  <Route path="billing" element={<Billing />} />
+                  <Route path="communications" element={<Communications />} />
+                  <Route path="equipment" element={<Equipment />} />
+                  <Route path="reports" element={<Reports />} />
+                  <Route path="settings" element={<Settings />} />
+                  <Route path="trainers" element={<Trainers />} />
+                  <Route path="pos" element={<PointOfSale />} />
+                  <Route path="pos/manage" element={<POSManagement />} />
+                  <Route path="member/:id" element={<StaffMemberProfile />} />
+                  <Route path="register-member" element={<MemberRegistration />} />
+                  <Route path="corporate-management" element={
+                    <PrivateRoute allowedRoles={['admin', 'staff']}>
+                      <CorporateManagement />
+                    </PrivateRoute>
+                  } />
+                  <Route path="tag-management" element={
+                    <PrivateRoute allowedRoles={['admin', 'staff']}>
+                      <TagManagement />
+                    </PrivateRoute>
+                  } />
+                  <Route path="location-management" element={
+                    <PrivateRoute allowedRoles={['admin']}>
+                      <LocationManagement />
+                    </PrivateRoute>
+                  } />
+                  <Route index element={<Navigate to="dashboard" replace />} />
+                </Route>
+
+                {/* Multi-location admin routes */}
+                <Route
+                  path="/:location/staff-portal/adminpanel"
+                  element={
+                    <PrivateRoute allowedRoles={['admin']}>
+                      <StaffDashboardLayout>
+                        <AdminPanelPage />
+                      </StaffDashboardLayout>
+                    </PrivateRoute>
+                  }
+                />
 
                   {/* Admin routes */}
                 <Route
@@ -259,7 +319,7 @@ function App() {
                   }
                 />
                 <Route
-                  path="/admin/adminpanel"
+                  path="/staff-portal/adminpanel"
                   element={
                     <PrivateRoute allowedRoles={['admin']}>
                       <StaffDashboardLayout>
@@ -267,9 +327,13 @@ function App() {
                       </StaffDashboardLayout>
                     </PrivateRoute>
                   }
-                />                <Route 
-                  path="/admin/super-admin" 
+                />                <Route
+                  path="/admin/super-admin"
                   element={<Navigate to="/staff-portal/settings/admin-panel" replace />}
+                />
+                <Route
+                  path="/admin/adminpanel"
+                  element={<Navigate to="/staff-portal/adminpanel" replace />}
                 />
                 
                 {/* Legacy staff routes - redirect to new staff-portal paths */}
@@ -281,10 +345,7 @@ function App() {
                   path="/staff/staffdashboard" 
                   element={<Navigate to="/staff-portal/dashboard" replace />}
                 />
-                <Route 
-                  path="/staff/members" 
-                  element={<Navigate to="/staff-portal/members" replace />}
-                />
+
                 <Route 
                   path="/staff/classes" 
                   element={<Navigate to="/staff-portal/classes" replace />}
@@ -318,4 +379,3 @@ function App() {
 }
 
 export default App;
-

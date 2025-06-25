@@ -9,11 +9,12 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CheckCircle, Star, Dumbbell, Crown, AlertCircle, Lock, Edit3, Settings, Users, Calendar, Target, ArrowRight, ArrowLeft, User, Mail, Phone, Shield } from 'lucide-react';
+import { CheckCircle, Star, Dumbbell, Crown, AlertCircle, Lock, Edit3, Settings, Users, Calendar, Target, ArrowRight, ArrowLeft, User, Mail, Phone, Shield, Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import { getGymName, getContactInfo, isFeatureEnabled, initializeGymBranding, getGymColors } from '@/utils/gymBranding.js';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast.js';
 import { normalizeRole } from '@/utils/roleUtils';
+import { useResilientForm, useNetworkStatus } from '@/hooks/useResilientForm';
 
 const JoinOnline = () => {
   const { user, signup, loading: authLoading } = useAuth();
@@ -25,16 +26,34 @@ const JoinOnline = () => {
   const [isStaff, setIsStaff] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [currentStep, setCurrentStep] = useState(1); // 1: Plan Selection, 2: User Info, 3: Confirmation
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    phone: '',
-    agreeToTerms: false
+  
+  // ✅ NETWORK RESILIENCE: Replace basic form state with resilient form handling
+  const {
+    formData,
+    updateFormData,
+    submitForm,
+    clearForm,
+    restoreFromBackup,
+    hasBackup,
+    isOnline,
+    isSubmitting,
+    attempt,
+    lastError
+  } = useResilientForm({
+    storageKey: 'join_online_form',
+    defaultData: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      phone: '',
+      agreeToTerms: false
+    },
+    autoSave: true,
+    autoSaveDelay: 2000
   });
+
   const [contactInfo, setContactInfo] = useState({
     email: 'info@momentumfitness.com',
     phone: '(555) 123-4567'
@@ -138,6 +157,34 @@ const JoinOnline = () => {
       
     }
   };
+
+  // ✅ NETWORK RESILIENCE: Handle form backup restoration
+  useEffect(() => {
+    if (hasBackup) {
+      const shouldRestore = window.confirm(
+        'We found a saved form from a previous session. Would you like to restore it?'
+      );
+      if (shouldRestore) {
+        restoreFromBackup();
+        toast({
+          title: "Form Restored",
+          description: "Your previous form data has been restored.",
+          variant: "default"
+        });
+      }
+    }
+  }, [hasBackup, restoreFromBackup, toast]);
+
+  // ✅ NETWORK RESILIENCE: Network status notifications
+  useEffect(() => {
+    if (!isOnline) {
+      toast({
+        title: "Connection Lost",
+        description: "You're currently offline. Your form data is being saved locally.",
+        variant: "destructive"
+      });
+    }
+  }, [isOnline, toast]);
 
   // Check if online joining is enabled and fetch membership plans
   useEffect(() => {
@@ -311,13 +358,9 @@ const JoinOnline = () => {
     
     return true;
   };
-
-  // Handle form input changes
+  // ✅ NETWORK RESILIENCE: Handle form input changes with auto-save
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    updateFormData({ [field]: value });
   };
 
   // Handle step navigation
@@ -334,117 +377,141 @@ const JoinOnline = () => {
       setCurrentStep(currentStep - 1);
     }
   };
-
-  // Complete signup process
+  // ✅ NETWORK RESILIENCE: Complete signup with retry logic
   const handleCompleteSignup = async () => {
     if (!validateStep2()) return;
     
-    setIsLoading(true);
-    
+    // ✅ NETWORK RESILIENCE: Use resilient form submission
     try {
-      
-      
-      // Step 1: Check if email already exists
-      const { data: existingProfiles, error: checkError } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('email', formData.email.toLowerCase().trim());
-      
-      if (checkError) {
-        throw new Error('Error checking existing users: ' + checkError.message);
-      }
-      
-      if (existingProfiles && existingProfiles.length > 0) {
-        toast({
-          title: "Account Already Exists",
-          description: "An account with this email already exists. Please sign in instead.",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      // Step 2: Create auth user using signup from AuthContext
-      
-      const { user: newUser } = await signup(formData.email, formData.password);
-      
-      if (!newUser) {
-        throw new Error('Failed to create user account');
-      }
-      
-      
-      
-      // Step 3: Create profile with membership plan
-      
-      const profileData = {
-        id: newUser.id,
-        email: formData.email.toLowerCase().trim(),
-        first_name: formData.firstName.trim(),
-        last_name: formData.lastName.trim(),
-        phone: formData.phone.trim(),
-        role: normalizeRole('member'),
-        current_membership_type_id: selectedPlan.id,
-        status: 'Active',
-        join_date: new Date().toISOString().split('T')[0],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([profileData]);
-      
-      if (profileError) {
-        
-        throw new Error('Failed to create user profile: ' + profileError.message);
-      }
-      
-      
-      
-      // Step 4: Create membership record (optional, depending on your business logic)
-      if (selectedPlan) {
-        
-        const membershipData = {
-          user_id: newUser.id,
-          membership_type_id: selectedPlan.id,
-          start_date: new Date().toISOString(),
-          status: 'active',
-          payment_status: 'pending', // Will be updated after payment
-          created_at: new Date().toISOString()
-        };
-        
-        const { error: membershipError } = await supabase
-          .from('memberships')
-          .insert([membershipData]);
-        
-        if (membershipError) {
+      await submitForm(
+        async () => {
+          console.log('🚀 Starting signup process...');
           
-          // Don't fail the whole process for this
-        } else {
+          // Step 1: Check if email already exists
+          const { data: existingProfiles, error: checkError } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('email', formData.email.toLowerCase().trim());
           
+          if (checkError) {
+            throw new Error('Error checking existing users: ' + checkError.message);
+          }
+          
+          if (existingProfiles && existingProfiles.length > 0) {
+            throw new Error('An account with this email already exists. Please sign in instead.');
+          }
+          
+          // Step 2: Create auth user using signup from AuthContext
+          console.log('📝 Creating auth user...');
+          const { user: newUser } = await signup(formData.email, formData.password, {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            phone: formData.phone
+          });
+          
+          if (!newUser) {
+            throw new Error('Failed to create user account');
+          }
+          
+          console.log('✅ Auth user created successfully');
+          
+          // Step 3: Create profile with membership plan
+          console.log('📋 Creating user profile...');
+          const profileData = {
+            id: newUser.id,
+            email: formData.email.toLowerCase().trim(),
+            first_name: formData.firstName.trim(),
+            last_name: formData.lastName.trim(),
+            phone: formData.phone.trim(),
+            role: normalizeRole('member'),
+            current_membership_type_id: selectedPlan.id,
+            status: 'Active',
+            join_date: new Date().toISOString().split('T')[0],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([profileData]);
+          
+          if (profileError) {
+            console.error('❌ Profile creation failed:', profileError);
+            throw new Error('Failed to create user profile: ' + profileError.message);
+          }
+          
+          console.log('✅ User profile created successfully');
+          
+          // Step 4: Create membership record (optional, depending on your business logic)
+          if (selectedPlan) {
+            console.log('💳 Creating membership record...');
+            const membershipData = {
+              user_id: newUser.id,
+              membership_type_id: selectedPlan.id,
+              start_date: new Date().toISOString(),
+              status: 'active',
+              payment_status: 'pending', // Will be updated after payment
+              created_at: new Date().toISOString()
+            };
+            
+            const { error: membershipError } = await supabase
+              .from('memberships')
+              .insert([membershipData]);
+            
+            if (membershipError) {
+              console.warn('⚠️ Membership record creation failed:', membershipError);
+              // Don't fail the whole process for this
+            } else {
+              console.log('✅ Membership record created successfully');
+            }
+          }
+          
+          return { user: newUser, profile: profileData };
+        },
+        {
+          maxRetries: 3,
+          validateBeforeSubmit: validateStep2,
+          onProgress: ({ attempt, maxRetries }) => {
+            if (attempt > 1) {
+              toast({
+                title: "Retrying...",
+                description: `Submission attempt ${attempt} of ${maxRetries}`,
+                variant: "default"
+              });
+            }
+          },
+          onRetry: ({ attempt, error, retryIn }) => {
+            toast({
+              title: "Connection Issue",
+              description: `Retrying in ${Math.round(retryIn/1000)} seconds... (Attempt ${attempt})`,
+              variant: "destructive"
+            });
+          }
         }
-      }
-        // Success! Show welcome message and redirect
+      );
+      
+      // Success! Show welcome message and redirect
       toast({
         title: "Welcome to " + getGymName() + "!",
         description: "Your account has been created successfully. Welcome to our community!",
         variant: "default"
       });
       
+      // Clear form data since submission was successful
+      clearForm();
       
-        // Redirect to member dashboard
+      // Redirect to member dashboard
       setTimeout(() => {
         navigate('/member-portal/dashboard');
       }, 2000);
       
     } catch (error) {
-      
+      console.error('❌ Signup failed:', error);
       toast({
         title: "Signup Failed",
         description: error.message || "Failed to create account. Please try again.",
         variant: "destructive"
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -687,10 +754,45 @@ const JoinOnline = () => {
       </div>
     );
   }
-
   // Main membership selection page
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4">
+      {/* ✅ NETWORK RESILIENCE: Network status indicator */}
+      {!isOnline && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed top-4 left-4 z-50 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2"
+        >
+          <WifiOff className="w-4 h-4" />
+          <span className="text-sm font-medium">Offline - Form data saved locally</span>
+        </motion.div>
+      )}
+
+      {/* ✅ NETWORK RESILIENCE: Retry indicator during submission */}
+      {isSubmitting && attempt > 1 && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2"
+        >
+          <RefreshCw className="w-4 h-4 animate-spin" />
+          <span className="text-sm font-medium">Retrying... (Attempt {attempt})</span>
+        </motion.div>
+      )}
+
+      {/* ✅ NETWORK RESILIENCE: Backup restoration notice */}
+      {hasBackup && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed top-16 right-4 z-50 bg-yellow-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2"
+        >
+          <AlertCircle className="w-4 h-4" />
+          <span className="text-sm font-medium">Form backup available</span>
+        </motion.div>
+      )}
+
       <div className="max-w-6xl mx-auto">
         {/* Header with Back Button */}
         <motion.div
@@ -1052,16 +1154,28 @@ const JoinOnline = () => {
                   </p>
                 </div>
               </div>
-            </div>
-
-            <div className="mt-6">
+            </div>            <div className="mt-6">
               <Button
                 onClick={handleCompleteSignup}
-                className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
-                isLoading={isLoading}
+                className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white disabled:opacity-50"
+                disabled={isSubmitting || !isOnline}
               >
-                Complete Signup
+                {isSubmitting ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    {attempt > 1 ? `Retrying... (${attempt})` : 'Creating Account...'}
+                  </>
+                ) : (
+                  'Complete Signup'
+                )}
               </Button>
+              
+              {/* ✅ NETWORK RESILIENCE: Offline notice */}
+              {!isOnline && (
+                <p className="text-sm text-red-600 mt-2 text-center">
+                  Please check your internet connection to complete signup
+                </p>
+              )}
             </div>
 
             <div className="mt-4 text-center">

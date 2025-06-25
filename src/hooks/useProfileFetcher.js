@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { storage } from '@/utils/storageUtils';
+import { enhancedStorage } from '@/utils/secureStorage';
 import { normalizeRole } from '@/utils/roleUtils';
 import { createProfileSafe } from '@/utils/profileValidation';
 
@@ -48,9 +49,8 @@ export const useProfileFetcher = () => {
           
           
           const createdProfile = await createUserProfile(userId, onProfileCreated);
-          
-          if (cache) {
-            cacheUserProfile(createdProfile);
+            if (cache) {
+            await cacheUserProfile(createdProfile);
           }
           
           return createdProfile;
@@ -62,11 +62,9 @@ export const useProfileFetcher = () => {
       // Validate and normalize profile data
       const normalizedProfile = normalizeProfileData(data);
       
-      
-
-      // Cache the profile if requested
+          // Cache the profile if requested
       if (cache) {
-        cacheUserProfile(normalizedProfile);
+        await cacheUserProfile(normalizedProfile);
       }
 
       return normalizedProfile;
@@ -255,17 +253,16 @@ export const useProfileFetcher = () => {
       name: ''
     };
   };
-
   /**
-   * Caches user profile data for faster subsequent loads
+   * Caches user profile data securely for faster subsequent loads
    * @param {Object} profile - The profile to cache
    */
-  const cacheUserProfile = (profile) => {
+  const cacheUserProfile = async (profile) => {
     try {
-      storage.local.set('cached_user', profile);
-      storage.local.set('cached_user_timestamp', Date.now());
+      await enhancedStorage.secure.set('cached_user', profile);
+      enhancedStorage.session.set('cached_user_timestamp', Date.now());
     } catch (error) {
-      
+      console.warn('Failed to cache user profile securely:', error);
     }
   };
 
@@ -273,10 +270,10 @@ export const useProfileFetcher = () => {
    * Retrieves cached user profile if valid
    * @returns {Object|null} Cached profile or null if invalid/expired
    */
-  const getCachedProfile = useCallback(() => {
+  const getCachedProfile = useCallback(async () => {
     try {
-      const cached = storage.local.get('cached_user');
-      const cacheTimestamp = storage.local.get('cached_user_timestamp');
+      const cached = await enhancedStorage.secure.get('cached_user');
+      const cacheTimestamp = enhancedStorage.session.get('cached_user_timestamp');
 
       // Check if cache is still valid (24 hours)
       if (cached && cacheTimestamp) {
@@ -284,32 +281,32 @@ export const useProfileFetcher = () => {
         const maxCacheAge = 24 * 60 * 60 * 1000; // 24 hours
 
         if (cacheAge < maxCacheAge) {
-          
+          console.log('🔄 Using cached user profile');
           return cached;
         } else {
-          
-          storage.local.remove('cached_user');
-          storage.local.remove('cached_user_timestamp');
+          console.log('♻️ Cache expired, clearing');
+          enhancedStorage.secure.remove('cached_user');
+          enhancedStorage.session.remove('cached_user_timestamp');
         }
       }
 
       return null;
     } catch (error) {
-      
+      console.warn('Failed to get cached profile:', error);
       return null;
     }
   }, []);
 
   /**
-   * Clears cached profile data
+   * Clears cached profile data securely
    */
   const clearProfileCache = useCallback(() => {
     try {
-      storage.local.remove('cached_user');
-      storage.local.remove('cached_user_timestamp');
-      
+      enhancedStorage.secure.remove('cached_user');
+      enhancedStorage.session.remove('cached_user_timestamp');
+      console.log('🧹 Profile cache cleared securely');
     } catch (error) {
-      
+      console.warn('Failed to clear profile cache:', error);
     }
   }, []);
 

@@ -4,10 +4,11 @@ import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast.js';
+import { useEmailValidation } from '@/hooks/useEmailValidation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CheckCircle, AlertCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle, Loader2, X } from 'lucide-react';
 import { getGymLogo, getGymName, getGymColors } from '@/utils/gymBranding';
 import { supabase } from '@/lib/supabaseClient';
 import { capitalizeName, calculatePasswordStrength } from '@/utils/formHelpers.js';
@@ -33,7 +34,6 @@ const Signup = () => {
   useEffect(() => {
     
   }, [searchParams, urlSuccess, localSuccess, showSuccess, displayName]);
-
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -41,6 +41,22 @@ const Signup = () => {
     password: '',
     confirmPassword: ''
   });
+  
+  // ✅ REAL-TIME EMAIL VALIDATION: Initialize email validation hook
+  const {
+    email: validatedEmail,
+    validationState,
+    errorMessage: emailErrorMessage,
+    isValid: isEmailValid,
+    isValidating: isEmailValidating,
+    handleEmailChange,
+    EMAIL_VALIDATION_STATES,
+    getValidationStatus
+  } = useEmailValidation({
+    debounceMs: 800, // Wait 800ms after user stops typing
+    checkDuplicates: true
+  });
+  
   const [gymLogoError, setGymLogoError] = useState(false);
   const [momentumLogoError, setMomentumLogoError] = useState(false);
   const [passwordsMatch, setPasswordsMatch] = useState(null);
@@ -57,13 +73,21 @@ const Signup = () => {
     if (!confirmPassword) return null;
     return password === confirmPassword;
   };
-
   const handleChange = (e) => {
     let value = e.target.value;
     
     // Auto-capitalize first and last names
     if (e.target.name === 'firstName' || e.target.name === 'lastName') {
       value = capitalizeName(value);
+    }
+    
+    // ✅ REAL-TIME EMAIL VALIDATION: Handle email changes
+    if (e.target.name === 'email') {
+      handleEmailChange(value);
+      // Clear duplicate email error when user starts typing
+      if (duplicateEmailError) {
+        setDuplicateEmailError(false);
+      }
     }
     
     const newFormData = {
@@ -84,11 +108,6 @@ const Signup = () => {
     // Update password match when confirm password changes
     if (e.target.name === 'confirmPassword') {
       setPasswordsMatch(checkPasswordsMatch(newFormData.password, value));
-    }
-
-    // Clear duplicate email error when user starts typing again
-    if (e.target.name === 'email' && duplicateEmailError) {
-      setDuplicateEmailError(false);
     }
   };
 
@@ -139,9 +158,8 @@ const Signup = () => {
         variant: "destructive",
       });
       return;
-    }
-
-    if (!formData.email.trim()) {
+    }    // ✅ REAL-TIME EMAIL VALIDATION: Use validated email from hook
+    if (!validatedEmail.trim()) {
       toast({
         title: "Email required",
         description: "Please enter your email address.",
@@ -150,12 +168,11 @@ const Signup = () => {
       return;
     }
 
-    // Email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
+    // ✅ REAL-TIME EMAIL VALIDATION: Check if email validation passed
+    if (!isEmailValid) {
       toast({
-        title: "Invalid email format",
-        description: "Please enter a valid email address.",
+        title: "Email validation failed",
+        description: emailErrorMessage || "Please enter a valid email address.",
         variant: "destructive",
       });
       return;
@@ -209,21 +226,15 @@ const Signup = () => {
         variant: "destructive",
       });
       return;
-    }
-
-    
+    }    
     try {
-      const emailExists = await checkEmailExists(formData.email);
+      // ✅ REAL-TIME EMAIL VALIDATION: Email already validated, skip duplicate check
+      // The hook already checked for duplicates in real-time
       
-      if (emailExists) {
-        setDuplicateEmailError(true);
-        return;
-      }
-
-      const result = await signup(formData.email, formData.password, {
+      const result = await signup(validatedEmail, formData.password, {
         firstName: formData.firstName,
         lastName: formData.lastName
-      });      
+      });
 
       if (result && (result.user || result.profile)) {
         
@@ -454,22 +465,52 @@ const Signup = () => {
                     placeholder="Doe"
                   />
                 </div>
-              </div>
-
-              {/* EMAIL FIELD WITH BEAUTIFUL ERROR DISPLAY */}
+              </div>              {/* EMAIL FIELD WITH REAL-TIME VALIDATION */}
               <div>
                 <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="you@example.com"
-                  className={duplicateEmailError ? 'border-red-400/60 focus:border-red-400 bg-red-50/30' : ''}
-                />
-                {duplicateEmailError && (
+                <div className="relative">
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    value={validatedEmail}
+                    onChange={(e) => {
+                      // Update both the validation hook and form data
+                      handleChange(e);
+                    }}
+                    placeholder="you@example.com"
+                    className={`pr-10 ${
+                      validationState === EMAIL_VALIDATION_STATES.VALID 
+                        ? 'border-green-400/60 focus:border-green-400 bg-green-50/30' 
+                        : validationState === EMAIL_VALIDATION_STATES.INVALID_FORMAT || 
+                          validationState === EMAIL_VALIDATION_STATES.DUPLICATE ||
+                          validationState === EMAIL_VALIDATION_STATES.ERROR
+                        ? 'border-red-400/60 focus:border-red-400 bg-red-50/30'
+                        : validationState === EMAIL_VALIDATION_STATES.VALIDATING
+                        ? 'border-blue-400/60 focus:border-blue-400 bg-blue-50/30'
+                        : ''
+                    }`}
+                  />
+                  
+                  {/* Real-time validation icon */}
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                    {validationState === EMAIL_VALIDATION_STATES.VALID && (
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                    )}
+                    {(validationState === EMAIL_VALIDATION_STATES.INVALID_FORMAT || 
+                      validationState === EMAIL_VALIDATION_STATES.DUPLICATE ||
+                      validationState === EMAIL_VALIDATION_STATES.ERROR) && (
+                      <X className="w-5 h-5 text-red-500" />
+                    )}
+                    {validationState === EMAIL_VALIDATION_STATES.VALIDATING && (
+                      <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                    )}
+                  </div>
+                </div>
+                
+                {/* Real-time validation feedback */}
+                {emailErrorMessage && (
                   <div className="mt-2">
                     <div className="relative overflow-hidden bg-white/70 backdrop-blur-md border border-red-300/40 rounded-xl p-3 shadow-lg">
                       {/* Animated background gradient */}
@@ -487,19 +528,46 @@ const Signup = () => {
                           </div>
                           
                           <span className="text-sm font-medium bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                            Email already exists
+                            {emailErrorMessage}
                           </span>
                         </div>
                         
-                        {/* Modern button */}
-                        <Link to="/login">
-                          <button 
-                            type="button"
-                            className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 shadow-md hover:shadow-lg"
-                          >
-                            Sign In
-                          </button>
-                        </Link>
+                        {/* Show "Sign In" button only for duplicate email */}
+                        {validationState === EMAIL_VALIDATION_STATES.DUPLICATE && (
+                          <Link to="/login">
+                            <button 
+                              type="button"
+                              className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 shadow-md hover:shadow-lg"
+                            >
+                              Sign In
+                            </button>
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Success feedback for valid email */}
+                {validationState === EMAIL_VALIDATION_STATES.VALID && (
+                  <div className="mt-2">
+                    <div className="relative overflow-hidden bg-white/70 backdrop-blur-md border border-green-300/40 rounded-xl p-3 shadow-lg">
+                      {/* Animated background gradient */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-green-400/5 via-emerald-400/5 to-green-400/5"></div>
+                      
+                      {/* Content */}
+                      <div className="relative flex items-center space-x-2.5">
+                        {/* Icon with glow effect */}
+                        <div className="relative">
+                          <div className="w-6 h-6 bg-gradient-to-br from-green-400 via-green-500 to-green-600 rounded-full flex items-center justify-center shadow-md">
+                            <CheckCircle className="w-3.5 h-3.5 text-white" />
+                          </div>
+                          <div className="absolute inset-0 bg-green-400/30 rounded-full blur-sm"></div>
+                        </div>
+                        
+                        <span className="text-sm font-medium bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                          Email is available
+                        </span>
                       </div>
                     </div>
                   </div>

@@ -5,7 +5,6 @@
 export const navLinks = [
   { to: "/staff-portal/dashboard", label: "Homepage", icon: "Home" },
   { to: "/staff-portal/checkin", label: "Check-in", icon: "UserCheck" },
-  // { to: "/staff-portal/members", label: "Members", icon: "Users" }, // DEACTIVATED: Member search available in navbar
   { to: "/staff-portal/memberships", label: "Plan Management", icon: "Briefcase" },
   { to: "/staff-portal/classes", label: "Classes", icon: "Calendar" },
   { to: "/staff-portal/schedule", label: "Schedule", icon: "Zap" },
@@ -16,8 +15,6 @@ export const navLinks = [
   { to: "/staff-portal/reports", label: "Reports", icon: "BarChart2" },
   { to: "/staff-portal/trainers", label: "Trainers", icon: "UserCog" },
   { to: "/staff-portal/corporate-management", label: "Corporate Partners", icon: "Building" },
-  { to: "/staff-portal/tag-management", label: "Tag Management", icon: "Tags" },
 ];
-
 
 

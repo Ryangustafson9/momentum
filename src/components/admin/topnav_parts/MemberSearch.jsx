@@ -170,12 +170,12 @@ const MemberSearch = ({ allMembers, navigate }) => {
       });
 
       // Navigate to the new profile page
-      navigate(`/staff-portal/member/${newProfile.system_member_id}`);
+      const profileId = newProfile.system_member_id || newProfile.id;
+      navigate(`/staff-portal/profile/${profileId}`);
       setSearchTerm('');
       setShowSearchDropdown(false);
 
     } catch (error) {
-      
       toast({
         title: "Error",
         description: `Failed to create profile: ${error.message}`,
@@ -207,6 +207,11 @@ const MemberSearch = ({ allMembers, navigate }) => {
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         onFocus={() => setShowSearchDropdown(searchTerm.length >= 2)}
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck="false"
+        data-form-type="other"
       />
       <AnimatePresence>
         {showSearchDropdown && searchTerm.length >= 2 && (

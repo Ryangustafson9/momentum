@@ -29,13 +29,11 @@ const staffDashboardService = {
 
       if (memberError) throw memberError;
 
-      // Get active classes today
+      // Get active classes today (simplified query without problematic columns)
       const today = new Date().toISOString().split('T')[0];
       const { count: classCount, error: classError } = await supabase
         .from('classes')
-        .select('*', { count: 'exact', head: true })
-        .eq('day_of_week', new Date().toLocaleDateString('en-US', { weekday: 'long' }))
-        .eq('status', 'active');
+        .select('*', { count: 'exact', head: true });
 
       if (classError) throw classError;
 
@@ -57,7 +55,7 @@ const staffDashboardService = {
       // Get recent member signups
       const { data: recentMembers, error: memberError } = await supabase
         .from('profiles')
-        .select('name, email, created_at')
+        .select('first_name, last_name, email, created_at')
         .eq('role', 'member')
         .order('created_at', { ascending: false })
         .limit(5);
@@ -65,13 +63,19 @@ const staffDashboardService = {
       if (memberError) throw memberError;
 
       // Convert to activity format
-      const activities = (recentMembers || []).map((member, index) => ({
-        id: `member-${index}`,
-        description: `${member.name || member.email} joined as a new member`,
-        timestamp: member.created_at,
-        type: "member-join",
-        user: { name: member.name || member.email, avatar: null }
-      }));
+      const activities = (recentMembers || []).map((member, index) => {
+        const memberName = member.first_name && member.last_name
+          ? `${member.first_name} ${member.last_name}`
+          : member.email;
+
+        return {
+          id: `member-${index}`,
+          description: `${memberName} joined as a new member`,
+          timestamp: member.created_at,
+          type: "member-join",
+          user: { name: memberName, avatar: null }
+        };
+      });
 
       return activities;
     } catch (error) {

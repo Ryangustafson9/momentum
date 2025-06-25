@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabaseClient';
-import { executeNormal, executeFast, getUserFriendlyErrorMessage } from '@/utils/requestUtils';
+import { executeNormal, executeFast, getUserFriendlyErrorMessage, sanitizeError } from '@/utils/requestUtils';
 
 /**
  * Centralized API service for all database operations
@@ -60,20 +60,17 @@ class ApiService {
       if (filters.limit) {
         query = query.limit(filters.limit);
       }
-      
-      const { data, error } = await query;
+        const { data, error } = await query;
       
       if (error) {
-        
-        throw error;
+        throw sanitizeError(error, 'Get members');
       }
       
       
       return data || [];
       
     } catch (error) {
-      
-      throw error;
+      throw sanitizeError(error, 'Get members');
     }
   }
 
@@ -90,8 +87,7 @@ class ApiService {
         .from('profiles')
         .select('*', { count: 'exact', head: true })
         .eq('role', 'member');
-      
-      if (totalError) throw totalError;
+        if (totalError) throw sanitizeError(totalError, 'Get total members count');
       
       // Get active members count (just count active status for now)
       const { count: activeMembers, error: activeError } = await supabase
@@ -100,7 +96,7 @@ class ApiService {
         .eq('role', 'member')
         .eq('status', 'active');
 
-      if (activeError) throw activeError;
+      if (activeError) throw sanitizeError(activeError, 'Get active members count');
       
       // Get new members this month
       const startOfMonth = new Date();
@@ -113,7 +109,7 @@ class ApiService {
         .eq('role', 'member')
         .gte('created_at', startOfMonth.toISOString());
       
-      if (newError) throw newError;
+      if (newError) throw sanitizeError(newError, 'Get new members this month');
       
       const stats = {
         totalMembers: totalMembers || 0,
@@ -158,12 +154,10 @@ class ApiService {
         'Get member by ID'
       );
 
-      
-      return result.data;
+        return result.data;
 
     } catch (error) {
-      
-      throw error;
+      throw sanitizeError(error, 'Get member by ID');
     }
   }
 
@@ -186,15 +180,13 @@ class ApiService {
         .eq('id', memberId)
         .select()
         .single();
-      
-      if (error) throw error;
+        if (error) throw sanitizeError(error, 'Update member');
       
       
       return data;
       
     } catch (error) {
-      
-      throw error;
+      throw sanitizeError(error, 'Update member');
     }
   }
 
@@ -219,16 +211,14 @@ class ApiService {
           .from('profiles')
           .delete()
           .eq('id', memberId);
-        
-        if (error) throw error;
+          if (error) throw sanitizeError(error, 'Delete member (hard delete)');
       }
       
       
       return true;
       
     } catch (error) {
-      
-      throw error;
+      throw sanitizeError(error, 'Delete member');
     }
   }
 
@@ -240,19 +230,17 @@ class ApiService {
    */
   async getMembershipTypes() {
     try {
-      
-
-      const { data, error } = await supabase
+          const { data, error } = await supabase
         .from('membership_types')
         .select('*')
         .order('name', { ascending: true });
 
-      if (error) throw error;
+      if (error) throw sanitizeError(error, 'Get membership types');
 
       
       return data || [];
     } catch (error) {
-      
+      console.error('Get membership types error:', error);
       return [];
     }
   }
@@ -268,12 +256,10 @@ class ApiService {
         .from('membership_types')
         .select('*')
         .eq('id', id)
-        .single();
-
-      if (error) throw error;
+        .single();      if (error) throw sanitizeError(error, 'Get membership type by ID');
       return data;
     } catch (error) {
-      
+      console.error('Get membership type by ID error:', error);
       return null;
     }
   }
@@ -308,16 +294,14 @@ class ApiService {
         query = query
           .gte('start_time', startOfDay.toISOString())
           .lte('start_time', endOfDay.toISOString());
-      }
+      }      const { data, error } = await query;
 
-      const { data, error } = await query;
-
-      if (error) throw error;
+      if (error) throw sanitizeError(error, 'Get classes');
 
       
       return data || [];
     } catch (error) {
-      
+      console.error('Get classes error:', error);
       return [];
     }
   }
@@ -330,19 +314,17 @@ class ApiService {
    */
   async getStaffRoles() {
     try {
-      
-
-      const { data, error } = await supabase
+          const { data, error } = await supabase
         .from('staff_roles')
         .select('*')
         .order('name', { ascending: true });
 
-      if (error) throw error;
+      if (error) throw sanitizeError(error, 'Get staff roles');
 
       
       return data || [];
     } catch (error) {
-      
+      console.error('Get staff roles error:', error);
       return [];
     }
   }
@@ -371,20 +353,18 @@ class ApiService {
    */
   async getInstructors() {
     try {
-      
-
-      const { data, error } = await supabase
+          const { data, error } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, email, phone')
         .in('role', ['staff', 'admin', 'instructor'])
         .order('first_name', { ascending: true });
 
-      if (error) throw error;
+      if (error) throw sanitizeError(error, 'Get instructors');
 
       
       return data || [];
     } catch (error) {
-      
+      console.error('Get instructors error:', error);
       return [];
     }
   }
@@ -400,12 +380,10 @@ class ApiService {
       const { data, error } = await supabase
         .from('general_settings')
         .select('*')
-        .single();
-
-      if (error) throw error;
+        .single();      if (error) throw sanitizeError(error, 'Get settings');
       return data || {};
     } catch (error) {
-      
+      console.error('Get settings error:', error);
       return {};
     }
   }
@@ -422,12 +400,10 @@ class ApiService {
         .from('profiles')
         .select('*', { count: 'exact', head: true })
         .eq('role', 'member')
-        .eq('status', 'active');
-
-      if (error) throw error;
+        .eq('status', 'active');      if (error) throw sanitizeError(error, 'Get member count');
       return count || 0;
     } catch (error) {
-      
+      console.error('Get member count error:', error);
       return 0;
     }
   }

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from '
 import { supabase } from '@/lib/supabaseClient';
 import { showToast } from '@/utils/toastUtils';
 import { storage, STORAGE_KEYS } from '@/utils/storageUtils';
+import { enhancedStorage } from '@/utils/secureStorage';
 import { normalizeRole } from '@/utils/roleUtils';
 import { createProfileSafe, validateAuthUserExists } from '@/utils/profileValidation';
 import { useProfileFetcher } from '@/hooks/useProfileFetcher';
@@ -34,12 +35,12 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider = ({ children }) => {
-  // ⚡ PERFORMANCE: Initialize with cached user for faster UI hydration
+export const AuthProvider = ({ children }) => {  // ⚡ PERFORMANCE: Initialize with cached user for faster UI hydration
   const [user, setUser] = useState(() => {
     try {
-      const cached = storage.local.get('cached_user');
-      const cacheTimestamp = storage.local.get('cached_user_timestamp');
+      // Use session storage for cached user data (more secure)
+      const cached = enhancedStorage.session.get('cached_user');
+      const cacheTimestamp = enhancedStorage.session.get('cached_user_timestamp');
 
       // 💾 CACHE VALIDATION: Check if cache is still valid (24 hours)
       if (cached && cacheTimestamp) {
@@ -49,13 +50,14 @@ export const AuthProvider = ({ children }) => {
         if (cacheAge < maxCacheAge) {
           return cached;
         } else {
-          storage.local.remove('cached_user');
-          storage.local.remove('cached_user_timestamp');
+          enhancedStorage.session.remove('cached_user');
+          enhancedStorage.session.remove('cached_user_timestamp');
         }
       }
 
-      return null;    } catch (error) {
-      
+      return null;
+    } catch (error) {
+      console.warn('Failed to load cached user:', error);
       return null;
     }
   });
@@ -207,15 +209,14 @@ export const AuthProvider = ({ children }) => {
                 // User can still use the app with basic auth data
               });
           }
-          break;
-            case 'SIGNED_OUT':
+          break;        case 'SIGNED_OUT':
           setUser(null);
           setUserPermissions([]); // 🔐 Clear permissions on logout
-          // 💾 PERSISTENCE: Clear cached user on logout
-          storage.local.remove('cached_user');
-          storage.local.remove('cached_user_timestamp');
-          storage.local.clear();
-          storage.session.clear();
+          // 💾 PERSISTENCE: Clear cached user on logout - use secure storage
+          enhancedStorage.session.remove('cached_user');
+          enhancedStorage.session.remove('cached_user_timestamp');
+          enhancedStorage.secure.clear(); // Clear all secure data
+          enhancedStorage.session.clear();
           break;
           
         case 'TOKEN_REFRESHED':
@@ -279,14 +280,12 @@ export const AuthProvider = ({ children }) => {
             last_name: '',
             name: ''
           };
-          setUser(userProfile);
-
-          // 💾 PERSISTENCE: Cache fallback user
+          setUser(userProfile);          // 💾 PERSISTENCE: Cache fallback user securely
           try {
-            storage.local.set('cached_user', userProfile);
-            storage.local.set('cached_user_timestamp', Date.now());
+            await enhancedStorage.secure.set('cached_user', userProfile);
+            enhancedStorage.session.set('cached_user_timestamp', Date.now());
           } catch (error) {
-            
+            console.warn('Failed to cache user securely:', error);
           }
 
           
@@ -400,15 +399,15 @@ export const AuthProvider = ({ children }) => {
 
             if (error) throw error;
             createdProfile = data;
-          }                    // ⚠️ FIX: Normalize and cache user data like in login()
+          }          // ⚠️ FIX: Normalize and cache user data like in login() - use secure storage
           normalizedUser = {
             ...createdProfile,
             role: normalizeRole(createdProfile.role || 'nonmember')
           };
           
-          // Cache the normalized user data
-          storage.local.set('cached_user', normalizedUser);
-          storage.local.set('cached_user_timestamp', Date.now());
+          // Cache the normalized user data securely
+          await enhancedStorage.secure.set('cached_user', normalizedUser);
+          enhancedStorage.session.set('cached_user_timestamp', Date.now());
           
           // ⭐ FIX: Set user state immediately so signup component can show success
           setUser(normalizedUser);
@@ -479,14 +478,13 @@ export const AuthProvider = ({ children }) => {
   };
   const logout = async () => {
     try {
-      
-
-      // ⭐ CLEAR: All stored data including cached user
-      storage.local.remove('cached_user');
-      storage.local.remove('cached_user_timestamp');
-      storage.local.remove(STORAGE_KEYS.USER_PREFERENCES);
-      storage.local.remove(STORAGE_KEYS.DASHBOARD_CONFIG);
-      storage.session.clear();
+          // ⭐ CLEAR: All stored data including cached user - use secure storage
+      enhancedStorage.session.remove('cached_user');
+      enhancedStorage.session.remove('cached_user_timestamp');
+      enhancedStorage.local.remove(STORAGE_KEYS.USER_PREFERENCES);
+      enhancedStorage.local.remove(STORAGE_KEYS.DASHBOARD_CONFIG);
+      enhancedStorage.secure.clear(); // Clear all secure data
+      enhancedStorage.session.clear();
 
       const { error } = await supabase.auth.signOut();
       if (error) throw error;

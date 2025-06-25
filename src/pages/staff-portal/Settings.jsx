@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Settings, Bell, Shield, CreditCard, Users, LayoutDashboard, BarChart3, Palette } from 'lucide-react';
+import { Settings, Bell, Shield, CreditCard, Users, LayoutDashboard, BarChart3, Palette, ClipboardList } from 'lucide-react';
 import SettingsPageLayout from '@/components/admin/settings/SettingsPageLayout.jsx';
 import SettingsTabs from '@/components/admin/settings/SettingsTabs.jsx';
 import GeneralSettingsTab from '@/components/admin/settings/tabs/GeneralSettingsTab.jsx';
@@ -9,6 +9,7 @@ import BillingSettingsTab from '@/components/admin/settings/tabs/BillingSettings
 import ReportingSettingsTab from '@/components/admin/settings/tabs/ReportingSettingsTab.jsx';
 import AppearanceSettingsTab from '@/components/admin/settings/tabs/AppearanceSettingsTab.jsx';
 import BrandingSettingsTab from '@/components/admin/settings/tabs/BrandingSettingsTab.jsx';
+import CustomFieldsSettingsTab from '@/components/admin/settings/tabs/CustomFieldsSettingsTab.jsx';
 
 import { TabsContent } from '@/components/ui/tabs';
 import { initializeGymBranding } from '@/utils/gymBranding.js';
@@ -55,6 +56,13 @@ const settingsTabsConfig = [
     Icon: Palette,
     component: <AppearanceSettingsTab />,
     description: "Manage themes, branding, and UI customization."
+  },
+  {
+    value: "custom-fields",
+    label: "Custom Fields",
+    Icon: ClipboardList,
+    component: <CustomFieldsSettingsTab />,
+    description: "Create and manage custom fields for member profiles."
   },
   {
     value: "branding",

@@ -417,9 +417,8 @@ export const initializeCacheCleanup = () => {
   setInterval(() => {
     cacheManager.cleanup();
   }, 300000);
-
   // Log cache statistics every 10 minutes in development
-  if (process.env.NODE_ENV === 'development') {
+  if (import.meta.env.DEV) {
     setInterval(() => {
       const stats = cacheManager.getStats();
       logger.debug('Cache statistics:', stats);

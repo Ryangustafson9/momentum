@@ -29,7 +29,7 @@ const memberProfileService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      
+      console.error('Error fetching member profile:', error);
       throw error;
     }
   },
@@ -49,7 +49,7 @@ const memberProfileService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      
+      console.error('Error updating member profile:', error);
       throw error;
     }
   },
@@ -68,7 +68,7 @@ const memberProfileService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      
+      console.error('Error fetching membership log:', error);
       return [];
     }
   },
@@ -87,7 +87,7 @@ const memberProfileService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      
+      console.error('Error fetching bookings:', error);
       return [];
     }
   }
@@ -119,15 +119,14 @@ const MemberProfilePage = () => {
       if (profileData) {
         setMemberData(profileData);
         setBookings(bookingsData.filter(r => r.status === 'Booked' || r.status === 'Cancelled'));
-        setMembershipLog(logData || []);
-      } else {
+        setMembershipLog(logData || []);      } else {
         toast({ title: "Error", description: "Could not load member details.", variant: "destructive" });
-        navigate('/');
+        navigate('/member-portal/dashboard');
       }
     } catch (error) {
-      
+      console.error("Error fetching profile data:", error);
       toast({ title: "Error", description: "Failed to load profile data.", variant: "destructive" });
-      navigate('/');
+      navigate('/member-portal/dashboard');
     } finally {
       setIsLoading(false);
     }
@@ -140,18 +139,7 @@ const MemberProfilePage = () => {
   const handleEditProfile = () => setIsEditModalOpen(true);
   const handleOpenAssignPlanModal = () => setIsAssignPlanModalOpen(true);
 
-  const handleSaveProfile = async (updatedFormData) => {
-    if (!memberData?.id) return;
-    try {
-      const updatedProfile = await memberProfileService.updateMemberProfile(memberData.id, updatedFormData);
-      setMemberData(updatedProfile);
-      toast({ title: "Success", description: "Profile updated successfully!" });
-      setIsEditModalOpen(false);
-    } catch (error) {
-      
-      toast({ title: "Error", description: "Failed to update profile.", variant: "destructive" });
-    }
-  };
+
 
   const handlePlanAssignSuccess = () => {
     fetchProfileData(); // Refresh to show new plan
@@ -175,7 +163,7 @@ const MemberProfilePage = () => {
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold mb-4">Profile Not Found</h2>
         <p className="text-muted-foreground mb-4">We couldn't load your profile information.</p>
-        <Button onClick={() => navigate('/')}>Go Home</Button>
+        <Button onClick={() => navigate('/member-portal/dashboard')}>Go to Dashboard</Button>
       </div>
     );
   }
@@ -330,8 +318,11 @@ const MemberProfilePage = () => {
       <MemberEditModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        onSave={handleSaveProfile}
-        memberData={memberData}
+        member={memberData}
+        onMemberUpdated={(updatedMember) => {
+          setMemberData(updatedMember);
+          setIsEditModalOpen(false);
+        }}
       />
 
       <AssignPlanDialog
@@ -345,6 +336,5 @@ const MemberProfilePage = () => {
 };
 
 export default MemberProfilePage;
-
 
 

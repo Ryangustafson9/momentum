@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LogOut, ChevronLeft, ChevronRight, Settings, GripVertical, Edit3,
   Home, Users, Calendar, BarChart2, UserCheck, Zap, UserCog, Briefcase,
-  Mail, CreditCard, Wrench, ShoppingCart, Building, Tags
+  Mail, CreditCard, Wrench, ShoppingCart, Building
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -47,7 +47,6 @@ const iconMap = {
   Wrench,
   ShoppingCart,
   Building,
-  Tags,
   Edit3,
   LogOut,
   Settings
@@ -176,10 +175,14 @@ const AdminSidebar = ({ onLogout, isExpanded, toggleSidebar, user }) => {
   const currentPath = location.pathname;
   const { toast } = useToast();
   // Sidebar organization state
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [orderedNavLinks, setOrderedNavLinks] = useState(() => {
+  const [isEditMode, setIsEditMode] = useState(false);  const [orderedNavLinks, setOrderedNavLinks] = useState(() => {
     const saved = localStorage.getItem('adminSidebarOrder');
     let baseLinks = saved ? JSON.parse(saved) : navLinks;
+
+    // Remove any links that no longer exist in the main navLinks configuration
+    baseLinks = baseLinks.filter(link => 
+      navLinks.some(nl => nl.label === link.label)
+    );
 
     // Ensure all links have correct paths (fix any localStorage corruption)
     baseLinks = baseLinks.map(link => {
@@ -213,11 +216,15 @@ const AdminSidebar = ({ onLogout, isExpanded, toggleSidebar, user }) => {
   useEffect(() => {
     localStorage.setItem('adminSidebarOrder', JSON.stringify(orderedNavLinks));
   }, [orderedNavLinks]);
-
   // Update links when user role changes
   useEffect(() => {
     const saved = localStorage.getItem('adminSidebarOrder');
     let baseLinks = saved ? JSON.parse(saved) : navLinks;
+
+    // Remove any links that no longer exist in the main navLinks configuration
+    baseLinks = baseLinks.filter(link => 
+      navLinks.some(nl => nl.label === link.label)
+    );
 
     // Ensure all links have correct paths (fix any localStorage corruption)
     baseLinks = baseLinks.map(link => {
@@ -472,7 +479,7 @@ const AdminSidebar = ({ onLogout, isExpanded, toggleSidebar, user }) => {
                 isExpanded ? "flex items-center" : "w-full p-2"
               )}              title="Sign Out"
             >
-              {renderIcon("LogOut", cn("h-4 w-4", isExpanded ? "mr-2" : ""))}
+              {renderIcon("LogOut", cn("h-4 w-4 rotate-180", isExpanded ? "mr-2" : ""))}
               {isExpanded && <span className="text-sm">Sign Out</span>}
             </Button>
 
