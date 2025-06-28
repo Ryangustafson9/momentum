@@ -1,9 +1,10 @@
 // 🚨 DO NOT MODIFY WITHOUT REVIEW - Login flow and layout is stable
 import { useEffect, useState, Suspense } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { LocationProvider } from '@/contexts/LocationContext';
+import { CheckInProvider } from '@/contexts/CheckInContext';
 import PrivateRoute from '@/components/PrivateRoute'; // ✅ FIXED: This file exists
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary'; // ✅ FIXED: Correct path
 import { JoinOnlineRoute } from '@/components/ClubSettingsRoute.jsx';
@@ -16,16 +17,25 @@ import NotFound from '@/pages/NotFound';
 
 // Member pages - ✅ FIXED: Updated to correct paths
 import MemberDashboard from '@/pages/member-portal/Dashboard';
+import MemberProfile from '@/pages/member-portal/Profile';
 import MemberProfilePage from '@/pages/member-portal/MemberProfilePage';
 import MemberClassesPage from '@/pages/member-portal/MemberClasses';
 import MemberBillingPage from '@/pages/member-portal/MemberBilling';
 import AdvancedFeatures from '@/pages/member-portal/AdvancedFeatures';
+import Reservations from '@/pages/member-portal/Reservations';
+import ProgramRegistration from '@/pages/member-portal/ProgramRegistration';
+import GroupActivities from '@/pages/member-portal/GroupActivities';
+import Statement from '@/pages/member-portal/Statement';
+import Packages from '@/pages/member-portal/Packages';
+import AccountAccess from '@/pages/member-portal/AccountAccess';
+import Notifications from '@/pages/member-portal/Notifications';
+import ContactUs from '@/pages/member-portal/ContactUs';
 
 // Staff pages - Updated to correct staff-portal paths
 import StaffDashboard from '@/pages/staff-portal/Dashboard';
 
 import Classes from '@/pages/staff-portal/Classes';
-import CheckIn from '@/pages/staff-portal/CheckIn';
+import CheckIn from '@/pages/staff-portal/CheckInEnhanced';
 import Memberships from '@/pages/staff-portal/Memberships';
 import Schedule from '@/pages/staff-portal/Schedule';
 import Attendance from '@/pages/staff-portal/Attendance';
@@ -41,6 +51,7 @@ import StaffMemberProfile from '@/pages/staff-portal/MemberProfile';
 import MemberRegistration from '@/pages/staff-portal/MemberRegistration';
 import CorporateManagement from '@/pages/staff-portal/CorporateManagement';
 import TagManagement from '@/pages/staff-portal/TagManagement';
+import ProcessAutomation from '@/pages/staff-portal/ProcessAutomation';
 import LocationManagement from '@/pages/admin/LocationManagement';
 
 // Admin pages
@@ -49,6 +60,12 @@ import AdminPanelPage from '@/pages/staff-portal/AdminPanelPage';
 // Layout components
 import StaffDashboardLayout from '@/layouts/StaffDashboardLayout';
 import MemberDashboardLayout from '@/layouts/MemberDashboardLayout';
+
+// Redirect component for legacy staff member routes
+const StaffMemberRedirect = () => {
+  const { id } = useParams();
+  return <Navigate to={`/staff-portal/profile/${id}`} replace />;
+};
 
 // Public pages
 import JoinOnline from '@/pages/joinOnline';
@@ -127,7 +144,8 @@ function App() {
     <ErrorBoundary>
       <NotificationProvider>
         <LocationProvider>
-          <div className="App min-h-screen bg-gray-50">
+          <CheckInProvider>
+            <div className="App min-h-screen bg-gray-50">
             <Suspense fallback={<SuspenseFallback />}>
               <Routes>
               {/* Public routes */}
@@ -157,12 +175,20 @@ function App() {
                     </PrivateRoute>
                   }
                 >                  <Route path="dashboard" element={<MemberDashboard />} />
-                  <Route path="profile" element={<MemberProfilePage />} />
-                  <Route path="classes" element={<MemberClassesPage />} />
+                  <Route path="profile" element={<MemberProfile />} />
+                  <Route path="reservations" element={<Reservations />} />
+                  <Route path="program-registration" element={<ProgramRegistration />} />
+                  <Route path="group-activities" element={<GroupActivities />} />
+                  <Route path="statement" element={<Statement />} />
                   <Route path="billing" element={<MemberBillingPage />} />
+                  <Route path="packages" element={<Packages />} />
+                  <Route path="account-access" element={<AccountAccess />} />
+                  <Route path="notifications" element={<Notifications />} />
+                  <Route path="contact" element={<ContactUs />} />
+                  <Route path="classes" element={<MemberClassesPage />} />
                   <Route path="advanced" element={<AdvancedFeatures />} />
                   <Route index element={<Navigate to="/member-portal/dashboard" replace />} />
-                </Route>                <Route 
+                </Route>                <Route
                   path="/member-portal/attendance" 
                   element={
                     <PrivateRoute allowedRoles={['member', 'staff', 'admin']}>
@@ -232,16 +258,20 @@ function App() {
                   <Route path="trainers" element={<Trainers />} />
                   <Route path="pos" element={<PointOfSale />} />
                   <Route path="pos/manage" element={<POSManagement />} />
-                  <Route path="member/:id" element={<StaffMemberProfile />} />
+                  <Route path="profile/:id" element={<StaffMemberProfile />} />
                   <Route path="register-member" element={<MemberRegistration />} />
                   <Route path="corporate-management" element={
                     <PrivateRoute allowedRoles={['admin', 'staff']}>
                       <CorporateManagement />
                     </PrivateRoute>
-                  } />
-                  <Route path="tag-management" element={
+                  } />                  <Route path="tag-management" element={
                     <PrivateRoute allowedRoles={['admin', 'staff']}>
                       <TagManagement />
+                    </PrivateRoute>
+                  } />
+                  <Route path="process-automation" element={
+                    <PrivateRoute allowedRoles={['admin', 'staff']}>
+                      <ProcessAutomation />
                     </PrivateRoute>
                   } />
                   <Route path="location-management" element={
@@ -275,16 +305,20 @@ function App() {
                   <Route path="trainers" element={<Trainers />} />
                   <Route path="pos" element={<PointOfSale />} />
                   <Route path="pos/manage" element={<POSManagement />} />
-                  <Route path="member/:id" element={<StaffMemberProfile />} />
+                  <Route path="profile/:id" element={<StaffMemberProfile />} />
                   <Route path="register-member" element={<MemberRegistration />} />
                   <Route path="corporate-management" element={
                     <PrivateRoute allowedRoles={['admin', 'staff']}>
                       <CorporateManagement />
                     </PrivateRoute>
-                  } />
-                  <Route path="tag-management" element={
+                  } />                  <Route path="tag-management" element={
                     <PrivateRoute allowedRoles={['admin', 'staff']}>
                       <TagManagement />
+                    </PrivateRoute>
+                  } />
+                  <Route path="process-automation" element={
+                    <PrivateRoute allowedRoles={['admin', 'staff']}>
+                      <ProcessAutomation />
                     </PrivateRoute>
                   } />
                   <Route path="location-management" element={
@@ -358,9 +392,9 @@ function App() {
                   path="/staff/memberships" 
                   element={<Navigate to="/staff-portal/memberships" replace />}
                 />
-                <Route 
-                  path="/staff/member/:id" 
-                  element={<Navigate to="/staff-portal/member/:id" replace />}
+                <Route
+                  path="/staff/member/:id"
+                  element={<StaffMemberRedirect />}
                 />
                   {/* Redirects */}
                 <Route path="/" element={<Navigate to="/login" replace />} />
@@ -372,8 +406,9 @@ function App() {
               {/* <MobileBottomNavigation /> */}
               {/* <PWAInstallPrompt /> */}
             </div>
-          </LocationProvider>
-        </NotificationProvider>
+          </CheckInProvider>
+        </LocationProvider>
+      </NotificationProvider>
     </ErrorBoundary>
   );
 }

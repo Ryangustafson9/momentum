@@ -13,8 +13,8 @@ export const navLinks = [
   { to: "/staff-portal/pos", label: "Point of Sale", icon: "ShoppingCart" },
   { to: "/staff-portal/equipment", label: "Equipment", icon: "Wrench" },
   { to: "/staff-portal/reports", label: "Reports", icon: "BarChart2" },
-  { to: "/staff-portal/trainers", label: "Trainers", icon: "UserCog" },
-  { to: "/staff-portal/corporate-management", label: "Corporate Partners", icon: "Building" },
+  { to: "/staff-portal/trainers", label: "Trainers", icon: "UserCog" },  { to: "/staff-portal/corporate-management", label: "Corporate Partners", icon: "Building" },
+  { to: "/staff-portal/process-automation", label: "Process Automation", icon: "GitBranch" },
 ];
 
 

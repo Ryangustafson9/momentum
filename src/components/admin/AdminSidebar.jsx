@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LogOut, ChevronLeft, ChevronRight, Settings, GripVertical, Edit3,
   Home, Users, Calendar, BarChart2, UserCheck, Zap, UserCog, Briefcase,
-  Mail, CreditCard, Wrench, ShoppingCart, Building
+  Mail, CreditCard, Wrench, ShoppingCart, Building, GitBranch
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -47,6 +47,7 @@ const iconMap = {
   Wrench,
   ShoppingCart,
   Building,
+  GitBranch,
   Edit3,
   LogOut,
   Settings
@@ -319,7 +320,7 @@ const AdminSidebar = ({ onLogout, isExpanded, toggleSidebar, user }) => {
         </button>
       </div>
       
-      <div className={`relative flex items-center justify-between h-16 px-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50 ${!isExpanded ? 'px-2' : ''}`}>
+      <div className={`relative flex items-center justify-between h-16 px-4 border-b-2 border-indigo-100 bg-gradient-to-r from-indigo-100 to-purple-100 ${!isExpanded ? 'px-2' : ''}`}>
         <AnimatePresence mode="wait">
           {isExpanded ? (
             <motion.div
@@ -331,7 +332,7 @@ const AdminSidebar = ({ onLogout, isExpanded, toggleSidebar, user }) => {
               <img
                 src="/assets/momentum-logo.svg"
                 alt="Momentum Gym"
-                className="w-32 h-24 object-contain"
+                className="w-40 h-28 object-contain"
               />
             </motion.div>
           ) : (
