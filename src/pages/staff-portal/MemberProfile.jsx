@@ -29,6 +29,7 @@ import AssignMembershipDialog from '@/components/admin/members/AssignMembershipD
 import AddressAutocomplete from '@/components/ui/AddressAutocomplete';
 import FamilyManagementDialog from '@/components/staff/FamilyManagementDialog';
 import FamilySection from '@/components/staff/FamilySection';
+import MembershipSignupWizard from '@/components/staff/MembershipSignupWizard';
 
 const getInitials = (name) => {
   if (!name || typeof name !== 'string') return "?";
@@ -37,6 +38,7 @@ const getInitials = (name) => {
   if (names.length === 1) return names[0].charAt(0).toUpperCase();
   return names[0].charAt(0).toUpperCase() + names[names.length - 1].charAt(0).toUpperCase();
 };
+
 
 const statusVariant = (status) => {
   switch (status?.toLowerCase()) {
@@ -979,12 +981,272 @@ const StaffNotesSection = ({ memberId, staffId }) => {
 };
 
 
+// Inline Edit Field Component
+const InlineEditField = ({
+  label,
+  value,
+  fieldName,
+  type = "text",
+  icon: Icon,
+  isRequired = false,
+  placeholder = "",
+  options = null,
+  onChange,
+  className = ""
+}) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [localValue, setLocalValue] = useState(value || '');
+
+  useEffect(() => {
+    setLocalValue(value || '');
+  }, [value]);
+
+  const handleChange = (e) => {
+    const newValue = e.target.value;
+    setLocalValue(newValue);
+    // Immediately update the global state to trigger unsaved changes detection
+    onChange(fieldName, newValue);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && type !== 'textarea') {
+      setIsEditing(false);
+    } else if (e.key === 'Escape') {
+      setLocalValue(value || '');
+      setIsEditing(false);
+    }
+  };
+
+  return (
+    <div className={`space-y-1 ${className}`}>
+      <Label className="text-sm font-medium text-gray-700 flex items-center gap-1">
+        {Icon && <Icon className="h-4 w-4 text-gray-500" />}
+        {label}
+        {isRequired && <span className="text-red-500">*</span>}
+      </Label>
+
+      {isEditing ? (
+        <div className="space-y-2">
+          {options ? (
+            <Select value={localValue} onValueChange={(newValue) => {
+              setLocalValue(newValue);
+              onChange(fieldName, newValue);
+              setIsEditing(false);
+            }}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={placeholder} />
+              </SelectTrigger>
+              <SelectContent>
+                {options.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : type === 'textarea' ? (
+            <Textarea
+              value={localValue}
+              onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              onBlur={() => setIsEditing(false)}
+              placeholder={placeholder}
+              className="w-full"
+              autoFocus
+            />
+          ) : (
+            <Input
+              type={type}
+              value={localValue}
+              onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              onBlur={() => setIsEditing(false)}
+              placeholder={placeholder}
+              className="w-full"
+              autoFocus
+            />
+          )}
+        </div>
+      ) : (
+        <div
+          className="min-h-[40px] px-3 py-2 border border-gray-200 rounded-md cursor-pointer hover:border-gray-300 hover:bg-gray-50 transition-colors flex items-center"
+          onClick={() => setIsEditing(true)}
+        >
+          {value ? (
+            <span className="text-gray-900">{value}</span>
+          ) : (
+            <span className="text-gray-400 italic">{placeholder || `Enter ${label.toLowerCase()}`}</span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Custom Field Inline Edit Component
+const CustomFieldInlineEdit = ({
+  field,
+  value,
+  onChange,
+  className = ""
+}) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [localValue, setLocalValue] = useState(value || '');
+
+  useEffect(() => {
+    setLocalValue(value || '');
+  }, [value]);
+
+  const handleChange = (e) => {
+    const newValue = e.target.value;
+    setLocalValue(newValue);
+    // Immediately update the global state to trigger unsaved changes detection
+    onChange(`custom_field_${field.id}`, newValue);
+  };
+
+  const handleKeyDown = (e) => {
+    const fieldType = field.type || field.field_type; // Handle both column names
+    if (e.key === 'Enter' && fieldType !== 'textarea') {
+      setIsEditing(false);
+    } else if (e.key === 'Escape') {
+      setLocalValue(value || '');
+      setIsEditing(false);
+    }
+  };
+
+  const renderEditField = () => {
+    const fieldType = field.type || field.field_type; // Handle both column names
+    switch (fieldType) {
+      case 'textarea':
+        return (
+          <Textarea
+            value={localValue}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            onBlur={() => setIsEditing(false)}
+            placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
+            className="w-full"
+            rows={3}
+            autoFocus
+          />
+        );
+      case 'select':
+        return (
+          <Select value={localValue} onValueChange={(newValue) => {
+            setLocalValue(newValue);
+            onChange(`custom_field_${field.id}`, newValue);
+            setIsEditing(false);
+          }}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={field.placeholder || `Select ${field.label.toLowerCase()}`} />
+            </SelectTrigger>
+            <SelectContent>
+              {field.options?.map((option) => (
+                <SelectItem key={option.value || option} value={option.value || option}>
+                  {option.label || option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      case 'checkbox':
+        return (
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={localValue === 'true' || localValue === true}
+              onChange={(e) => {
+                const newValue = e.target.checked.toString();
+                setLocalValue(newValue);
+                onChange(`custom_field_${field.id}`, newValue);
+                setIsEditing(false);
+              }}
+              className="rounded border-border/60 text-primary focus:ring-primary/20"
+            />
+            <span className="text-sm text-muted-foreground">
+              {field.placeholder || `Check to enable ${field.label.toLowerCase()}`}
+            </span>
+          </div>
+        );
+      default:
+        return (
+          <Input
+            type={fieldType === 'email' ? 'email' :
+                  fieldType === 'date' ? 'date' :
+                  fieldType === 'number' ? 'number' :
+                  fieldType === 'url' ? 'url' : 'text'}
+            value={localValue}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            onBlur={() => setIsEditing(false)}
+            placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
+            className="w-full"
+            autoFocus
+          />
+        );
+    }
+  };
+
+  const renderDisplayValue = () => {
+    const fieldType = field.type || field.field_type; // Handle both column names
+    if (fieldType === 'checkbox') {
+      return (
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={value === 'true' || value === true}
+            disabled
+            className="rounded border-border/60"
+          />
+          <span className="text-sm">
+            {value === 'true' || value === true ? 'Yes' : 'No'}
+          </span>
+        </div>
+      );
+    }
+
+    if (value) {
+      return <span className="text-gray-900">{value}</span>;
+    }
+
+    return <span className="text-gray-400 italic">Not provided</span>;
+  };
+
+  return (
+    <div className={`space-y-1 ${className}`}>
+      <Label className="text-sm font-medium text-gray-700 flex items-center gap-1">
+        {field.label}
+        {field.is_required && <span className="text-red-500">*</span>}
+      </Label>
+
+      {isEditing ? (
+        <div className="space-y-2">
+          {renderEditField()}
+        </div>
+      ) : (
+        <div
+          className="min-h-[40px] px-3 py-2 border border-gray-200 rounded-md cursor-pointer hover:border-gray-300 hover:bg-gray-50 transition-colors flex items-center"
+          onClick={() => setIsEditing(true)}
+        >
+          {renderDisplayValue()}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const StaffMemberProfilePage = () => {
   const { id: systemMemberId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();    const [memberData, setMemberData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // Inline editing state
+  const [formData, setFormData] = useState({});
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [originalData, setOriginalData] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
 
   const [editingSection, setEditingSection] = useState(null); // 'personal', 'contact', 'emergency'
   const [editFormData, setEditFormData] = useState({});
@@ -994,6 +1256,7 @@ const StaffMemberProfilePage = () => {
   const [currentMemberships, setCurrentMemberships] = useState([]);
   const [membershipHistory, setMembershipHistory] = useState([]);
   const [isAssignMembershipDialogOpen, setIsAssignMembershipDialogOpen] = useState(false);
+  const [isMembershipSignupWizardOpen, setIsMembershipSignupWizardOpen] = useState(false);
   const [isFamilyDialogOpen, setIsFamilyDialogOpen] = useState(false);  const [isEditMembershipDialogOpen, setIsEditMembershipDialogOpen] = useState(false);
   const [editingMembership, setEditingMembership] = useState(null);
   const [loggedInStaff, setLoggedInStaff] = useState(null);
@@ -1003,6 +1266,137 @@ const StaffMemberProfilePage = () => {
   // Custom fields state
   const [customFields, setCustomFields] = useState([]);
   const [memberCustomFieldValues, setMemberCustomFieldValues] = useState({});
+
+  // Initialize form data when member data changes
+  useEffect(() => {
+    if (memberData) {
+      const initialData = {
+        first_name: memberData.first_name || '',
+        last_name: memberData.last_name || '',
+        email: memberData.email || '',
+        phone: memberData.phone || '',
+        address: memberData.address || '',
+        city: memberData.city || '',
+        state: memberData.state || '',
+        zip_code: memberData.zip_code || '',
+        date_of_birth: memberData.date_of_birth || '',
+        gender: memberData.gender || '',
+        access_card_number: memberData.access_card_number || '',
+        emergency_contact_name: memberData.emergency_contact_name || '',
+        emergency_contact_phone: memberData.emergency_contact_phone || '',
+        emergency_contact_relationship: memberData.emergency_contact_relationship || '',
+        notes: memberData.notes || '',
+        ...memberCustomFieldValues
+      };
+      setFormData(initialData);
+      setOriginalData(initialData);
+    }
+  }, [memberData, memberCustomFieldValues]);
+  // Handle field changes
+  const handleFieldChange = useCallback((fieldName, value) => {
+    console.log('Field change:', { fieldName, value });
+    setFormData(prev => {
+      const newData = { ...prev, [fieldName]: value };
+      // Check if there are unsaved changes
+      const hasChanges = Object.keys(newData).some(key => newData[key] !== originalData[key]);
+      console.log('Has changes:', hasChanges, { newData, originalData });
+      setHasUnsavedChanges(hasChanges);
+      return newData;
+    });
+  }, [originalData]);
+  // Global save function
+  const handleGlobalSave = async () => {
+    console.log('handleGlobalSave called', { 
+      memberDataId: memberData?.id, 
+      hasUnsavedChanges, 
+      formData 
+    });
+    
+    if (!memberData?.id || !hasUnsavedChanges) {
+      console.log('Early return - no member ID or no unsaved changes');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // Separate custom fields from regular fields
+      const customFieldUpdates = {};
+      const profileUpdates = {};
+
+      Object.keys(formData).forEach(key => {
+        if (key.startsWith('custom_field_')) {
+          const fieldId = key.replace('custom_field_', '');
+          customFieldUpdates[fieldId] = formData[key];
+        } else {
+          profileUpdates[key] = formData[key];
+        }
+      });
+
+      console.log('Updates to apply:', { profileUpdates, customFieldUpdates });      // Update profile data
+      if (Object.keys(profileUpdates).length > 0) {
+        console.log('Updating profile with:', profileUpdates);
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            ...profileUpdates,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', memberData.id);
+
+        if (profileError) {
+          console.error('Profile update error:', profileError);
+          throw profileError;
+        }
+        console.log('Profile updated successfully');
+      }      // Update custom field values
+      if (Object.keys(customFieldUpdates).length > 0) {
+        console.log('Updating custom fields:', customFieldUpdates);
+        for (const [fieldId, value] of Object.entries(customFieldUpdates)) {
+          const { error: customFieldError } = await supabase
+            .from('member_custom_field_values')
+            .upsert({
+              member_id: memberData.id,
+              custom_field_id: fieldId,
+              value: value || null,
+              updated_at: new Date().toISOString()
+            });
+
+          if (customFieldError) {
+            console.error('Custom field update error:', customFieldError);
+            throw customFieldError;
+          }
+        }
+        console.log('Custom fields updated successfully');
+      }      // Update local state
+      setMemberData(prev => ({ ...prev, ...profileUpdates }));
+      setMemberCustomFieldValues(prev => ({ ...prev, ...customFieldUpdates }));
+      setOriginalData(formData);
+      setHasUnsavedChanges(false);
+
+      console.log('Save completed successfully');
+      toast({
+        title: "Profile Updated",
+        description: "All changes have been saved successfully.",
+        variant: "default"
+      });
+
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      toast({
+        title: "Save Failed",
+        description: error.message || "Failed to save changes. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Discard changes function
+  const handleDiscardChanges = () => {
+    setFormData(originalData);
+    setHasUnsavedChanges(false);
+  };
 
   const fetchProfileData = useCallback(async () => {
     setIsLoading(true);
@@ -1366,6 +1760,16 @@ const StaffMemberProfilePage = () => {
     });
   };
 
+  const handleMembershipSignupComplete = (result) => {
+    fetchProfileData();
+    setIsMembershipSignupWizardOpen(false);
+    toast({
+      title: "Membership Added Successfully",
+      description: "The new membership plan has been assigned to this member.",
+      variant: "default"
+    });
+  };
+
   if (isLoading || !memberData) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -1582,6 +1986,39 @@ const StaffMemberProfilePage = () => {
               Email
             </Button>
           )}
+
+          {/* Global Save Button - Top Right */}
+          {hasUnsavedChanges && (
+            <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDiscardChanges}
+                className="px-3 py-2 text-xs font-medium border-gray-300 text-gray-600 hover:bg-gray-50 transition-all duration-200"
+              >
+                <X className="h-3 w-3 mr-1" />
+                Discard
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleGlobalSave}
+                disabled={isSaving}
+                className="px-3 py-2 text-xs font-medium bg-green-600 hover:bg-green-700 text-white transition-all duration-200"
+              >
+                {isSaving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-3 w-3 mr-1" />
+                    Save All Changes
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
           {/* Enhanced Profile Photo Section */}
           <div className="relative">
             <Avatar className="h-32 w-32 md:h-40 md:w-40 border-4 border-background shadow-lg">
@@ -1755,271 +2192,223 @@ const StaffMemberProfilePage = () => {
           <StaffNotesSection memberId={memberData.id} staffId={loggedInStaff.id} />
         </div>
       </div>
-      </div>      {/* Enhanced tab bar */}
-      <div className="sticky z-20 bg-gray-50 mb-0 top-0">
+      </div>      {/* Modern Tab Navigation - Separate from content */}
+      <div className="mb-3.5">
         <Tabs defaultValue="demographics" className="w-full">
-          <TabsList id="staffProfileTabsTriggerList" className="flex w-full justify-center gap-1 py-4 px-4 rounded-none shadow-none border-0 bg-transparent">
-            <TabsTrigger value="demographics" className="text-sm font-medium px-6 py-3 flex items-center gap-2 rounded-t-lg border-b-0 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:text-gray-800 transition-all duration-200">
-              <User className="h-4 w-4" /> Profile
+          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:grid-cols-6 bg-muted">
+            <TabsTrigger value="demographics" className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:text-foreground">
+              <User className="h-4 w-4" />
+              <span className="hidden sm:inline">Profile</span>
             </TabsTrigger>
-            <TabsTrigger value="membership" className="text-sm font-medium px-6 py-3 flex items-center gap-2 rounded-t-lg border-b-0 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:text-gray-800 transition-all duration-200">
-              <Briefcase className="h-4 w-4" /> Membership
+            <TabsTrigger value="membership" className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:text-foreground">
+              <Briefcase className="h-4 w-4" />
+              <span className="hidden sm:inline">Membership</span>
             </TabsTrigger>
-            <TabsTrigger value="registrations" className="text-sm font-medium px-6 py-3 flex items-center gap-2 rounded-t-lg border-b-0 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:text-gray-800 transition-all duration-200">
-              <ClipboardList className="h-4 w-4" /> Registrations
+            <TabsTrigger value="registrations" className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:text-foreground">
+              <ClipboardList className="h-4 w-4" />
+              <span className="hidden sm:inline">Registrations</span>
             </TabsTrigger>
-            <TabsTrigger value="communication" className="text-sm font-medium px-6 py-3 flex items-center gap-2 rounded-t-lg border-b-0 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:text-gray-800 transition-all duration-200">
-              <Send className="h-4 w-4" /> Communication
+            <TabsTrigger value="communication" className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:text-foreground">
+              <Send className="h-4 w-4" />
+              <span className="hidden sm:inline">Communication</span>
             </TabsTrigger>
-            <TabsTrigger value="notes-documents" className="text-sm font-medium px-6 py-3 flex items-center gap-2 rounded-t-lg border-b-0 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:text-gray-800 transition-all duration-200">
-              <FolderOpen className="h-4 w-4" /> Notes & Documents
+            <TabsTrigger value="notes-documents" className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:text-foreground">
+              <FolderOpen className="h-4 w-4" />
+              <span className="hidden sm:inline">Notes & Documents</span>
             </TabsTrigger>
-            <TabsTrigger value="billing-history" className="text-sm font-medium px-6 py-3 flex items-center gap-2 rounded-t-lg border-b-0 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:text-gray-800 transition-all duration-200">
-              <History className="h-4 w-4" /> Billing
+            <TabsTrigger value="billing-history" className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:text-foreground">
+              <History className="h-4 w-4" />
+              <span className="hidden sm:inline">Billing</span>
             </TabsTrigger>
           </TabsList>          {/* Profile Tab - Enhanced UI/UX with better organization and visual design */}
-          <TabsContent value="demographics" className="bg-white p-6 rounded-none border-t-0 shadow-sm">
+          <TabsContent value="demographics" className="space-y-6 mt-6 pt-2">
             <div className="space-y-6">
 
-              {/* Personal Information Section */}
+              {/* Personal & Contact Information Section */}
               <ProfileSectionCard
-                title="Personal Information"
+                title="Personal & Contact Information"
                 icon={User}
-                description="Basic demographic and identity details"
+                description="Personal details, contact information, and mailing address"
                 isLoading={isLoading}
                 className="h-fit"
-                sectionId="personal"
-                isEditing={editingSection === 'personal'}
-                onEdit={() => handleStartEdit('personal')}
-                onSave={() => handleSaveSectionEdit('personal')}
-                onCancel={() => handleCancelEdit('personal')}
               >
-                <div className="grid gap-3">
-                  {/* Member ID and Access Card - Top row */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    <InfoRow
-                      label="Member ID"
-                      value={memberData?.system_member_id || memberData?.id}
-                      icon={Fingerprint}
-                      className="bg-primary/5 border-primary/20"
-                    />
-                    <EditableInfoRow
-                      label="Access Card"
-                      value={memberData?.access_card_number}
-                      icon={KeySquare}
-                      isEmpty={!memberData?.access_card_number}
-                      field="access_card_number"
-                      editValue={editFormData.access_card_number}
-                      onInputChange={handleInputChange}
-                      placeholder="Enter access card number"
-                    />
+                <div className="space-y-6">
+                  {/* Personal Information */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <User className="h-4 w-4 text-blue-600" />
+                      Personal Details
+                    </h4>
+
+                    {/* Member ID and Access Card - Top row */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <InfoRow
+                        label="Member ID"
+                        value={memberData?.system_member_id || memberData?.id}
+                        icon={Fingerprint}
+                        className="bg-primary/5 border-primary/20"
+                      />
+                      <InlineEditField
+                        label="Access Card"
+                        value={formData.access_card_number}
+                        fieldName="access_card_number"
+                        icon={KeySquare}
+                        placeholder="Enter access card number"
+                        onChange={handleFieldChange}
+                      />
+                    </div>
+
+                    {/* First Name and Last Name - Second row */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <InlineEditField
+                        label="First Name"
+                        value={formData.first_name}
+                        fieldName="first_name"
+                        icon={User}
+                        isRequired={true}
+                        placeholder="Enter first name"
+                        onChange={handleFieldChange}
+                      />
+                      <InlineEditField
+                        label="Last Name"
+                        value={formData.last_name}
+                        fieldName="last_name"
+                        icon={User}
+                        isRequired={true}
+                        placeholder="Enter last name"
+                        onChange={handleFieldChange}
+                      />
+                    </div>
+
+                    {/* Date of Birth and Gender */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <InlineEditField
+                        label="Date of Birth"
+                        value={formData.date_of_birth}
+                        fieldName="date_of_birth"
+                        type="date"
+                        icon={CalendarDays}
+                        placeholder="Select date of birth"
+                        onChange={handleFieldChange}
+                      />
+                      <InlineEditField
+                        label="Gender"
+                        value={formData.gender}
+                        fieldName="gender"
+                        icon={User}
+                        options={[
+                          { value: 'Male', label: 'Male' },
+                          { value: 'Female', label: 'Female' },
+                          { value: 'Other', label: 'Other' },
+                          { value: 'Prefer not to say', label: 'Prefer not to say' }
+                        ]}
+                        placeholder="Select gender"
+                        onChange={handleFieldChange}
+                      />
+                    </div>
                   </div>
 
-                  {/* First Name and Last Name - Second row */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    <EditableInfoRow
-                      label="First Name"
-                      value={memberData?.first_name}
-                      icon={User}
-                      isRequired={true}
-                      isEmpty={!memberData?.first_name}
-                      isEditing={editingSection === 'personal'}
-                      field="first_name"
-                      editValue={editFormData.first_name}
-                      onInputChange={handleInputChange}
-                    />
-                    <EditableInfoRow
-                      label="Last Name"
-                      value={memberData?.last_name}
-                      icon={User}
-                      isRequired={true}
-                      isEmpty={!memberData?.last_name}
-                      isEditing={editingSection === 'personal'}
-                      field="last_name"
-                      editValue={editFormData.last_name}
-                      onInputChange={handleInputChange}
-                    />
-                  </div>
+                  {/* Contact Information */}
+                  <div className="pt-4 border-t border-border/50">
+                    <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-green-600" />
+                      Contact Information
+                    </h4>
 
-                  {/* Date of Birth and Gender */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    <EditableInfoRow
-                      label="Date of Birth"
-                      value={memberData?.dob ? format(new Date(memberData.dob), 'MMM d, yyyy') : ''}
-                      icon={CalendarDays}
-                      isEmpty={!memberData?.dob}
-                      isEditing={editingSection === 'personal'}
-                      field="dob"
-                      type="date"
-                      editValue={editFormData.dob}
-                      onInputChange={handleInputChange}
-                    />
-                    <EditableInfoRow
-                      label="Gender"
-                      value={memberData?.gender}
-                      icon={User}
-                      isEmpty={!memberData?.gender}
-                      isEditing={editingSection === 'personal'}
-                      field="gender"
-                      editValue={editFormData.gender}
-                      onInputChange={handleInputChange}
-                      options={[
-                        { value: 'Male', label: 'Male' },
-                        { value: 'Female', label: 'Female' },
-                        { value: 'Other', label: 'Other' },
-                        { value: 'Prefer not to say', label: 'Prefer not to say' }
-                      ]}
-                      placeholder="Select gender"
-                    />
-                  </div>
-
-
-                </div>
-              </ProfileSectionCard>
-
-              {/* Contact Information Section */}
-              <ProfileSectionCard
-                title="Contact Information"
-                icon={Mail}
-                description="Primary contact details and mailing address"
-                isLoading={isLoading}
-                className="h-fit"
-                sectionId="contact"
-                isEditing={editingSection === 'contact'}
-                onEdit={() => handleStartEdit('contact')}
-                onSave={() => handleSaveSectionEdit('contact')}
-                onCancel={() => handleCancelEdit('contact')}
-              >
-                <div className="space-y-3">
-                  <EditableInfoRow
-                    label="Email Address"
-                    value={memberData?.email}
-                    icon={Mail}
-                    isRequired={true}
-                    isEmpty={!memberData?.email}
-                    isEditing={editingSection === 'contact'}
-                    field="email"
-                    type="email"
-                    editValue={editFormData.email}
-                    onInputChange={handleInputChange}
-                  >
-                    {editingSection !== 'contact' && memberData?.email && (
-                      <div className="flex items-center justify-between group">
-                        <p className="font-medium text-sm truncate flex-1 mr-3">{memberData.email}</p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => window.location.href = `mailto:${memberData.email}`}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Mail className="h-4 w-4" />
-                        </Button>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <InlineEditField
+                          label="Email Address"
+                          value={formData.email}
+                          fieldName="email"
+                          type="email"
+                          icon={Mail}
+                          isRequired={true}
+                          placeholder="Enter email address"
+                          onChange={handleFieldChange}
+                        />
+                        <InlineEditField
+                          label="Phone Number"
+                          value={formData.phone}
+                          fieldName="phone"
+                          type="tel"
+                          icon={Phone}
+                          isRequired={true}
+                          placeholder="Enter phone number"
+                          onChange={handleFieldChange}
+                        />
                       </div>
-                    )}
-                  </EditableInfoRow>
+                    </div>
+                  </div>
 
-                  <EditableInfoRow
-                    label="Phone Number"
-                    value={memberData?.phone}
-                    icon={Phone}
-                    isRequired={true}
-                    isEmpty={!memberData?.phone}
-                    field="phone"
-                    type="tel"
-                    editValue={editFormData.phone}
-                    onInputChange={handleInputChange}
-                  >
-                    {editingSection !== 'contact' && memberData?.phone && (
-                      <div className="flex items-center justify-between group">
-                        <p className="font-medium text-sm flex-1 mr-3">{memberData.phone}</p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => window.location.href = `tel:${memberData.phone}`}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Phone className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </EditableInfoRow>
-
-                  <div className="pt-3 border-t border-border/50">
-                    <h4 className="text-xs font-semibold text-foreground mb-2 flex items-center gap-2">
-                      <Home className="h-3 w-3 text-primary" />
+                  {/* Mailing Address */}
+                  <div className="pt-4 border-t border-border/50">
+                    <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <Home className="h-4 w-4 text-purple-600" />
                       Mailing Address
                     </h4>
-                    <div className="space-y-2">                      <EditableInfoRow
+
+                    <div className="space-y-4">
+                      <InlineEditField
                         label="Street Address"
-                        value={memberData?.address}
+                        value={formData.address}
+                        fieldName="address"
                         icon={Home}
-                        isEmpty={!memberData?.address}
-                        field="address"
-                        editValue={editFormData.address}
-                        onInputChange={handleInputChange}
-                        useAddressAutocomplete={true}
-                        onAddressSelect={handleAddressSelect}
-                        placeholder="Enter street address (autocomplete uses demo data)"
+                        placeholder="Enter street address"
+                        onChange={handleFieldChange}
                       />
 
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                        <EditableInfoRow
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <InlineEditField
                           label="City"
-                          value={memberData?.city}
+                          value={formData.city}
+                          fieldName="city"
                           icon={Home}
-                          isEmpty={!memberData?.city}
-                          field="city"
-                          editValue={editFormData.city}
-                          onInputChange={handleInputChange}
+                          placeholder="Enter city"
+                          onChange={handleFieldChange}
                         />
-                        <EditableInfoRow
+                        <InlineEditField
                           label="State"
-                          value={memberData?.state}
+                          value={formData.state}
+                          fieldName="state"
                           icon={Home}
-                          isEmpty={!memberData?.state}
-                          field="state"
-                          editValue={editFormData.state}
-                          onInputChange={handleInputChange}
+                          placeholder="Enter state"
+                          onChange={handleFieldChange}
                         />
-                        <EditableInfoRow
+                        <InlineEditField
                           label="ZIP Code"
-                          value={memberData?.zip_code}
+                          value={formData.zip_code}
+                          fieldName="zip_code"
                           icon={Home}
-                          isEmpty={!memberData?.zip_code}
-                          field="zip_code"
-                          editValue={editFormData.zip_code}
-                          onInputChange={handleInputChange}
+                          placeholder="Enter ZIP code"
+                          onChange={handleFieldChange}
                         />
                       </div>
                     </div>
                   </div>
 
                   {/* Emergency Contact Section */}
-                  <div className="pt-3 border-t border-border/50">
-                    <h4 className="text-xs font-semibold text-foreground mb-2 flex items-center gap-2">
-                      <Shield className="h-3 w-3 text-orange-600" />
+                  <div className="pt-4 border-t border-border/50">
+                    <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-orange-600" />
                       Emergency Contact
                     </h4>
-                    <div className="space-y-2">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                        <EditableInfoRow
+
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <InlineEditField
                           label="Contact Name"
-                          value={memberData?.emergency_contact_name}
+                          value={formData.emergency_contact_name}
+                          fieldName="emergency_contact_name"
                           icon={User}
-                          isEmpty={!memberData?.emergency_contact_name}
-                          field="emergency_contact_name"
-                          editValue={editFormData.emergency_contact_name}
-                          onInputChange={handleInputChange}
                           placeholder="Enter emergency contact name"
+                          onChange={handleFieldChange}
                         />
-                        <EditableInfoRow
+                        <InlineEditField
                           label="Relationship"
-                          value={memberData?.emergency_contact_relationship}
+                          value={formData.emergency_contact_relationship}
+                          fieldName="emergency_contact_relationship"
                           icon={Users}
-                          isEmpty={!memberData?.emergency_contact_relationship}
-                          field="emergency_contact_relationship"
-                          editValue={editFormData.emergency_contact_relationship}
-                          onInputChange={handleInputChange}
                           options={[
                             { value: 'Spouse', label: 'Spouse' },
                             { value: 'Parent', label: 'Parent' },
@@ -2029,20 +2418,36 @@ const StaffMemberProfilePage = () => {
                             { value: 'Other', label: 'Other' }
                           ]}
                           placeholder="Select relationship"
+                          onChange={handleFieldChange}
                         />
                       </div>
-                      <EditableInfoRow
+                      <InlineEditField
                         label="Emergency Phone"
-                        value={memberData?.emergency_contact_phone}
-                        icon={Phone}
-                        isEmpty={!memberData?.emergency_contact_phone}
-                        field="emergency_contact_phone"
+                        value={formData.emergency_contact_phone}
+                        fieldName="emergency_contact_phone"
                         type="tel"
-                        editValue={editFormData.emergency_contact_phone}
-                        onInputChange={handleInputChange}
+                        icon={Phone}
                         placeholder="Enter emergency contact phone"
+                        onChange={handleFieldChange}
                       />
                     </div>
+                  </div>
+
+                  {/* Notes Section */}
+                  <div className="pt-4 border-t border-border/50">
+                    <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-indigo-600" />
+                      Notes
+                    </h4>
+                    <InlineEditField
+                      label="Member Notes"
+                      value={formData.notes}
+                      fieldName="notes"
+                      type="textarea"
+                      icon={FileText}
+                      placeholder="Add notes about this member..."
+                      onChange={handleFieldChange}
+                    />
                   </div>
                 </div>
               </ProfileSectionCard>
@@ -2056,98 +2461,20 @@ const StaffMemberProfilePage = () => {
               className="h-fit"
             >
               {customFields.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {customFields.map((field) => (
-                    <div key={field.id} className="space-y-1">
-                      <Label className="text-xs font-medium">
-                        {field.label}
-                        {field.is_required && <span className="text-red-500 ml-1">*</span>}
-                      </Label>
-                      {editingSection === 'custom' ? (
-                        // Editing mode
-                        field.type === 'textarea' ? (
-                          <Textarea
-                            value={editFormData[`custom_field_${field.id}`] || ''}
-                            onChange={(e) => handleInputChange(`custom_field_${field.id}`, e.target.value)}
-                            placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
-                            className="text-sm"
-                            rows={3}
-                          />
-                        ) : field.type === 'select' ? (
-                          <select
-                            value={editFormData[`custom_field_${field.id}`] || ''}
-                            onChange={(e) => handleInputChange(`custom_field_${field.id}`, e.target.value)}
-                            className="w-full text-sm h-10 px-3 border border-border/60 bg-background/80 rounded-md focus:border-primary focus:ring-primary/20 transition-all duration-200 shadow-sm"
-                          >
-                            <option value="">{field.placeholder || `Select ${field.label.toLowerCase()}`}</option>
-                            {field.options?.map((option) => (
-                              <option key={option.value || option} value={option.value || option}>
-                                {option.label || option}
-                              </option>
-                            ))}
-                          </select>
-                        ) : field.type === 'checkbox' ? (
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              checked={editFormData[`custom_field_${field.id}`] === 'true' || editFormData[`custom_field_${field.id}`] === true}
-                              onChange={(e) => handleInputChange(`custom_field_${field.id}`, e.target.checked.toString())}
-                              className="rounded border-border/60 text-primary focus:ring-primary/20"
-                            />
-                            <span className="text-sm text-muted-foreground">
-                              {field.placeholder || `Check to enable ${field.label.toLowerCase()}`}
-                            </span>
-                          </div>
-                        ) : (
-                          <Input
-                            type={field.type === 'email' ? 'email' :
-                                  field.type === 'date' ? 'date' :
-                                  field.type === 'number' ? 'number' :
-                                  field.type === 'url' ? 'url' : 'text'}
-                            value={editFormData[`custom_field_${field.id}`] || ''}
-                            onChange={(e) => handleInputChange(`custom_field_${field.id}`, e.target.value)}
-                            placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
-                            className="text-sm"
-                          />
-                        )
-                      ) : (
-                        // View mode
-                        <div className="min-h-[40px] flex items-center">
-                          {field.type === 'checkbox' ? (
-                            <div className="flex items-center space-x-2">
-                              <input
-                                type="checkbox"
-                                checked={memberCustomFieldValues[field.id] === 'true' || memberCustomFieldValues[field.id] === true}
-                                disabled
-                                className="rounded border-border/60"
-                              />
-                              <span className="text-sm">
-                                {memberCustomFieldValues[field.id] === 'true' || memberCustomFieldValues[field.id] === true ? 'Yes' : 'No'}
-                              </span>
-                            </div>
-                          ) : field.type === 'textarea' ? (
-                            <div className="text-sm whitespace-pre-wrap">
-                              {memberCustomFieldValues[field.id] || (
-                                <span className="text-muted-foreground italic">Not provided</span>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="text-sm">
-                              {memberCustomFieldValues[field.id] || (
-                                <span className="text-muted-foreground italic">Not provided</span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    <CustomFieldInlineEdit
+                      key={field.id}
+                      field={field}
+                      value={formData[`custom_field_${field.id}`] || memberCustomFieldValues[field.id] || ''}
+                      onChange={handleFieldChange}
+                    />
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Settings className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <div className="text-center py-8 text-gray-500">
+                  <Settings className="h-8 w-8 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">No custom fields configured</p>
-                  <p className="text-xs mt-1">Contact administrator to add custom fields</p>
                 </div>
               )}
             </ProfileSectionCard>
@@ -2177,7 +2504,7 @@ const StaffMemberProfilePage = () => {
           </TabsContent>
 
           {/* Membership Tab - Table-based membership management */}
-          <TabsContent value="membership" className="space-y-8 bg-white p-8 rounded-none border-t-0 shadow-sm">
+          <TabsContent value="membership" className="space-y-6 mt-6 pt-2">
             <ProfileSectionCard
               title="Membership Management"
               icon={Briefcase}
@@ -2185,9 +2512,9 @@ const StaffMemberProfilePage = () => {
                 <div className="flex items-center justify-between w-full">
                   <span>Current and historical membership information</span>
                   <div className="flex items-center gap-3 absolute right-6 -mt-3">
-                    <Button onClick={() => setIsAssignMembershipDialogOpen(true)} className="flex items-center gap-2">
+                    <Button onClick={() => setIsMembershipSignupWizardOpen(true)} className="flex items-center gap-2">
                       <PlusCircle className="h-4 w-4" />
-                      Add Membership
+                      Add Plan
                     </Button>
                   </div>
                 </div>
@@ -2385,7 +2712,7 @@ const StaffMemberProfilePage = () => {
           </TabsContent>
 
           {/* Registrations Tab - Class registrations and event sign-ups */}
-          <TabsContent value="registrations" className="space-y-8 bg-white p-8 rounded-none border-t-0 shadow-sm">
+          <TabsContent value="registrations" className="space-y-6 mt-6 pt-2">
             <ProfileSectionCard
               title="Class & Event Registrations"
               icon={ClipboardList}
@@ -2443,7 +2770,7 @@ const StaffMemberProfilePage = () => {
           </TabsContent>
 
           {/* Communication Tab - Messages, notifications, and communication history */}
-          <TabsContent value="communication" className="space-y-8 bg-white p-8 rounded-none border-t-0 shadow-sm">
+          <TabsContent value="communication" className="space-y-6 mt-6 pt-2">
             <ProfileSectionCard
               title="Communication History"
               icon={Send}
@@ -2524,7 +2851,7 @@ const StaffMemberProfilePage = () => {
           </TabsContent>
 
           {/* Billing History Tab - Dedicated billing and payment information */}
-          <TabsContent value="billing-history" className="space-y-8 bg-white p-8 rounded-none border-t-0 shadow-sm">
+          <TabsContent value="billing-history" className="space-y-6 mt-6 pt-2">
             {/* Billing Preferences Section */}            <ProfileSectionCard
               title="Billing Preferences"
               icon={Settings}
@@ -2582,7 +2909,7 @@ const StaffMemberProfilePage = () => {
           </TabsContent>
 
           {/* Notes & Documents Tab - Member notes and document management */}
-          <TabsContent value="notes-documents" className="space-y-8 bg-white p-8 rounded-none border-t-0 shadow-sm">
+          <TabsContent value="notes-documents" className="space-y-6 mt-6 pt-2">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Member Documents */}
               <div className="lg:col-span-2">
@@ -2670,6 +2997,30 @@ const StaffMemberProfilePage = () => {
             memberName={memberData.name}
             currentMembershipTypeId={memberData.current_membership_type_id}
             onMembershipAssigned={handleMembershipAssigned}
+          />
+
+          {/* Membership Signup Wizard */}
+          <MembershipSignupWizard
+            isOpen={isMembershipSignupWizardOpen}
+            onClose={() => setIsMembershipSignupWizardOpen(false)}
+            memberId={memberData.id}
+            initialMemberData={{
+              first_name: memberData.first_name,
+              last_name: memberData.last_name,
+              email: memberData.email,
+              phone: memberData.phone,
+              address: memberData.address,
+              city: memberData.city,
+              state: memberData.state,
+              zip_code: memberData.zip_code,
+              date_of_birth: memberData.date_of_birth,
+              gender: memberData.gender,
+              access_card_number: memberData.access_card_number,
+              emergency_contact_name: memberData.emergency_contact_name,
+              emergency_contact_relationship: memberData.emergency_contact_relationship,
+              emergency_contact_phone: memberData.emergency_contact_phone
+            }}
+            onComplete={handleMembershipSignupComplete}
           />
         </>
       )}

@@ -339,17 +339,16 @@ const PointOfSale = () => {
     <StaffPageContainer>
       <StaffPageHeader
         title="Point of Sale"
-        subtitle="Process sales and manage transactions"
-        actions={
-          <Button
-            variant="outline"
-            onClick={() => navigate('/staff-portal/pos/manage')}
-            className="flex items-center gap-2"
-          >
-            <Settings className="h-4 w-4" />
-            Manage
-          </Button>
-        }
+        description="Process sales and manage transactions"
+        actions={[
+          {
+            text: "Manage",
+            icon: Settings,
+            variant: "outline",
+            onClick: () => navigate('/staff-portal/pos/manage'),
+            className: "flex items-center gap-2"
+          }
+        ]}
       />
 
       <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-12rem)]">
@@ -508,7 +507,15 @@ const PointOfSale = () => {
         </div>
 
         {/* Right Panel - Cart */}
-        <div className="w-full lg:w-96 flex flex-col">
+        <div className="w-full lg:w-96 flex flex-col space-y-4">
+
+          {/* Administrative Functions - Horizontal Layout Above Cart */}
+          <div className="grid grid-cols-3 gap-2">
+            <Button variant="outline" size="sm" className="text-xs border-orange-300 text-orange-700 hover:bg-orange-50" onClick={() => toast({ title: "End of Day", variant: "default" })}>End of Day</Button>
+            <Button variant="outline" size="sm" className="text-xs border-green-300 text-green-700 hover:bg-green-50" onClick={() => toast({ title: "Open Drawer", variant: "default" })}>Open Drawer</Button>
+            <Button variant="outline" size="sm" className="text-xs border-purple-300 text-purple-700 hover:bg-purple-50" onClick={() => toast({ title: "Search Transaction", variant: "default" })}>Search Transaction</Button>
+          </div>
+
           <Card className="flex-1 flex flex-col border-2 border-indigo-200 shadow-lg bg-gradient-to-b from-indigo-50/30 to-white">
             <CardHeader className="border-b-2 border-indigo-100 bg-gradient-to-r from-indigo-100 to-purple-100">
               <CardTitle className="flex items-center justify-between text-indigo-900">
@@ -517,8 +524,13 @@ const PointOfSale = () => {
                   <span className="text-lg font-bold">Cart ({cart.length})</span>
                 </span>
                 {cart.length > 0 && (
-                  <Button variant="ghost" size="sm" onClick={clearCart} className="hover:bg-red-100 text-red-600 hover:text-red-700">
-                    <X className="h-4 w-4" />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearCart}
+                    className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    Clear Cart
                   </Button>
                 )}
               </CardTitle>

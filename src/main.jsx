@@ -55,13 +55,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <FeatureErrorBoundary featureName="App">
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-            <AuthProvider>
+          <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">            <AuthProvider>
               <App />
               <Toaster />
-              {process.env.NODE_ENV === 'development' && (
-                <ReactQueryDevtools initialIsOpen={false} />
-              )}
             </AuthProvider>
           </ThemeProvider>
         </BrowserRouter>

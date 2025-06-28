@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { showToast } from '@/utils/toastUtils';
 import { storage, STORAGE_KEYS } from '@/utils/storageUtils';
@@ -6,6 +6,7 @@ import { enhancedStorage } from '@/utils/secureStorage';
 import { normalizeRole } from '@/utils/roleUtils';
 import { createProfileSafe, validateAuthUserExists } from '@/utils/profileValidation';
 import { useProfileFetcher } from '@/hooks/useProfileFetcher';
+import { logger } from '@/utils/logger';
 import { PermissionsService } from '@/services/permissionsService';
 
 /**
@@ -38,26 +39,26 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {  // ⚡ PERFORMANCE: Initialize with cached user for faster UI hydration
   const [user, setUser] = useState(() => {
     try {
-      // Use session storage for cached user data (more secure)
-      const cached = enhancedStorage.session.get('cached_user');
-      const cacheTimestamp = enhancedStorage.session.get('cached_user_timestamp');
+      // Use localStorage for cached user data (persistent across refreshes)
+      const cached = enhancedStorage.local.get('cached_user');
+      const cacheTimestamp = enhancedStorage.local.get('cached_user_timestamp');
 
-      // 💾 CACHE VALIDATION: Check if cache is still valid (24 hours)
+      // 💾 CACHE VALIDATION: Check if cache is still valid (7 days)
       if (cached && cacheTimestamp) {
         const cacheAge = Date.now() - cacheTimestamp;
-        const maxCacheAge = 24 * 60 * 60 * 1000; // 24 hours
+        const maxCacheAge = 7 * 24 * 60 * 60 * 1000; // 7 days
 
         if (cacheAge < maxCacheAge) {
           return cached;
         } else {
-          enhancedStorage.session.remove('cached_user');
-          enhancedStorage.session.remove('cached_user_timestamp');
+          enhancedStorage.local.remove('cached_user');
+          enhancedStorage.local.remove('cached_user_timestamp');
         }
       }
 
       return null;
     } catch (error) {
-      console.warn('Failed to load cached user:', error);
+      logger.warn('Failed to load cached user:', error);
       return null;
     }
   });
@@ -108,31 +109,46 @@ export const AuthProvider = ({ children }) => {  // ⚡ PERFORMANCE: Initialize 
     }
   };
   // ⭐ ENHANCED: Profile fetcher with user state management
-  const fetchAndSetProfile = async (userId, options = {}) => {
+  const fetchAndSetProfile = useCallback(async (userId, options = {}) => {
     try {
       const profile = await fetchUserProfile(userId, {
         ...options,
         onProfileCreated: (createdProfile) => {
-          
+
           setUser(createdProfile);
+          // 💾 PERSISTENCE: Cache created profile in localStorage
+          try {
+            enhancedStorage.local.set('cached_user', createdProfile);
+            enhancedStorage.local.set('cached_user_timestamp', Date.now());
+          } catch (error) {
+            logger.warn('Failed to cache created profile:', error);
+          }
         }
       });
-      
+
       setUser(profile);
-      
+
+      // 💾 PERSISTENCE: Cache fetched profile in localStorage
+      try {
+        enhancedStorage.local.set('cached_user', profile);
+        enhancedStorage.local.set('cached_user_timestamp', Date.now());
+      } catch (error) {
+        logger.warn('Failed to cache profile:', error);
+      }
+
       // 🔐 PERMISSIONS: Fetch permissions after profile is set
       if (profile?.id) {
         fetchUserPermissions(profile.id).catch(error => {
-          
+
         });
       }
-      
+
       return profile;
     } catch (error) {
-      
+
       throw error;
     }
-  };
+  }, [fetchUserProfile, setUser, fetchUserPermissions]);
 
   // ⭐ SIMPLIFIED: Auth state listener with faster timeout
   useEffect(() => {
@@ -140,48 +156,112 @@ export const AuthProvider = ({ children }) => {  // ⚡ PERFORMANCE: Initialize 
     
     let isMounted = true;
     
-    // ⭐ FASTER: Reduced timeout to 3 seconds
+    // Debug interval removed for security - no sensitive data logging
+    
+    // Window focus/blur monitoring for session validation (no logging)
+    const handleFocus = () => {
+      // Focus event handled silently
+    };
+
+    const handleBlur = () => {
+      // Blur event handled silently
+    };
+
+    const handleVisibilityChange = () => {
+      // When page becomes visible again, check session status
+      if (!document.hidden && user) {
+        supabase.auth.getSession().then(({ data: { session }, error }) => {
+          if (error) {
+            logger.error('Session check error on visibility change:', error);
+            return;
+          }
+
+          if (!session && user) {
+            // Try to refresh the session
+            supabase.auth.refreshSession().catch(refreshError => {
+              logger.error('Session refresh failed:', refreshError);
+            });
+          }
+        });
+      }
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('blur', handleBlur);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // ⭐ FIXED: Longer timeout to allow proper session restoration
     const authTimeout = setTimeout(() => {
       if (isMounted) {
+        logger.warn('Auth initialization timeout - setting authReady to true');
         setAuthReady(true);
       }
-    }, 3000); // Reduced from 5000ms to 3000ms
+    }, 8000); // Increased to 8 seconds for better session restoration
 
     const initializeAuth = async () => {
       try {
-        // ⭐ FASTER: Get current session quickly
+        logger.info('🔄 Initializing authentication...');
+
+        // ⭐ CRITICAL: Wait for Supabase to restore session from localStorage
         const { data: { session }, error } = await supabase.auth.getSession();
-        
+
         if (error) {
-          
+          logger.error('AuthContext: Session error:', error);
           if (isMounted) {
             setAuthReady(true);
           }
           return;
         }
 
+        logger.info('Session check completed:', session ? 'Session found' : 'No session');
+
         if (session?.user && isMounted) {
-          // ⭐ ASYNC: Fetch profile in background, don't wait
-          fetchAndSetProfile(session.user.id)
-            .catch((error) => {
-              
-              // Don't throw - this is a background operation
-            })
-            .finally(() => {
-              if (isMounted) {
-                setAuthReady(true);
-                clearTimeout(authTimeout);
-              }
-            });
+          logger.info('✅ User session found, fetching profile...');
+
+          // ⭐ CRITICAL: Wait for profile fetch before setting authReady
+          try {
+            await fetchAndSetProfile(session.user.id);
+            logger.info('✅ Profile fetched successfully');
+          } catch (profileError) {
+            logger.error('Profile fetch error:', profileError);
+            // Create fallback user profile
+            const fallbackUser = {
+              id: session.user.id,
+              email: session.user.email || '',
+              role: 'nonmember',
+              first_name: '',
+              last_name: '',
+              name: session.user.email || ''
+            };
+            setUser(fallbackUser);
+
+            // Cache fallback user
+            try {
+              enhancedStorage.local.set('cached_user', fallbackUser);
+              enhancedStorage.local.set('cached_user_timestamp', Date.now());
+            } catch (error) {
+              logger.warn('Failed to cache fallback user:', error);
+            }
+          }
+
+          // ⭐ FIXED: Set authReady after profile is handled
+          if (isMounted) {
+            setAuthReady(true);
+            clearTimeout(authTimeout);
+          }
         } else {
+          logger.info('No active session found');
+
+          // ⭐ FIXED: Don't try to refresh session unnecessarily
+          // Just set authReady and let the user login normally
           if (isMounted) {
             setAuthReady(true);
             clearTimeout(authTimeout);
           }
         }
-        
+
       } catch (error) {
-        
+        logger.error('AuthContext: Initialize error:', error);
         if (isMounted) {
           setAuthReady(true);
           clearTimeout(authTimeout);
@@ -192,35 +272,54 @@ export const AuthProvider = ({ children }) => {  // ⚡ PERFORMANCE: Initialize 
     // ⭐ FAST: Initialize immediately
     initializeAuth();
 
-    // ⭐ SIMPLIFIED: Auth state change listener
+    // ⭐ FIXED: Auth state change listener with better session handling
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      
-      
+      logger.info('🔄 Auth state change:', event, session ? 'with session' : 'no session');
+
       if (!isMounted) return;
 
       switch (event) {
         case 'SIGNED_IN':
+          logger.info('✅ SIGNED_IN event - user authenticated');
           if (session?.user) {
             // ⭐ BACKGROUND: Don't block UI for profile fetching
             fetchAndSetProfile(session.user.id)
               .catch((error) => {
-                
+                logger.error('Profile fetch error in SIGNED_IN:', error);
                 // Don't throw - this is a background operation
                 // User can still use the app with basic auth data
               });
           }
-          break;        case 'SIGNED_OUT':
-          setUser(null);
-          setUserPermissions([]); // 🔐 Clear permissions on logout
-          // 💾 PERSISTENCE: Clear cached user on logout - use secure storage
-          enhancedStorage.session.remove('cached_user');
-          enhancedStorage.session.remove('cached_user_timestamp');
-          enhancedStorage.secure.clear(); // Clear all secure data
-          enhancedStorage.session.clear();
           break;
-          
+
+        case 'SIGNED_OUT':
+          logger.info('⚠️ SIGNED_OUT event received');
+
+          // ⭐ CRITICAL: Add delay to prevent race conditions during page refresh
+          setTimeout(async () => {
+            if (!isMounted) return;
+
+            // Double-check session status to prevent false logouts
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
+
+            if (!currentSession) {
+              logger.info('✅ Confirmed logout - clearing user state');
+              setUser(null);
+              setUserPermissions([]);
+              // Clear cached data
+              enhancedStorage.local.remove('cached_user');
+              enhancedStorage.local.remove('cached_user_timestamp');
+              enhancedStorage.secure.clear();
+              enhancedStorage.session.clear();
+            } else {
+              logger.info('🔄 False logout detected - session still exists, keeping user logged in');
+            }
+          }, 100); // Small delay to handle race conditions
+          break;
+
         case 'TOKEN_REFRESHED':
-          
+          logger.info('🔄 Token refreshed successfully');
+          // Session is still valid, no action needed
           break;
       }
 
@@ -233,7 +332,10 @@ export const AuthProvider = ({ children }) => {  // ⚡ PERFORMANCE: Initialize 
     return () => {
       isMounted = false;
       clearTimeout(authTimeout);
-      subscription.unsubscribe();
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('blur', handleBlur);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      subscription?.unsubscribe();
     };
   }, []);
 
@@ -280,12 +382,12 @@ export const AuthProvider = ({ children }) => {  // ⚡ PERFORMANCE: Initialize 
             last_name: '',
             name: ''
           };
-          setUser(userProfile);          // 💾 PERSISTENCE: Cache fallback user securely
+          setUser(userProfile);          // 💾 PERSISTENCE: Cache fallback user in localStorage
           try {
-            await enhancedStorage.secure.set('cached_user', userProfile);
-            enhancedStorage.session.set('cached_user_timestamp', Date.now());
+            enhancedStorage.local.set('cached_user', userProfile);
+            enhancedStorage.local.set('cached_user_timestamp', Date.now());
           } catch (error) {
-            console.warn('Failed to cache user securely:', error);
+            logger.warn('Failed to cache user:', error);
           }
 
           
@@ -477,30 +579,36 @@ export const AuthProvider = ({ children }) => {  // ⚡ PERFORMANCE: Initialize 
     }
   };
   const logout = async () => {
+    // Attempting logout
     try {
-          // ⭐ CLEAR: All stored data including cached user - use secure storage
-      enhancedStorage.session.remove('cached_user');
-      enhancedStorage.session.remove('cached_user_timestamp');
+      // Clearing storage
+      // ⭐ CLEAR: All stored data including cached user - use localStorage
+      enhancedStorage.local.remove('cached_user');
+      enhancedStorage.local.remove('cached_user_timestamp');
       enhancedStorage.local.remove(STORAGE_KEYS.USER_PREFERENCES);
       enhancedStorage.local.remove(STORAGE_KEYS.DASHBOARD_CONFIG);
       enhancedStorage.secure.clear(); // Clear all secure data
       enhancedStorage.session.clear();
 
+      // Calling supabase.auth.signOut()
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (error) {
+        logger.error('Supabase signOut error:', error);
+        throw error;
+      }
 
+      // Supabase signOut successful, clearing user state
       setUser(null);
-      setUserPermissions([]); // 🔐 Clear permissions
+      setUserPermissions([]); // Clear permissions
 
-      showToast.success('Logged Out', 'You have been successfully logged out');
+      // Logout successful, redirecting
 
       // ⭐ REDIRECT: Force redirect to login page
       window.location.href = '/login';
 
     } catch (error) {
-      
-      showToast.error('Logout Failed', error.message);
-      // ⭐ FALLBACK: Even if logout fails, redirect to login
+      logger.error('Logout error:', error);
+      // FALLBACK: Even if logout fails, redirect to login
       window.location.href = '/login';
     }
   };  // ⚡ PERFORMANCE FIX: Memoize context value to prevent unnecessary re-renders
@@ -529,4 +637,5 @@ export const AuthProvider = ({ children }) => {  // ⚡ PERFORMANCE: Initialize 
 };
 
 export default AuthProvider;
+
 

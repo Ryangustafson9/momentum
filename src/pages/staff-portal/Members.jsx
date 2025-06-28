@@ -18,11 +18,12 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
 import { Users, UserPlus, Loader2 } from 'lucide-react';
-import MembersHeader from '@/components/admin/members/page_specific/MembersHeader';
+import { Button } from '@/components/ui/button';
 import MembersFilterControls from '@/components/admin/members/page_specific/MembersFilterControls';
 import MembersTable from '@/components/admin/members/page_specific/MembersTable';
 import MemberFormDialog from '@/components/admin/members/MemberFormDialog';
 import DeleteMemberDialog from '@/components/admin/members/DeleteMemberDialog';
+
 import AssignMembershipDialog from '@/components/admin/members/AssignMembershipDialog';
 import ImpersonationConfirmationDialog from '@/components/admin/members/ImpersonationConfirmationDialog';
 
@@ -111,6 +112,7 @@ const MembersPage = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isAssignMembershipDialogOpen, setIsAssignMembershipDialogOpen] = useState(false);
   const [isImpersonateDialogOpen, setIsImpersonateDialogOpen] = useState(false);
+
   const [memberToAssignPlan, setMemberToAssignPlan] = useState(null);
   const [memberToImpersonate, setMemberToImpersonate] = useState(null);
 
@@ -163,6 +165,8 @@ const MembersPage = () => {
     setIsFormDialogOpen(true);
   };
 
+
+
   const handleEditMember = (member) => {
     setCurrentMember(member);
     setIsFormDialogOpen(true);
@@ -196,7 +200,7 @@ const MembersPage = () => {
   const handleNavigateToProfile = (member) => {
     // Use system_member_id for the profile route
     const profileId = member.system_member_id || member.id;
-    navigate(`/staff-portal/member/${profileId}`);
+    navigate(`/staff-portal/profile/${profileId}`);
   };
 
   const handleAssignMembership = (member) => {
@@ -235,7 +239,29 @@ const MembersPage = () => {
 
   return (
     <div className="space-y-6 p-4 md:p-6 lg:p-8 bg-background dark:bg-slate-900 min-h-screen">
-      <MembersHeader onAddMemberClick={handleAddMemberClick} />
+      {/* Members Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+            <Users className="h-8 w-8 text-blue-600" />
+            Members
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Manage gym members and their membership information
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={handleAddMemberClick}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <UserPlus className="h-4 w-4" />
+            Add Member
+          </Button>
+
+        </div>
+      </div>
       <MembersFilterControls
         searchTerm={searchTerm}
         onSearchTermChange={(e) => setSearchTerm(e.target.value)}
@@ -285,6 +311,8 @@ const MembersPage = () => {
         onConfirm={confirmImpersonate}
         member={memberToImpersonate}
       />
+
+
     </div>
   );
 };
