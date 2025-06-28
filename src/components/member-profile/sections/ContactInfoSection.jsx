@@ -6,13 +6,10 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Home,
-  Edit3, 
-  Save, 
+import {
+  Mail,
+  Edit3,
+  Save,
   X
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,16 +46,16 @@ const EditableInfoRow = ({
 
   return (
     <div className="flex items-start justify-between py-3 border-b border-gray-100 last:border-b-0">
-      <div className="flex items-start gap-3 flex-1">
-        {Icon && (
-          <div className="p-2 bg-gray-50 rounded-lg mt-1">
-            <Icon className="h-4 w-4 text-gray-600" />
-          </div>
-        )}
-        <div className="flex-1">
+      <div className="flex items-start w-full">
+        {/* Label Column - Fixed Width */}
+        <div className="w-32 flex-shrink-0 pt-1">
           <Label className="text-sm font-medium text-gray-700">{label}</Label>
+        </div>
+
+        {/* Value/Input Column - Flexible Width */}
+        <div className="flex-1 min-w-0">
           {isEditing ? (
-            <div className="mt-1">
+            <div>
               {multiline ? (
                 <Textarea
                   value={editValue}
@@ -73,18 +70,18 @@ const EditableInfoRow = ({
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
                   placeholder={placeholder}
-                  className="w-full"
+                  className="w-full h-9"
                 />
               )}
             </div>
           ) : (
-            <div className="mt-1">
+            <div>
               {multiline ? (
-                <p className="text-sm text-gray-900 whitespace-pre-wrap">
+                <p className="text-sm text-gray-900 whitespace-pre-wrap py-1">
                   {value || 'Not provided'}
                 </p>
               ) : (
-                <p className="text-sm text-gray-900">
+                <p className="text-sm text-gray-900 py-1">
                   {value || 'Not provided'}
                 </p>
               )}
@@ -237,7 +234,6 @@ const ContactInfoSection = () => {
           <EditableInfoRow
             label="Email Address"
             value={memberData?.email}
-            icon={Mail}
             isEditing={isEditingSection}
             onEdit={() => handleEdit('email')}
             onSave={(value) => handleSave('email', value)}
@@ -250,7 +246,6 @@ const ContactInfoSection = () => {
           <EditableInfoRow
             label="Phone Number"
             value={memberData?.phone}
-            icon={Phone}
             isEditing={isEditingSection}
             onEdit={() => handleEdit('phone')}
             onSave={(value) => handleSave('phone', value)}
@@ -263,7 +258,6 @@ const ContactInfoSection = () => {
           <EditableInfoRow
             label="Street Address"
             value={memberData?.address}
-            icon={Home}
             isEditing={isEditingSection}
             onEdit={() => handleEdit('address')}
             onSave={(value) => handleSave('address', value)}
@@ -275,7 +269,6 @@ const ContactInfoSection = () => {
           <EditableInfoRow
             label="City"
             value={memberData?.city}
-            icon={MapPin}
             isEditing={isEditingSection}
             onEdit={() => handleEdit('city')}
             onSave={(value) => handleSave('city', value)}
@@ -287,7 +280,6 @@ const ContactInfoSection = () => {
           <EditableInfoRow
             label="State"
             value={memberData?.state}
-            icon={MapPin}
             isEditing={isEditingSection}
             onEdit={() => handleEdit('state')}
             onSave={(value) => handleSave('state', value)}
@@ -299,7 +291,6 @@ const ContactInfoSection = () => {
           <EditableInfoRow
             label="ZIP Code"
             value={memberData?.zip_code}
-            icon={MapPin}
             isEditing={isEditingSection}
             onEdit={() => handleEdit('zip_code')}
             onSave={(value) => handleSave('zip_code', value)}

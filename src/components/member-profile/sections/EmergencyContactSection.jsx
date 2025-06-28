@@ -6,12 +6,10 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Phone, 
-  User, 
+import {
   Heart,
-  Edit3, 
-  Save, 
+  Edit3,
+  Save,
   X,
   AlertTriangle
 } from 'lucide-react';
@@ -49,19 +47,19 @@ const EditableInfoRow = ({
 
   return (
     <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0">
-      <div className="flex items-center gap-3 flex-1">
-        {Icon && (
-          <div className="p-2 bg-gray-50 rounded-lg">
-            <Icon className="h-4 w-4 text-gray-600" />
-          </div>
-        )}
-        <div className="flex-1">
+      <div className="flex items-center w-full">
+        {/* Label Column - Fixed Width */}
+        <div className="w-32 flex-shrink-0">
           <Label className="text-sm font-medium text-gray-700">{label}</Label>
+        </div>
+
+        {/* Value/Input Column - Flexible Width */}
+        <div className="flex-1 min-w-0">
           {isEditing ? (
-            <div className="mt-1">
+            <div>
               {type === 'select' && options ? (
                 <Select value={editValue} onValueChange={setEditValue}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full h-9">
                     <SelectValue placeholder={placeholder} />
                   </SelectTrigger>
                   <SelectContent>
@@ -78,12 +76,12 @@ const EditableInfoRow = ({
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
                   placeholder={placeholder}
-                  className="w-full"
+                  className="w-full h-9"
                 />
               )}
             </div>
           ) : (
-            <p className="text-sm text-gray-900 mt-1">
+            <p className="text-sm text-gray-900 py-1">
               {value || 'Not provided'}
             </p>
           )}
@@ -233,7 +231,6 @@ const EmergencyContactSection = () => {
           <EditableInfoRow
             label="Contact Name"
             value={memberData?.emergency_contact_name}
-            icon={User}
             isEditing={isEditingSection}
             onEdit={() => handleEdit('emergency_contact_name')}
             onSave={(value) => handleSave('emergency_contact_name', value)}
@@ -245,7 +242,6 @@ const EmergencyContactSection = () => {
           <EditableInfoRow
             label="Contact Phone"
             value={memberData?.emergency_contact_phone}
-            icon={Phone}
             isEditing={isEditingSection}
             onEdit={() => handleEdit('emergency_contact_phone')}
             onSave={(value) => handleSave('emergency_contact_phone', value)}
@@ -258,7 +254,6 @@ const EmergencyContactSection = () => {
           <EditableInfoRow
             label="Relationship"
             value={memberData?.emergency_contact_relationship}
-            icon={Heart}
             isEditing={isEditingSection}
             onEdit={() => handleEdit('emergency_contact_relationship')}
             onSave={(value) => handleSave('emergency_contact_relationship', value)}

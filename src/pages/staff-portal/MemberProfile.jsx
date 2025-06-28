@@ -504,14 +504,8 @@ const EditProfileModal = ({ isOpen, onClose, memberData, onSave }) => {
                 </FormField>
               </div>
               <FormField label="Join Date" name="join_date" type="date" />
-            </div>
 
-            {/* Contact Information Section */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Mail className="h-4 w-4 text-primary" />
-                Contact Information
-              </h4>
+              {/* Contact Information - merged into Personal Information */}
               <FormField label="Email Address" name="email" type="email" required />
               <FormField label="Phone Number" name="phone" type="tel" />
               <FormField label="Street Address" name="address" />
@@ -1018,67 +1012,75 @@ const InlineEditField = ({
   };
 
   return (
-    <div className={`space-y-1 ${className}`}>
-      <Label className="text-sm font-medium text-gray-700 flex items-center gap-1">
-        {Icon && <Icon className="h-4 w-4 text-gray-500" />}
-        {label}
-        {isRequired && <span className="text-red-500">*</span>}
-      </Label>
+    <div className={`flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0 ${className}`}>
+      <div className="flex items-center w-full">
+        {/* Label Column - Fixed Width */}
+        <div className="w-32 flex-shrink-0">
+          <Label className="text-sm font-medium text-gray-700 flex items-center gap-1">
+            {label}
+            {isRequired && <span className="text-red-500">*</span>}
+          </Label>
+        </div>
 
-      {isEditing ? (
-        <div className="space-y-2">
-          {options ? (
-            <Select value={localValue} onValueChange={(newValue) => {
-              setLocalValue(newValue);
-              onChange(fieldName, newValue);
-              setIsEditing(false);
-            }}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={placeholder} />
-              </SelectTrigger>
-              <SelectContent>
-                {options.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : type === 'textarea' ? (
-            <Textarea
-              value={localValue}
-              onChange={handleChange}
-              onKeyDown={handleKeyDown}
-              onBlur={() => setIsEditing(false)}
-              placeholder={placeholder}
-              className="w-full"
-              autoFocus
-            />
+        {/* Value/Input Column - Flexible Width */}
+        <div className="flex-1 min-w-0">
+          {isEditing ? (
+            <div>
+              {options ? (
+                <Select value={localValue} onValueChange={(newValue) => {
+                  setLocalValue(newValue);
+                  onChange(fieldName, newValue);
+                  setIsEditing(false);
+                }}>
+                  <SelectTrigger className="w-full h-9">
+                    <SelectValue placeholder={placeholder} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {options.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : type === 'textarea' ? (
+                <Textarea
+                  value={localValue}
+                  onChange={handleChange}
+                  onKeyDown={handleKeyDown}
+                  onBlur={() => setIsEditing(false)}
+                  placeholder={placeholder}
+                  className="w-full min-h-[80px]"
+                  rows={3}
+                  autoFocus
+                />
+              ) : (
+                <Input
+                  type={type}
+                  value={localValue}
+                  onChange={handleChange}
+                  onKeyDown={handleKeyDown}
+                  onBlur={() => setIsEditing(false)}
+                  placeholder={placeholder}
+                  className="w-full h-9"
+                  autoFocus
+                />
+              )}
+            </div>
           ) : (
-            <Input
-              type={type}
-              value={localValue}
-              onChange={handleChange}
-              onKeyDown={handleKeyDown}
-              onBlur={() => setIsEditing(false)}
-              placeholder={placeholder}
-              className="w-full"
-              autoFocus
-            />
+            <div
+              className="py-1 cursor-pointer hover:bg-gray-50 transition-colors flex items-center rounded px-2 -mx-2"
+              onClick={() => setIsEditing(true)}
+            >
+              {value ? (
+                <span className="text-sm text-gray-900">{value}</span>
+              ) : (
+                <span className="text-sm text-gray-400 italic">{placeholder || `Enter ${label.toLowerCase()}`}</span>
+              )}
+            </div>
           )}
         </div>
-      ) : (
-        <div
-          className="min-h-[40px] px-3 py-2 border border-gray-200 rounded-md cursor-pointer hover:border-gray-300 hover:bg-gray-50 transition-colors flex items-center"
-          onClick={() => setIsEditing(true)}
-        >
-          {value ? (
-            <span className="text-gray-900">{value}</span>
-          ) : (
-            <span className="text-gray-400 italic">{placeholder || `Enter ${label.toLowerCase()}`}</span>
-          )}
-        </div>
-      )}
+      </div>
     </div>
   );
 };
@@ -1125,7 +1127,7 @@ const CustomFieldInlineEdit = ({
             onKeyDown={handleKeyDown}
             onBlur={() => setIsEditing(false)}
             placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
-            className="w-full"
+            className="w-full min-h-[80px]"
             rows={3}
             autoFocus
           />
@@ -1137,7 +1139,7 @@ const CustomFieldInlineEdit = ({
             onChange(`custom_field_${field.id}`, newValue);
             setIsEditing(false);
           }}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full h-9">
               <SelectValue placeholder={field.placeholder || `Select ${field.label.toLowerCase()}`} />
             </SelectTrigger>
             <SelectContent>
@@ -1180,7 +1182,7 @@ const CustomFieldInlineEdit = ({
             onKeyDown={handleKeyDown}
             onBlur={() => setIsEditing(false)}
             placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
-            className="w-full"
+            className="w-full h-9"
             autoFocus
           />
         );
@@ -1206,31 +1208,39 @@ const CustomFieldInlineEdit = ({
     }
 
     if (value) {
-      return <span className="text-gray-900">{value}</span>;
+      return <span className="text-sm text-gray-900">{value}</span>;
     }
 
-    return <span className="text-gray-400 italic">Not provided</span>;
+    return <span className="text-sm text-gray-400 italic">Not provided</span>;
   };
 
   return (
-    <div className={`space-y-1 ${className}`}>
-      <Label className="text-sm font-medium text-gray-700 flex items-center gap-1">
-        {field.label}
-        {field.is_required && <span className="text-red-500">*</span>}
-      </Label>
+    <div className={`flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0 ${className}`}>
+      <div className="flex items-center w-full">
+        {/* Label Column - Fixed Width */}
+        <div className="w-32 flex-shrink-0">
+          <Label className="text-sm font-medium text-gray-700 flex items-center gap-1">
+            {field.label}
+            {field.is_required && <span className="text-red-500">*</span>}
+          </Label>
+        </div>
 
-      {isEditing ? (
-        <div className="space-y-2">
-          {renderEditField()}
+        {/* Value/Input Column - Flexible Width */}
+        <div className="flex-1 min-w-0">
+          {isEditing ? (
+            <div>
+              {renderEditField()}
+            </div>
+          ) : (
+            <div
+              className="py-1 cursor-pointer hover:bg-gray-50 transition-colors flex items-center rounded px-2 -mx-2"
+              onClick={() => setIsEditing(true)}
+            >
+              {renderDisplayValue()}
+            </div>
+          )}
         </div>
-      ) : (
-        <div
-          className="min-h-[40px] px-3 py-2 border border-gray-200 rounded-md cursor-pointer hover:border-gray-300 hover:bg-gray-50 transition-colors flex items-center"
-          onClick={() => setIsEditing(true)}
-        >
-          {renderDisplayValue()}
-        </div>
-      )}
+      </div>
     </div>
   );
 };
@@ -2224,105 +2234,96 @@ const StaffMemberProfilePage = () => {
           <TabsContent value="demographics" className="space-y-6 mt-6 pt-2">
             <div className="space-y-6">
 
-              {/* Personal & Contact Information Section */}
+              {/* Personal Information Section */}
               <ProfileSectionCard
-                title="Personal & Contact Information"
+                title="Personal Information"
                 icon={User}
                 description="Personal details, contact information, and mailing address"
                 isLoading={isLoading}
                 className="h-fit"
               >
-                <div className="space-y-6">
+                <div className="space-y-8">
                   {/* Personal Information */}
-                  <div className="space-y-4">
-                    <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <div className="space-y-6">
+                    <h4 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
                       <User className="h-4 w-4 text-blue-600" />
-                      Personal Details
+                      Personal Information
                     </h4>
 
-                    {/* Member ID and Access Card - Top row */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <InfoRow
-                        label="Member ID"
-                        value={memberData?.system_member_id || memberData?.id}
-                        icon={Fingerprint}
-                        className="bg-primary/5 border-primary/20"
-                      />
-                      <InlineEditField
-                        label="Access Card"
-                        value={formData.access_card_number}
-                        fieldName="access_card_number"
-                        icon={KeySquare}
-                        placeholder="Enter access card number"
-                        onChange={handleFieldChange}
-                      />
+                    {/* 1. Member Identification - Highest Priority */}
+                    <div className="bg-slate-50/50 rounded-lg p-4 space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <InfoRow
+                          label="Member ID"
+                          value={memberData?.system_member_id || memberData?.id}
+                          icon={Fingerprint}
+                          className="bg-primary/10 border-primary/30 font-medium"
+                        />
+                        <InlineEditField
+                          label="Access Card"
+                          value={formData.access_card_number}
+                          fieldName="access_card_number"
+                          placeholder="Enter access card number"
+                          onChange={handleFieldChange}
+                        />
+                      </div>
                     </div>
 
-                    {/* First Name and Last Name - Second row */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <InlineEditField
-                        label="First Name"
-                        value={formData.first_name}
-                        fieldName="first_name"
-                        icon={User}
-                        isRequired={true}
-                        placeholder="Enter first name"
-                        onChange={handleFieldChange}
-                      />
-                      <InlineEditField
-                        label="Last Name"
-                        value={formData.last_name}
-                        fieldName="last_name"
-                        icon={User}
-                        isRequired={true}
-                        placeholder="Enter last name"
-                        onChange={handleFieldChange}
-                      />
-                    </div>
-
-                    {/* Date of Birth and Gender */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <InlineEditField
-                        label="Date of Birth"
-                        value={formData.date_of_birth}
-                        fieldName="date_of_birth"
-                        type="date"
-                        icon={CalendarDays}
-                        placeholder="Select date of birth"
-                        onChange={handleFieldChange}
-                      />
-                      <InlineEditField
-                        label="Gender"
-                        value={formData.gender}
-                        fieldName="gender"
-                        icon={User}
-                        options={[
-                          { value: 'Male', label: 'Male' },
-                          { value: 'Female', label: 'Female' },
-                          { value: 'Other', label: 'Other' },
-                          { value: 'Prefer not to say', label: 'Prefer not to say' }
-                        ]}
-                        placeholder="Select gender"
-                        onChange={handleFieldChange}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Contact Information */}
-                  <div className="pt-4 border-t border-border/50">
-                    <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-green-600" />
-                      Contact Information
-                    </h4>
-
+                    {/* 2. Primary Identity - Name Fields */}
                     <div className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <InlineEditField
+                          label="First Name"
+                          value={formData.first_name}
+                          fieldName="first_name"
+                          isRequired={true}
+                          placeholder="Enter first name"
+                          onChange={handleFieldChange}
+                        />
+                        <InlineEditField
+                          label="Last Name"
+                          value={formData.last_name}
+                          fieldName="last_name"
+                          isRequired={true}
+                          placeholder="Enter last name"
+                          onChange={handleFieldChange}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <InlineEditField
+                          label="Date of Birth"
+                          value={formData.date_of_birth}
+                          fieldName="date_of_birth"
+                          type="date"
+                          placeholder="Select date of birth"
+                          onChange={handleFieldChange}
+                        />
+                        <InlineEditField
+                          label="Gender"
+                          value={formData.gender}
+                          fieldName="gender"
+                          options={[
+                            { value: 'Male', label: 'Male' },
+                            { value: 'Female', label: 'Female' },
+                            { value: 'Other', label: 'Other' },
+                            { value: 'Prefer not to say', label: 'Prefer not to say' }
+                          ]}
+                          placeholder="Select gender"
+                          onChange={handleFieldChange}
+                        />
+                      </div>
+                    </div>
+
+                    {/* 3. Contact Information - High Priority */}
+                    <div className="bg-blue-50/30 rounded-lg p-4 space-y-4">
+                      <h5 className="text-xs font-medium text-blue-700 uppercase tracking-wide">Contact Information</h5>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <InlineEditField
                           label="Email Address"
                           value={formData.email}
                           fieldName="email"
                           type="email"
-                          icon={Mail}
                           isRequired={true}
                           placeholder="Enter email address"
                           onChange={handleFieldChange}
@@ -2332,75 +2333,65 @@ const StaffMemberProfilePage = () => {
                           value={formData.phone}
                           fieldName="phone"
                           type="tel"
-                          icon={Phone}
                           isRequired={true}
                           placeholder="Enter phone number"
                           onChange={handleFieldChange}
                         />
                       </div>
                     </div>
-                  </div>
 
-                  {/* Mailing Address */}
-                  <div className="pt-4 border-t border-border/50">
-                    <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                      <Home className="h-4 w-4 text-purple-600" />
-                      Mailing Address
-                    </h4>
-
-                    <div className="space-y-4">
-                      <InlineEditField
-                        label="Street Address"
-                        value={formData.address}
-                        fieldName="address"
-                        icon={Home}
-                        placeholder="Enter street address"
-                        onChange={handleFieldChange}
-                      />
-
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {/* 4. Mailing Address - Medium Priority */}
+                    <div className="bg-green-50/30 rounded-lg p-4 space-y-4">
+                      <h5 className="text-xs font-medium text-green-700 uppercase tracking-wide">Mailing Address</h5>
+                      <div className="space-y-4">
                         <InlineEditField
-                          label="City"
-                          value={formData.city}
-                          fieldName="city"
-                          icon={Home}
-                          placeholder="Enter city"
+                          label="Street Address"
+                          value={formData.address}
+                          fieldName="address"
+                          placeholder="Enter street address"
                           onChange={handleFieldChange}
                         />
-                        <InlineEditField
-                          label="State"
-                          value={formData.state}
-                          fieldName="state"
-                          icon={Home}
-                          placeholder="Enter state"
-                          onChange={handleFieldChange}
-                        />
-                        <InlineEditField
-                          label="ZIP Code"
-                          value={formData.zip_code}
-                          fieldName="zip_code"
-                          icon={Home}
-                          placeholder="Enter ZIP code"
-                          onChange={handleFieldChange}
-                        />
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          <InlineEditField
+                            label="City"
+                            value={formData.city}
+                            fieldName="city"
+                            placeholder="Enter city"
+                            onChange={handleFieldChange}
+                          />
+                          <InlineEditField
+                            label="State"
+                            value={formData.state}
+                            fieldName="state"
+                            placeholder="Enter state"
+                            onChange={handleFieldChange}
+                          />
+                          <InlineEditField
+                            label="ZIP Code"
+                            value={formData.zip_code}
+                            fieldName="zip_code"
+                            placeholder="Enter ZIP code"
+                            onChange={handleFieldChange}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Emergency Contact Section */}
-                  <div className="pt-4 border-t border-border/50">
-                    <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-orange-600" />
+                  {/* 5. Emergency Contact - Lower Priority but Important */}
+                  <div className="bg-orange-50/30 rounded-lg p-4 space-y-4">
+                    <h5 className="text-xs font-medium text-orange-700 uppercase tracking-wide flex items-center gap-2">
+                      <Shield className="h-3 w-3" />
                       Emergency Contact
-                    </h4>
+                    </h5>
 
                     <div className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <InlineEditField
                           label="Contact Name"
                           value={formData.emergency_contact_name}
                           fieldName="emergency_contact_name"
-                          icon={User}
                           placeholder="Enter emergency contact name"
                           onChange={handleFieldChange}
                         />
@@ -2408,7 +2399,6 @@ const StaffMemberProfilePage = () => {
                           label="Relationship"
                           value={formData.emergency_contact_relationship}
                           fieldName="emergency_contact_relationship"
-                          icon={Users}
                           options={[
                             { value: 'Spouse', label: 'Spouse' },
                             { value: 'Parent', label: 'Parent' },
@@ -2421,33 +2411,19 @@ const StaffMemberProfilePage = () => {
                           onChange={handleFieldChange}
                         />
                       </div>
-                      <InlineEditField
-                        label="Emergency Phone"
-                        value={formData.emergency_contact_phone}
-                        fieldName="emergency_contact_phone"
-                        type="tel"
-                        icon={Phone}
-                        placeholder="Enter emergency contact phone"
-                        onChange={handleFieldChange}
-                      />
-                    </div>
-                  </div>
 
-                  {/* Notes Section */}
-                  <div className="pt-4 border-t border-border/50">
-                    <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-indigo-600" />
-                      Notes
-                    </h4>
-                    <InlineEditField
-                      label="Member Notes"
-                      value={formData.notes}
-                      fieldName="notes"
-                      type="textarea"
-                      icon={FileText}
-                      placeholder="Add notes about this member..."
-                      onChange={handleFieldChange}
-                    />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <InlineEditField
+                          label="Emergency Phone"
+                          value={formData.emergency_contact_phone}
+                          fieldName="emergency_contact_phone"
+                          type="tel"
+                          placeholder="Enter emergency contact phone"
+                          onChange={handleFieldChange}
+                        />
+                        <div></div> {/* Empty space for visual balance */}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </ProfileSectionCard>
