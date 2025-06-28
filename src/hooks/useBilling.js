@@ -16,9 +16,9 @@ const billingService = {
       .select(`
         *,
         membership_type:membership_types!current_membership_type_id(*),
-        profile:profiles!auth_user_id(first_name, last_name, email)
+        profile:profiles!user_id(first_name, last_name, email)
       `)
-      .eq('auth_user_id', memberId)
+      .eq('user_id', memberId)
       .maybeSingle();
 
     if (error) {
@@ -59,8 +59,8 @@ const billingService = {
       .select(`
         *,
         membership_type:membership_types!current_membership_type_id(*),
-        profile:profiles!auth_user_id(first_name, last_name, email),
-        addon_memberships:addon_memberships!auth_user_id(
+        profile:profiles!user_id(first_name, last_name, email),
+        addon_memberships:addon_memberships!user_id(
           *,
           addon_type:membership_types!addon_type_id(*)
         )
@@ -223,7 +223,7 @@ const billingService = {
           last_payment_date: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
-        .eq('auth_user_id', memberId);
+        .eq('user_id', memberId);
 
       if (error) {
         

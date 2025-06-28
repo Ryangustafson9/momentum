@@ -142,7 +142,7 @@ export const automatedBillingEngine = {
       .from('profiles')
       .select(`
         *,
-        memberships:memberships!auth_user_id(
+        memberships:memberships!user_id(
           *,
           membership_type:membership_types!current_membership_type_id(*)
         )

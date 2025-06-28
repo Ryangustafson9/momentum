@@ -259,6 +259,8 @@ function App() {
                   <Route path="pos" element={<PointOfSale />} />
                   <Route path="pos/manage" element={<POSManagement />} />
                   <Route path="profile/:id" element={<StaffMemberProfile />} />
+                  {/* Redirect old member route to new profile route */}
+                  <Route path="member/:id" element={<StaffMemberRedirect />} />
                   <Route path="register-member" element={<MemberRegistration />} />
                   <Route path="corporate-management" element={
                     <PrivateRoute allowedRoles={['admin', 'staff']}>
@@ -306,6 +308,8 @@ function App() {
                   <Route path="pos" element={<PointOfSale />} />
                   <Route path="pos/manage" element={<POSManagement />} />
                   <Route path="profile/:id" element={<StaffMemberProfile />} />
+                  {/* Redirect old member route to new profile route */}
+                  <Route path="member/:id" element={<StaffMemberRedirect />} />
                   <Route path="register-member" element={<MemberRegistration />} />
                   <Route path="corporate-management" element={
                     <PrivateRoute allowedRoles={['admin', 'staff']}>

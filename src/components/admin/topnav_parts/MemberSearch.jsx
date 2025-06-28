@@ -142,7 +142,10 @@ const MemberSearch = ({ allMembers, navigate }) => {
   const handleSelectMember = (member) => {
     // Use system_member_id for the profile route
     const profileId = member.system_member_id || member.id;
-    navigate(`/staff-portal/member/${profileId}`);
+    const targetUrl = `/staff-portal/profile/${profileId}`;
+    console.log('🔍 MemberSearch: Navigating to:', targetUrl);
+    console.log('🔍 Member data:', member);
+    navigate(targetUrl);
     setSearchTerm('');
     setShowSearchDropdown(false);
   };

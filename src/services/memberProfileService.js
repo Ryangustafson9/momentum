@@ -46,12 +46,14 @@ export class MemberProfileService {
         .from('profiles')
         .select('*')
         .eq('system_member_id', systemMemberId)
+        .order('created_at', { ascending: true })
+        .limit(1)
         .single();
 
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      
+
       return { data: null, error };
     }
   }

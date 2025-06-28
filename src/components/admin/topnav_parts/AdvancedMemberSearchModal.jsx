@@ -203,7 +203,9 @@ const AdvancedMemberSearchModal = ({
   const handleSelectMember = (member) => {
     onSelectMember?.(member);
     if (navigate) {
-      navigate(`/staff-portal/member/${member.id}`);
+      // Use system_member_id for the profile route, consistent with other components
+      const profileId = member.system_member_id || member.id;
+      navigate(`/staff-portal/profile/${profileId}`);
     }
     onClose();
   };
@@ -232,7 +234,7 @@ const AdvancedMemberSearchModal = ({
 
       // Navigate to the new profile page
       if (navigate) {
-        navigate(`/staff-portal/member/${newProfile.system_member_id}`);
+        navigate(`/staff-portal/profile/${newProfile.system_member_id}`);
       }
       onClose();
 

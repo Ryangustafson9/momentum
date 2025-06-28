@@ -5,6 +5,7 @@ import TopNavbar from '@/components/admin/TopNavbar.jsx';
 import { supabase } from '@/lib/supabaseClient';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import AskMoChat from '@/components/ui/AskMoChat';
 
 const pageTitles = {
   '/': 'Dashboard',
@@ -109,6 +110,9 @@ const AdminDashboardLayout = ({ children }) => {
           </div>
         </main>
       </div>
+
+      {/* Ask Mo - Global Momentum AI Assistant for Staff Portal */}
+      <AskMoChat />
     </div>
   );
 };

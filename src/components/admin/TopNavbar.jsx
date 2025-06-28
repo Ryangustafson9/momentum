@@ -58,7 +58,7 @@ const ClubHeader = () => {
         <img
           src={branding.logo_url || "/assets/NordicFitness.png"}
           alt="Club Logo"
-          className="h-10 w-auto object-contain"
+          className="h-12 w-auto object-contain"
         />
         <LocationSwitcher variant="dropdown" className="ml-2" />
       </div>
@@ -257,9 +257,10 @@ const TopNavbar = ({ user, onLogout, startRoleImpersonation, allMembers = [] }) 
   };
 
   const handleSelectMember = (member) => {
-    // Navigate to member profile
-    if (member?.id) {
-      navigate(`/member/${member.id}`);
+    // Navigate to member profile using system_member_id
+    const profileId = member.system_member_id || member.id;
+    if (profileId) {
+      navigate(`/staff-portal/profile/${profileId}`);
     }
     setIsAdvancedSearchOpen(false);
   };

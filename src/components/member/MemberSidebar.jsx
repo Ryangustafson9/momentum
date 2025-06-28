@@ -308,7 +308,7 @@ const MemberSidebar = ({ isExpanded, toggleSidebar, onLogout }) => {
       </div>
 
       {/* Header with Logo/Avatar */}
-      <div className={`relative flex items-center justify-between h-16 px-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50 ${!actualIsExpanded ? 'px-2' : ''}`}>
+      <div className={`relative flex flex-col space-y-1.5 p-6 border-b-2 border-indigo-100 bg-gradient-to-r from-indigo-100 to-purple-100 ${!actualIsExpanded ? 'px-2' : ''}`}>
         <AnimatePresence mode="wait">
           {actualIsExpanded ? (
             <motion.div
@@ -320,7 +320,7 @@ const MemberSidebar = ({ isExpanded, toggleSidebar, onLogout }) => {
               <img
                 src="/assets/momentum-logo.svg"
                 alt="Momentum Gym"
-                className="w-32 h-24 object-contain"
+                className="w-40 h-28 object-contain"
               />
             </motion.div>
           ) : (

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import {
   User, Mail, Phone, Shield, Edit3, Save, CreditCard, CalendarCheck, AlertTriangle, LifeBuoy, Image as ImageIcon,
   Fingerprint, Settings, Settings as SettingsIcon, MessageSquare, CalendarDays, FileText, Users, LogOut, MoreVertical,
-  PauseCircle, XCircle, Repeat, Trash2, Briefcase, Home, DollarSign, CheckSquare, Info, PlusCircle, ChevronDown, ChevronUp, UserCog, UserX, UserCheck, Star, Clock, X, KeySquare, ClipboardList, Send, FolderOpen, History, Link, Bell, Calendar
+  PauseCircle, XCircle, Repeat, Trash2, Briefcase, Home, DollarSign, CheckSquare, Info, PlusCircle, ChevronDown, ChevronUp, UserCog, UserX, UserCheck, Star, Clock, X, KeySquare, ClipboardList, Send, FolderOpen, History, Link, Bell, Calendar, Camera
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast.js';
 import { supabase } from '@/lib/supabaseClient';
 import { dataService } from '@/services/apiService';
 import { MemberProfileService } from '@/services/memberProfileService';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -1032,7 +1032,7 @@ const InlineEditField = ({
                   onChange(fieldName, newValue);
                   setIsEditing(false);
                 }}>
-                  <SelectTrigger className="w-full h-9">
+                  <SelectTrigger className="w-64 h-9">
                     <SelectValue placeholder={placeholder} />
                   </SelectTrigger>
                   <SelectContent>
@@ -1050,7 +1050,7 @@ const InlineEditField = ({
                   onKeyDown={handleKeyDown}
                   onBlur={() => setIsEditing(false)}
                   placeholder={placeholder}
-                  className="w-full min-h-[80px]"
+                  className="w-64 min-h-[80px]"
                   rows={3}
                   autoFocus
                 />
@@ -1062,20 +1062,166 @@ const InlineEditField = ({
                   onKeyDown={handleKeyDown}
                   onBlur={() => setIsEditing(false)}
                   placeholder={placeholder}
-                  className="w-full h-9"
+                  className="w-64 h-9"
                   autoFocus
                 />
               )}
             </div>
           ) : (
             <div
-              className="py-1 cursor-pointer hover:bg-gray-50 transition-colors flex items-center rounded px-2 -mx-2"
+              className="py-1 cursor-pointer hover:bg-gray-50 transition-colors flex items-center rounded px-2 w-64"
               onClick={() => setIsEditing(true)}
             >
               {value ? (
                 <span className="text-sm text-gray-900">{value}</span>
               ) : (
                 <span className="text-sm text-gray-400 italic">{placeholder || `Enter ${label.toLowerCase()}`}</span>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Address field component that breaks down full address into components when editing
+const AddressField = ({ label, fullAddress, streetAddress, city, state, zipCode, onChange }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [localValues, setLocalValues] = useState({
+    streetAddress: '',
+    city: '',
+    state: '',
+    zipCode: ''
+  });
+
+  // Parse full address when starting to edit
+  const parseAddress = (address) => {
+    if (!address) return { streetAddress: '', city: '', state: '', zipCode: '' };
+
+    // Simple address parsing - split by commas and try to identify components
+    const parts = address.split(',').map(part => part.trim());
+
+    if (parts.length >= 4) {
+      return {
+        streetAddress: parts[0],
+        city: parts[1],
+        state: parts[2],
+        zipCode: parts[3]
+      };
+    } else if (parts.length === 3) {
+      return {
+        streetAddress: parts[0],
+        city: parts[1],
+        state: '',
+        zipCode: parts[2]
+      };
+    } else if (parts.length === 2) {
+      return {
+        streetAddress: parts[0],
+        city: parts[1],
+        state: '',
+        zipCode: ''
+      };
+    } else {
+      return {
+        streetAddress: address,
+        city: '',
+        state: '',
+        zipCode: ''
+      };
+    }
+  };
+
+  const handleStartEdit = () => {
+    const parsed = parseAddress(fullAddress);
+    setLocalValues({
+      streetAddress: streetAddress || parsed.streetAddress,
+      city: city || parsed.city,
+      state: state || parsed.state,
+      zipCode: zipCode || parsed.zipCode
+    });
+    setIsEditing(true);
+  };
+
+  const handleSave = () => {
+    onChange(localValues);
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSave();
+    } else if (e.key === 'Escape') {
+      handleCancel();
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0">
+      <div className="flex items-center w-full">
+        {/* Label Column - Fixed Width */}
+        <div className="w-32 flex-shrink-0">
+          <Label className="text-sm font-medium text-gray-700">{label}</Label>
+        </div>
+
+        {/* Value/Input Column - Flexible Width */}
+        <div className="flex-1 min-w-0">
+          {isEditing ? (
+            <div className="space-y-2">
+              {/* DEV NOTE: Address autocomplete is not live yet - currently using manual input */}
+              <div className="relative">
+                <AddressAutocomplete
+                  value={fullAddress || ''}
+                  onChange={(value) => {
+                    // Update the full address directly - pass as string
+                    onChange(value);
+                  }}
+                  onAddressSelect={(addressComponents) => {
+                    // Handle address selection from autocomplete
+                    const fullAddr = [
+                      addressComponents.street_number,
+                      addressComponents.route,
+                      addressComponents.locality,
+                      addressComponents.administrative_area_level_1,
+                      addressComponents.postal_code
+                    ].filter(Boolean).join(' ');
+
+                    // Pass the full address as a string
+                    onChange(fullAddr);
+                    setIsEditing(false);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setIsEditing(false);
+                    } else if (e.key === 'Escape') {
+                      setIsEditing(false);
+                    }
+                  }}
+                  onBlur={() => setIsEditing(false)}
+                  placeholder="Search Address"
+                  className="w-64 h-9"
+                  autoFocus
+                />
+                {/* Dev reminder badge */}
+                <div className="absolute -top-2 -right-2 bg-yellow-100 border border-yellow-300 text-yellow-800 text-xs px-2 py-1 rounded-full shadow-sm">
+                  Dev: Not Live
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div
+              className="py-1 cursor-pointer hover:bg-gray-50 transition-colors flex items-center rounded px-2 w-64"
+              onClick={handleStartEdit}
+            >
+              {fullAddress ? (
+                <span className="text-sm text-gray-900 py-1">{fullAddress}</span>
+              ) : (
+                <span className="text-sm text-gray-400 italic py-1">Search Address</span>
               )}
             </div>
           )}
@@ -1314,6 +1460,27 @@ const StaffMemberProfilePage = () => {
       return newData;
     });
   }, [originalData]);
+
+  // Handle address changes - simplified for single address field
+  const handleAddressChange = useCallback((addressData) => {
+    // Handle both direct string values and object with fullAddress property
+    const addressValue = typeof addressData === 'string' ? addressData : (addressData.fullAddress || '');
+    console.log('handleAddressChange called with:', addressData, 'processed as:', addressValue);
+
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        address: addressValue
+      };
+
+      // Check if there are unsaved changes
+      const hasChanges = Object.keys(newData).some(key => newData[key] !== originalData[key]);
+      console.log('Address change - hasChanges:', hasChanges, 'newData:', newData, 'originalData:', originalData);
+      setHasUnsavedChanges(hasChanges);
+      return newData;
+    });
+  }, [originalData]);
+
   // Global save function
   const handleGlobalSave = async () => {
     console.log('handleGlobalSave called', { 
@@ -1333,12 +1500,21 @@ const StaffMemberProfilePage = () => {
       const customFieldUpdates = {};
       const profileUpdates = {};
 
+      // Define which fields are valid for the profiles table
+      const validProfileFields = [
+        'first_name', 'last_name', 'email', 'phone', 'address', 'date_of_birth', 'gender',
+        'emergency_contact_name', 'emergency_contact_relationship', 'emergency_contact_phone',
+        'access_card_number', 'status', 'notes'
+      ];
+
       Object.keys(formData).forEach(key => {
         if (key.startsWith('custom_field_')) {
           const fieldId = key.replace('custom_field_', '');
           customFieldUpdates[fieldId] = formData[key];
-        } else {
+        } else if (validProfileFields.includes(key)) {
           profileUpdates[key] = formData[key];
+        } else {
+          console.log('Skipping invalid profile field:', key, formData[key]);
         }
       });
 
@@ -1408,6 +1584,222 @@ const StaffMemberProfilePage = () => {
     setHasUnsavedChanges(false);
   };
 
+  // Handle photo upload from file
+  const handlePhotoUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    await uploadPhoto(file);
+  };
+
+  // Handle camera capture
+  const handleTakePhoto = async () => {
+    console.log('Take photo clicked');
+
+    // Check if we're on HTTPS or localhost
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+      toast({
+        title: "Camera Requires HTTPS",
+        description: "Camera access requires a secure connection. Please use file upload instead.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check if getUserMedia is supported
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      toast({
+        title: "Camera Not Supported",
+        description: "Your browser doesn't support camera access. Please use file upload instead.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      console.log('Requesting camera access...');
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'user',
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        }
+      });
+
+      console.log('Camera access granted');
+
+      // Create a modal or overlay to show camera preview
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+      modal.innerHTML = `
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <h3 class="text-lg font-semibold mb-4">Take Photo</h3>
+          <video id="camera-preview" autoplay playsinline class="w-full rounded-lg mb-4"></video>
+          <div class="flex gap-2 justify-end">
+            <button id="cancel-photo" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Cancel</button>
+            <button id="capture-photo" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Capture</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+
+      const video = document.getElementById('camera-preview');
+      video.srcObject = stream;
+
+      // Handle capture
+      document.getElementById('capture-photo').onclick = () => {
+        console.log('Capturing photo...');
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0);
+
+        // Convert to blob
+        canvas.toBlob(async (blob) => {
+          console.log('Photo captured, uploading...');
+          // Stop camera stream
+          stream.getTracks().forEach(track => track.stop());
+          document.body.removeChild(modal);
+
+          if (blob) {
+            await uploadPhoto(blob, `camera-${Date.now()}.jpg`);
+          }
+        }, 'image/jpeg', 0.8);
+      };
+
+      // Handle cancel
+      document.getElementById('cancel-photo').onclick = () => {
+        console.log('Photo capture cancelled');
+        stream.getTracks().forEach(track => track.stop());
+        document.body.removeChild(modal);
+      };
+
+    } catch (error) {
+      console.error('Camera access error:', error);
+      let errorMessage = "Unable to access camera. Please use file upload instead.";
+
+      if (error.name === 'NotAllowedError') {
+        errorMessage = "Camera access was denied. Please allow camera access and try again.";
+      } else if (error.name === 'NotFoundError') {
+        errorMessage = "No camera found. Please use file upload instead.";
+      }
+
+      toast({
+        title: "Camera Access Failed",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Common photo upload function
+  const uploadPhoto = async (file, fileName = null) => {
+    // Validate file type
+    if (file.type && !file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please select an image file (JPG, PNG, GIF, etc.)",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Please select an image smaller than 5MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      console.log('Starting photo upload for member:', memberData.id);
+      console.log('File details:', { name: file.name, size: file.size, type: file.type });
+
+      // Create unique filename
+      const fileExt = fileName ? fileName.split('.').pop() : (file.name ? file.name.split('.').pop() : 'jpg');
+      const uniqueFileName = fileName || `${memberData.id}-${Date.now()}.${fileExt}`;
+      let filePath = `profile-photos/${uniqueFileName}`;
+
+      console.log('Upload path:', filePath);
+
+      // Use the member-photos bucket
+      const bucketName = 'member-photos';
+      console.log('Using bucket:', bucketName);
+
+      // Upload to Supabase Storage
+      console.log('Uploading file to bucket:', bucketName);
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(bucketName)
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true // Allow overwriting existing files
+        });
+
+      console.log('Upload result:', { uploadData, uploadError });
+
+      if (uploadError) {
+        console.error('Upload error details:', uploadError);
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(filePath);
+
+      console.log('Generated public URL:', publicUrl);
+
+      // Update member profile with new photo URL
+      console.log('Updating profile with photo URL...');
+      const { data: updateData, error: updateError } = await supabase
+        .from('profiles')
+        .update({ profile_picture_url: publicUrl })
+        .eq('id', memberData.id)
+        .select();
+
+      console.log('Profile update result:', { updateData, updateError });
+
+      if (updateError) {
+        console.error('Profile update error:', updateError);
+        throw updateError;
+      }
+
+      // Update local state with cache-busting parameter
+      const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`;
+      setMemberData(prev => ({
+        ...prev,
+        profile_picture_url: cacheBustedUrl
+      }));
+
+      console.log('Photo upload completed successfully');
+      console.log('Updated memberData with new photo URL:', cacheBustedUrl);
+      toast({
+        title: "Photo Updated",
+        description: "Profile photo has been successfully updated",
+        variant: "default"
+      });
+
+    } catch (error) {
+      console.error('Photo upload error:', error);
+      toast({
+        title: "Upload Failed",
+        description: `Failed to upload photo: ${error.message}`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+      // Reset file input
+      const fileInput = document.getElementById('photo-upload');
+      if (fileInput) fileInput.value = '';
+    }
+  };
+
   const fetchProfileData = useCallback(async () => {
     setIsLoading(true);
 
@@ -1430,7 +1822,7 @@ const StaffMemberProfilePage = () => {
     if (!systemMemberId) {
       setIsLoading(false);
       toast({ title: "Error", description: "No member ID provided.", variant: "destructive" });
-      navigate('/staff/dashboard');
+      navigate('/staff-portal/dashboard');
       return;
     }
 
@@ -1458,11 +1850,35 @@ const StaffMemberProfilePage = () => {
         // Set empty billing preferences for now
         setBillingPreferences(null);
 
-        // Fetch other related data
-        fetchInitialData(member.id);
+        // Fetch current memberships from memberships table
+        try {
+          const { data: memberships, error: membershipsError } = await supabase
+            .from('memberships')
+            .select(`
+              *,
+              membership_types (
+                id,
+                name,
+                category,
+                price,
+                billing_cycle
+              )
+            `)
+            .eq('member_id', member.id)
+            .eq('status', 'active');
+
+          if (membershipsError) {
+            console.error('Error fetching memberships:', membershipsError);
+          } else {
+            setCurrentMemberships(memberships || []);
+          }
+        } catch (error) {
+          console.error('Error fetching memberships:', error);
+          setCurrentMemberships([]);
+        }
       } else {
         toast({ title: "Not Found", description: `Member with ID ${systemMemberId} not found.`, variant: "destructive" });
-        navigate('/staff/members');
+        navigate('/staff-portal/dashboard');
       }
     } catch (error) {
       
@@ -1814,6 +2230,9 @@ const StaffMemberProfilePage = () => {
   const memberNameForAvatar = displayName;
   const avatarSrc = memberData.profile_picture_url || '';
 
+  // Debug avatar URL
+  console.log('Avatar rendering with URL:', avatarSrc);
+
   // EditMembershipDialog Component
   const EditMembershipDialog = ({ isOpen, onClose, membership, onMembershipUpdated }) => {
     const [formData, setFormData] = useState({
@@ -1982,157 +2401,199 @@ const StaffMemberProfilePage = () => {
         transition={{ duration: 0.5 }}
         className="container mx-auto px-2 sm:px-4 py-6 space-y-6"
       >
-      <Card className="overflow-hidden shadow-xl rounded-xl bg-card">
-        <div className="relative p-6 flex flex-col items-center bg-gradient-to-b from-primary/10 to-transparent dark:from-primary/20">
-          {/* Email Button - Top Left */}
-          {memberData?.email && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.location.href = `mailto:${memberData.email}`}
-              className="absolute top-4 left-4 px-3 py-2 text-xs font-medium border-blue-300 text-blue-600 hover:bg-blue-50 transition-all duration-200 z-10"
-            >
-              <Mail className="h-3 w-3 mr-1" />
-              Email
-            </Button>
-          )}
+      <Card className="overflow-hidden shadow-xl rounded-xl bg-card border-2 border-indigo-200">
+        <div className="relative flex flex-col space-y-1.5 p-6 border-b-2 border-indigo-100 bg-gradient-to-r from-indigo-100 to-purple-100">
 
-          {/* Global Save Button - Top Right */}
-          {hasUnsavedChanges && (
-            <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDiscardChanges}
-                className="px-3 py-2 text-xs font-medium border-gray-300 text-gray-600 hover:bg-gray-50 transition-all duration-200"
-              >
-                <X className="h-3 w-3 mr-1" />
-                Discard
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleGlobalSave}
-                disabled={isSaving}
-                className="px-3 py-2 text-xs font-medium bg-green-600 hover:bg-green-700 text-white transition-all duration-200"
-              >
-                {isSaving ? (
-                  <>
-                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-3 w-3 mr-1" />
-                    Save All Changes
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
-          {/* Enhanced Profile Photo Section */}
-          <div className="relative">
-            <Avatar className="h-32 w-32 md:h-40 md:w-40 border-4 border-background shadow-lg">
-              {avatarSrc ? (
-                <AvatarImage src={avatarSrc} alt={memberData.name || "Member avatar"} />
-              ) : (
-                <div className="flex items-center justify-center h-full w-full bg-muted rounded-full">
-                  <User className="h-20 w-20 text-muted-foreground" />
+
+          {/* Profile Content - Left-aligned layout like member portal */}
+          <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-4 lg:space-y-0 lg:space-x-6">
+            {/* Enhanced Profile Photo Section - Left Side */}
+            <div className="relative flex-shrink-0">
+              <div className="relative group">
+                <div className="relative h-24 w-24 lg:h-32 lg:w-32 border-4 border-white shadow-lg transition-all duration-200 group-hover:shadow-xl rounded-full overflow-hidden bg-muted">
+                  {avatarSrc ? (
+                    <img
+                      key={`${avatarSrc}-${Date.now()}`}
+                      src={`${avatarSrc}?t=${Date.now()}`}
+                      alt={memberData.name || "Member avatar"}
+                      className="w-full h-full object-cover relative z-10"
+                      onLoad={() => {
+                        console.log('Avatar image loaded successfully:', avatarSrc);
+                      }}
+                      onError={(e) => {
+                        console.log('Avatar image failed to load:', avatarSrc);
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full w-full relative z-10">
+                      <User className="h-12 w-12 lg:h-20 lg:w-20 text-muted-foreground" />
+                    </div>
+                  )}
+
+                  {/* Initials fallback (always present but hidden when image loads) */}
+                  <div className={`absolute inset-0 flex items-center justify-center text-2xl lg:text-4xl font-semibold text-muted-foreground bg-muted rounded-full transition-opacity duration-200 ${avatarSrc ? 'opacity-0 z-0' : 'opacity-100 z-10'}`}>
+                    {getInitials(memberNameForAvatar)}
+                  </div>
                 </div>
-              )}
-              <AvatarFallback className="text-4xl">{getInitials(memberNameForAvatar)}</AvatarFallback>
-            </Avatar>
-            
-            {/* Status Indicator Overlay */}
-            <div className="absolute -bottom-2 -right-2 bg-background rounded-full p-2 shadow-lg">
-              {memberData.status === 'Active' ? (
-                <CheckSquare className="h-6 w-6 text-green-500" />
-              ) : memberData.status === 'Inactive' ? (
-                <PauseCircle className="h-6 w-6 text-yellow-500" />
-              ) : (
-                <XCircle className="h-6 w-6 text-red-500" />
-              )}
+
+                {/* Photo Upload Buttons - Always visible */}
+                <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2">
+                  {/* Take Picture Button */}
+                  <button
+                    onClick={handleTakePhoto}
+                    disabled={isSaving}
+                    className="flex items-center justify-center gap-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded-full text-xs font-medium transition-colors disabled:opacity-50 text-white shadow-lg"
+                    title="Take Photo"
+                  >
+                    <Camera className="h-3 w-3" />
+                  </button>
+
+                  {/* Upload Button */}
+                  <button
+                    onClick={() => document.getElementById('photo-upload').click()}
+                    disabled={isSaving}
+                    className="flex items-center justify-center gap-1 px-2 py-1 bg-green-600 hover:bg-green-700 rounded-full text-xs font-medium transition-colors disabled:opacity-50 text-white shadow-lg"
+                    title="Upload Photo"
+                  >
+                    <ImageIcon className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Hidden file input */}
+              <input
+                id="photo-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoUpload}
+              />
+
+              {/* Status Indicator Overlay */}
+              <div className="absolute -bottom-2 -right-2 bg-background rounded-full p-2 shadow-lg">
+                {memberData.status === 'Active' ? (
+                  <CheckSquare className="h-5 w-5 lg:h-6 lg:w-6 text-green-500" />
+                ) : memberData.status === 'Inactive' ? (
+                  <PauseCircle className="h-5 w-5 lg:h-6 lg:w-6 text-yellow-500" />
+                ) : (
+                  <XCircle className="h-5 w-5 lg:h-6 lg:w-6 text-red-500" />
+                )}
+              </div>
+            </div>
+
+            {/* Enhanced Name and Identity Section - Right Side */}
+            <div className="flex-1 text-center lg:text-left space-y-3">
+              {/* Primary Name Display with Balance */}
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <h1 className="text-2xl lg:text-3xl font-bold text-foreground tracking-tight">
+                    {displayName}
+                  </h1>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    ID: {memberData?.system_member_id || memberData?.id}
+                  </p>
+                </div>
+
+                {/* Balance Display - Top Right - Inlaid Box */}
+                <div className="mt-2 lg:mt-0">
+                  <div className="bg-white/60 border border-indigo-200/50 rounded-lg p-3 shadow-inner backdrop-blur-sm">
+                    <div className="text-center lg:text-right">
+                      <div className="text-sm font-medium text-indigo-900">
+                        Current Balance: <span className="font-bold">${memberData?.current_balance || '0.00'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Badges Row */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3">
+                {/* Membership Status - Based on Active Memberships */}
+                {(() => {
+                  // currentMemberships already contains only active memberships from DB query
+                  const hasActiveMembership = currentMemberships && currentMemberships.length > 0;
+                  const actualStatus = hasActiveMembership ? 'Active Member' : 'No Active Plan';
+                  const statusVar = hasActiveMembership ? 'success' : 'secondary';
+
+                  return (
+                    <Badge
+                      variant={statusVar}
+                      className="px-3 py-1.5 text-sm font-medium"
+                    >
+                      {hasActiveMembership && <CheckSquare className="h-4 w-4 mr-1" />}
+                      {!hasActiveMembership && <AlertTriangle className="h-4 w-4 mr-1" />}
+                      {actualStatus}
+                    </Badge>
+                  );
+                })()}
+
+                {/* Member Type */}
+                <Badge variant="secondary" className="px-3 py-1.5 text-sm">
+                  {memberData.role === 'admin' ? 'Administrator' :
+                   memberData.role === 'staff' ? 'Staff Member' :
+                   currentMemberships.filter(m => m.status === 'active').length > 0 ? 'Member' : 'Non-Member'}
+                </Badge>
+              </div>
+
+              {/* Key Information Row */}
+              <div className="flex flex-col lg:flex-row items-center lg:items-start gap-2 lg:gap-6 text-sm text-muted-foreground">
+                {/* Membership Plan */}
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  <span>{currentMembership?.name || 'No Active Plan'}</span>
+                </div>
+
+                {/* Join Date */}
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4" />
+                  <span>Joined: {memberData.join_date ? format(new Date(memberData.join_date), 'PP') : 'N/A'}</span>
+                </div>
+
+                {/* Email with Action Button */}
+                {memberData.email && (
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    <span className="truncate max-w-[150px]">{memberData.email}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => window.location.href = `mailto:${memberData.email}`}
+                      className="h-6 w-6 p-0 hover:bg-blue-50 hover:text-blue-600"
+                    >
+                      <Mail className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Additional Status Indicators */}
+              <div className="mt-3 flex flex-wrap items-center justify-center lg:justify-start gap-2">
+                {/* First Visit Indicator */}
+                {memberData.join_date && new Date(memberData.join_date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) && (
+                  <Badge variant="outline" className="border-yellow-500 text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-600">
+                    <Star className="h-3 w-3 mr-1" />
+                    New Member
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Enhanced Name and Identity Section */}
-          <div className="mt-6 text-center space-y-3">
-            {/* Primary Name Display */}
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">
-                {displayName}
-              </h1>
-            </div>
-
-            {/* Status Badges Row */}
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              {/* Membership Status */}
-              <Badge 
-                variant={statusVariant(memberData.status)} 
-                className="px-3 py-1.5 text-sm font-medium"
+          {/* Settings Gear - Bottom Right - Inlaid Box */}
+          <div className="absolute bottom-4 right-4">
+            <div className="bg-white/60 border border-indigo-200/50 rounded-lg p-3 shadow-inner backdrop-blur-sm">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0 hover:bg-indigo-100/50 hover:text-indigo-700"
+                onClick={() => {
+                  // TODO: Add settings functionality
+                  console.log('Settings clicked');
+                }}
               >
-                {memberData.status === 'Active' && <CheckSquare className="h-4 w-4 mr-1" />}
-                {memberData.status === 'Inactive' && <PauseCircle className="h-4 w-4 mr-1" />}
-                {(!memberData.status || memberData.status === 'Unknown') && <AlertTriangle className="h-4 w-4 mr-1" />}
-                {memberData.status || 'Unknown'}
-              </Badge>
-
-              {/* Corporate Affiliation - Placeholder for future feature */}
-              {/* TODO: Add corporate affiliation when implemented */}
-              {/* {memberData.corporate_affiliation && (
-                <Badge variant="outline" className="px-3 py-1.5 text-sm border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-900/30">
-                  <Briefcase className="h-4 w-4 mr-1" />
-                  {memberData.corporate_affiliation.company_name} Employee
-                </Badge>
-              )} */}
-
-              {/* Member Type */}
-              <Badge variant="secondary" className="px-3 py-1.5 text-sm">
-                {memberData.role === 'admin' ? 'Administrator' : 
-                 memberData.role === 'staff' ? 'Staff Member' : 'Member'}
-              </Badge>
-            </div>
-
-            {/* Key Information Row */}
-            <div className="mt-4 flex flex-col sm:flex-row items-center gap-2 sm:gap-6 text-sm text-muted-foreground">
-              {/* Membership Plan */}
-              <div className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4" />
-                <span>{currentMembership?.name || 'No Active Plan'}</span>
-              </div>
-              
-              {/* Join Date */}
-              <div className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4" />
-                <span>Joined: {memberData.join_date ? format(new Date(memberData.join_date), 'PP') : 'N/A'}</span>
-              </div>
-
-              {/* Email (for quick reference) */}
-              {memberData.email && (
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  <span className="truncate max-w-[200px]">{memberData.email}</span>
-                </div>
-              )}
-            </div>            {/* Quick Actions removed - global edit functionality disabled */}
-
-            {/* Additional Status Indicators */}
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-              {/* First Visit Indicator */}
-              {memberData.join_date && new Date(memberData.join_date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) && (
-                <Badge variant="outline" className="border-yellow-500 text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-600">
-                  <Star className="h-3 w-3 mr-1" />
-                  New Member
-                </Badge>
-              )}
-              
-              {/* Verification Status - Placeholder for corporate members */}
-              {/* TODO: Add verification status for corporate members */}
-              {/* {memberData.verification_status === 'verified' && (
-                <Badge variant="outline" className="border-green-500 text-green-600 bg-green-50 dark:bg-green-900/30">
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Verified
-                </Badge>
-              )} */}
+                <Settings className="h-4 w-4 text-indigo-600" />
+              </Button>
             </div>
           </div>
         </div>
@@ -2242,36 +2703,18 @@ const StaffMemberProfilePage = () => {
                 isLoading={isLoading}
                 className="h-fit"
               >
-                <div className="space-y-8">
+                <div className="space-y-6">
                   {/* Personal Information */}
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     <h4 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
                       <User className="h-4 w-4 text-blue-600" />
                       Personal Information
                     </h4>
 
-                    {/* 1. Member Identification - Highest Priority */}
-                    <div className="bg-slate-50/50 rounded-lg p-4 space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <InfoRow
-                          label="Member ID"
-                          value={memberData?.system_member_id || memberData?.id}
-                          icon={Fingerprint}
-                          className="bg-primary/10 border-primary/30 font-medium"
-                        />
-                        <InlineEditField
-                          label="Access Card"
-                          value={formData.access_card_number}
-                          fieldName="access_card_number"
-                          placeholder="Enter access card number"
-                          onChange={handleFieldChange}
-                        />
-                      </div>
-                    </div>
-
-                    {/* 2. Primary Identity - Name Fields */}
+                    {/* Clean unified layout - exactly as requested */}
                     <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Row 1: First Name, Last Name, Date of Birth */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <InlineEditField
                           label="First Name"
                           value={formData.first_name}
@@ -2288,9 +2731,6 @@ const StaffMemberProfilePage = () => {
                           placeholder="Enter last name"
                           onChange={handleFieldChange}
                         />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <InlineEditField
                           label="Date of Birth"
                           value={formData.date_of_birth}
@@ -2299,6 +2739,24 @@ const StaffMemberProfilePage = () => {
                           placeholder="Select date of birth"
                           onChange={handleFieldChange}
                         />
+                      </div>
+
+                      {/* Row 2: Member ID, Gender, Email */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0">
+                          <div className="flex items-center w-full">
+                            <div className="w-32 flex-shrink-0">
+                              <Label className="text-sm font-medium text-gray-700">Member ID</Label>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="py-1 bg-primary/10 border border-primary/30 rounded px-2 w-full">
+                                <span className="text-sm text-gray-900 font-medium">
+                                  {memberData?.system_member_id || memberData?.id || 'Not assigned'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                         <InlineEditField
                           label="Gender"
                           value={formData.gender}
@@ -2312,15 +2770,8 @@ const StaffMemberProfilePage = () => {
                           placeholder="Select gender"
                           onChange={handleFieldChange}
                         />
-                      </div>
-                    </div>
-
-                    {/* 3. Contact Information - High Priority */}
-                    <div className="bg-blue-50/30 rounded-lg p-4 space-y-4">
-                      <h5 className="text-xs font-medium text-blue-700 uppercase tracking-wide">Contact Information</h5>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <InlineEditField
-                          label="Email Address"
+                          label="Email"
                           value={formData.email}
                           fieldName="email"
                           type="email"
@@ -2328,6 +2779,18 @@ const StaffMemberProfilePage = () => {
                           placeholder="Enter email address"
                           onChange={handleFieldChange}
                         />
+                      </div>
+
+                      {/* Row 3: Access Card, [empty], Phone Number */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <InlineEditField
+                          label="Access Card"
+                          value={formData.access_card_number}
+                          fieldName="access_card_number"
+                          placeholder="Enter access card number"
+                          onChange={handleFieldChange}
+                        />
+                        <div></div> {/* Empty middle column */}
                         <InlineEditField
                           label="Phone Number"
                           value={formData.phone}
@@ -2338,58 +2801,31 @@ const StaffMemberProfilePage = () => {
                           onChange={handleFieldChange}
                         />
                       </div>
-                    </div>
 
-                    {/* 4. Mailing Address - Medium Priority */}
-                    <div className="bg-green-50/30 rounded-lg p-4 space-y-4">
-                      <h5 className="text-xs font-medium text-green-700 uppercase tracking-wide">Mailing Address</h5>
-                      <div className="space-y-4">
-                        <InlineEditField
-                          label="Street Address"
-                          value={formData.address}
-                          fieldName="address"
-                          placeholder="Enter street address"
-                          onChange={handleFieldChange}
+                      {/* Row 4: Address (full width) */}
+                      <div className="grid grid-cols-1 gap-4">
+                        <AddressField
+                          label="Address"
+                          fullAddress={formData.address}
+                          streetAddress={formData.street_address || ''}
+                          city={formData.city}
+                          state={formData.state}
+                          zipCode={formData.zip_code}
+                          onChange={handleAddressChange}
                         />
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                          <InlineEditField
-                            label="City"
-                            value={formData.city}
-                            fieldName="city"
-                            placeholder="Enter city"
-                            onChange={handleFieldChange}
-                          />
-                          <InlineEditField
-                            label="State"
-                            value={formData.state}
-                            fieldName="state"
-                            placeholder="Enter state"
-                            onChange={handleFieldChange}
-                          />
-                          <InlineEditField
-                            label="ZIP Code"
-                            value={formData.zip_code}
-                            fieldName="zip_code"
-                            placeholder="Enter ZIP code"
-                            onChange={handleFieldChange}
-                          />
-                        </div>
                       </div>
-                    </div>
-                  </div>
 
-                  {/* 5. Emergency Contact - Lower Priority but Important */}
-                  <div className="bg-orange-50/30 rounded-lg p-4 space-y-4">
-                    <h5 className="text-xs font-medium text-orange-700 uppercase tracking-wide flex items-center gap-2">
-                      <Shield className="h-3 w-3" />
-                      Emergency Contact
-                    </h5>
 
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                      {/* Row 5: Emergency Contact, Relationship, Emergency Phone */}
+                      <div className="bg-orange-50/30 rounded-lg p-4 space-y-4 mt-4">
+                        <h5 className="text-xs font-medium text-orange-700 uppercase tracking-wide flex items-center gap-2">
+                          <Shield className="h-3 w-3" />
+                          Emergency Contact
+                        </h5>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <InlineEditField
-                          label="Contact Name"
+                          label="Emergency Contact"
                           value={formData.emergency_contact_name}
                           fieldName="emergency_contact_name"
                           placeholder="Enter emergency contact name"
@@ -2410,9 +2846,6 @@ const StaffMemberProfilePage = () => {
                           placeholder="Select relationship"
                           onChange={handleFieldChange}
                         />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <InlineEditField
                           label="Emergency Phone"
                           value={formData.emergency_contact_phone}
@@ -2421,7 +2854,7 @@ const StaffMemberProfilePage = () => {
                           placeholder="Enter emergency contact phone"
                           onChange={handleFieldChange}
                         />
-                        <div></div> {/* Empty space for visual balance */}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -3043,6 +3476,39 @@ const StaffMemberProfilePage = () => {
         </DialogContent>
       </Dialog>
         </>
+      )}
+
+      {/* Floating Global Save Button - Bottom Right */}
+      {hasUnsavedChanges && (
+        <div className="fixed bottom-6 right-6 flex items-center gap-2 z-50">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDiscardChanges}
+            className="px-3 py-2 text-xs font-medium border-gray-300 text-gray-600 hover:bg-gray-50 transition-all duration-200 shadow-lg"
+          >
+            <X className="h-3 w-3 mr-1" />
+            Discard
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleGlobalSave}
+            disabled={isSaving}
+            className="px-3 py-2 text-xs font-medium bg-green-600 hover:bg-green-700 text-white transition-all duration-200 shadow-lg"
+          >
+            {isSaving ? (
+              <>
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-3 w-3 mr-1" />
+                Save All Changes
+              </>
+            )}
+          </Button>
+        </div>
       )}
     </motion.div>
     </div>
