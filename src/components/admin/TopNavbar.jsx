@@ -33,30 +33,18 @@ import MemberSearch from '@/components/admin/topnav_parts/MemberSearch.jsx';
 import AdvancedMemberSearchModal from '@/components/admin/topnav_parts/AdvancedMemberSearchModal.jsx';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/hooks/useTheme.jsx';
-import { brandingService } from '@/services/brandingService.js';
+import { useBranding } from '@/hooks/useBranding';
 import LocationSwitcher from './LocationSwitcher';
+
 const ClubHeader = () => {
-  const [branding, setBranding] = useState({ logo_url: '', avatar_url: '' });
+  const { branding } = useBranding();
   // LocationSwitcher will handle its own location context
-
-  useEffect(() => {
-    brandingService.getBranding().then(setBranding).catch(() => {});
-  }, []);
-
-  // Add this effect to refetch branding when the window regains focus
-  useEffect(() => {
-    const handleFocus = () => {
-      brandingService.getBranding().then(setBranding).catch(() => {});
-    };
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, []);
 
   return (
     <div className="flex items-center gap-4">
       <div className="flex items-center gap-3">
         <img
-          src={branding.logo_url || "/assets/NordicFitness.png"}
+          src={branding.logoUrl || "/assets/momentum-logo.svg"}
           alt="Club Logo"
           className="h-12 w-auto object-contain"
         />

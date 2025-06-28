@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast.js';
+import { getUserStatusOptions } from '@/utils/statusUtils';
 
 const MemberFormField = React.memo(({ label, name, type = "text", value, onChange, isRequiredByAdmin = false, children, min }) => {
   const isRequired = isRequiredByAdmin;
@@ -315,11 +316,11 @@ const MemberFormDialog = ({ isOpen, onOpenChange, editingMember, onSubmit, membe
             <Select name="status" value={formData.status} onValueChange={(value) => handleSelectChange('status', value)}>
               <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Inactive">Inactive</SelectItem>
-                <SelectItem value="Frozen">Frozen</SelectItem>
-                <SelectItem value="Guest">Guest</SelectItem>
-                <SelectItem value="Archived">Archived</SelectItem>
+                {getUserStatusOptions().map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </MemberFormField>

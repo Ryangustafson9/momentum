@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CheckCircle, AlertCircle, Loader2, X } from 'lucide-react';
-import { getGymLogo, getGymName, getGymColors } from '@/utils/gymBranding';
+import { getGymColors } from '@/utils/gymBranding';
+import { useBranding } from '@/hooks/useBranding';
 import { supabase } from '@/lib/supabaseClient';
 import { capitalizeName, calculatePasswordStrength } from '@/utils/formHelpers.js';
 import { isOnlineJoiningAllowed, clubSettingsUtils } from '@/services/clubSettingsService';
@@ -67,6 +68,7 @@ const Signup = () => {
   // Get loading state and user from useAuth hook
   const { signup, loading, user } = useAuth(); // Use signup instead of register
   const { toast } = useToast();
+  const { clubName } = useBranding();
 
   // Check if passwords match
   const checkPasswordsMatch = (password, confirmPassword) => {
@@ -432,7 +434,7 @@ const Signup = () => {
         ) : (          /* FORM STATE */
           <>
             <div className="text-center mb-6">
-              <h1 className="text-2xl font-bold text-gray-900">Join Nordic Fitness</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Join {clubName}</h1>
               <p className="text-gray-600 mt-2 text-sm">Create your account to get started</p>
             </div>
 

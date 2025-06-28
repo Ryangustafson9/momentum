@@ -476,12 +476,13 @@ const AdminSidebar = ({ onLogout, isExpanded, toggleSidebar, user }) => {
               size="sm"
               onClick={onLogout}
               className={cn(
-                "text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors duration-200",
+                "text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors duration-200",
                 isExpanded ? "flex items-center" : "w-full p-2"
-              )}              title="Sign Out"
+              )}
+              title="Sign Out"
             >
-              {renderIcon("LogOut", cn("h-4 w-4 rotate-180", isExpanded ? "mr-2" : ""))}
-              {isExpanded && <span className="text-sm">Sign Out</span>}
+              {renderIcon("LogOut", cn("h-4 w-4 rotate-180 text-red-600", isExpanded ? "mr-2" : ""))}
+              {isExpanded && <span className="text-sm text-red-600">Sign Out</span>}
             </Button>
 
             {/* Settings Button */}

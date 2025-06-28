@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast.js';
 import { supabase } from '@/lib/supabaseClient';
-import { Save, Building, Phone, Mail, Globe } from 'lucide-react';
+import { Save, Building, Phone } from 'lucide-react';
+import { brandingService } from '@/services/brandingService';
 
 // Simple Toggle Switch Component (internal)
 const SimpleSwitch = ({ checked, onCheckedChange, id }) => (
@@ -36,8 +37,8 @@ const GeneralSettingsTab = (props) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [settings, setSettings] = useState({
-    gym_name: 'Nordic Fitness',
-    contact_email: 'info@nordicfitness.com',
+    gym_name: 'Momentum Fitness',
+    contact_email: 'info@momentumfitness.com',
     contact_phone: '(555) 123-4567',
     address: '',
     website: '',
@@ -96,7 +97,14 @@ const GeneralSettingsTab = (props) => {
         throw error;
       }
 
-      
+      // Also update the club name in the branding service
+      if (settings.gym_name) {
+        try {
+          await brandingService.updateClubName(settings.gym_name);
+        } catch (brandingError) {
+          console.warn('Failed to update club name in branding service:', brandingError);
+        }
+      }
 
       // Call parent callback if provided
       if (props.onSettingsChange) {

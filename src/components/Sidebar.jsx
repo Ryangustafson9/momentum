@@ -71,10 +71,10 @@ const Sidebar = ({ onLogout, mobile = false, closeSidebar }) => {
       <div className="flex flex-shrink-0 border-t border-gray-200 p-4">
         <Button
           variant="ghost"
-          className="w-full justify-start text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+          className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700"
           onClick={onLogout}
         >
-          <LogOut className="mr-3 h-5 w-5 text-gray-400" />
+          <LogOut className="mr-3 h-5 w-5 text-red-600" />
           Log out
         </Button>
       </div>

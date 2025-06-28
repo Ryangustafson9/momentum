@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useMemberProfile } from '../MemberProfileContext';
 import { format, isValid, addDays } from 'date-fns';
+import { getMembershipStatusColor, isGuestUser, USER_STATUSES } from '@/utils/statusUtils';
 
 // ==================== HELPER FUNCTIONS ====================
 
@@ -47,16 +48,7 @@ const formatCurrency = (amount) => {
   }).format(amount);
 };
 
-const getMembershipStatusColor = (status) => {
-  const colors = {
-    active: 'bg-green-100 text-green-800 border-green-200',
-    inactive: 'bg-gray-100 text-gray-800 border-gray-200',
-    suspended: 'bg-red-100 text-red-800 border-red-200',
-    pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    expired: 'bg-orange-100 text-orange-800 border-orange-200'
-  };
-  return colors[status] || colors.inactive;
-};
+// getMembershipStatusColor is now imported from statusUtils
 
 const getBillingCycleText = (cycle) => {
   const cycles = {
@@ -70,7 +62,20 @@ const getBillingCycleText = (cycle) => {
 
 // ==================== CURRENT MEMBERSHIP CARD ====================
 
-const CurrentMembershipCard = ({ membership }) => {
+const CurrentMembershipCard = ({ membership, isGuestUser = false }) => {
+  // Don't show membership card for guest users
+  if (isGuestUser) {
+    return (
+      <Card className="border-dashed border-2 border-gray-300">
+        <CardContent className="p-6 text-center">
+          <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Guest User</h3>
+          <p className="text-gray-600 mb-4">This user has guest access with no membership required.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!membership) {
     return (
       <Card className="border-dashed border-2 border-gray-300">
@@ -255,6 +260,9 @@ const MembershipTab = () => {
   // Get current membership from member data
   const currentMembership = memberData?.currentMembership;
 
+  // Check if user is a guest (no membership history and guest status)
+  const userIsGuest = isGuestUser(memberData?.status);
+
   useEffect(() => {
     // TODO: Fetch membership history from API
     // For now, using mock data
@@ -287,7 +295,7 @@ const MembershipTab = () => {
       className="space-y-6"
     >
       {/* Current Membership */}
-      <CurrentMembershipCard membership={currentMembership} />
+      <CurrentMembershipCard membership={currentMembership} isGuestUser={userIsGuest} />
 
       {/* Membership History */}
       <MembershipHistoryTable history={membershipHistory} />

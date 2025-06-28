@@ -119,9 +119,18 @@ const ProcessAutomation = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedWorkflow, setSelectedWorkflow] = useState(null);
   const [showBuilder, setShowBuilder] = useState(false);
-
   const handleImportWorkflow = () => {
     alert('Import functionality will allow you to upload workflow files from your computer.');
+  };
+
+  const handleEditWorkflow = (workflow) => {
+    setSelectedWorkflow(workflow);
+    setShowBuilder(true);
+  };
+
+  const handleViewWorkflow = (workflow) => {
+    // This will be handled by the WorkflowsList component internally
+    console.log('View workflow:', workflow.name);
   };
 
   return (
@@ -172,11 +181,13 @@ const ProcessAutomation = () => {
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             <OverviewSection />
-          </TabsContent>
-
-          {/* Workflows Tab */}
+          </TabsContent>          {/* Workflows Tab */}
           <TabsContent value="workflows" className="space-y-6">
-            <WorkflowsList workflows={sampleWorkflows} />
+            <WorkflowsList 
+              workflows={sampleWorkflows} 
+              onEditWorkflow={handleEditWorkflow}
+              onViewWorkflow={handleViewWorkflow}
+            />
           </TabsContent>
 
           {/* Templates Tab */}
@@ -188,11 +199,14 @@ const ProcessAutomation = () => {
           <TabsContent value="analytics" className="space-y-6">
             <AnalyticsSection />
           </TabsContent>
-        </Tabs>        {/* Workflow Builder Modal */}
-        {showBuilder && (
+        </Tabs>        {/* Workflow Builder Modal */}        {showBuilder && (
           <WorkflowBuilder 
             isOpen={showBuilder}
-            onClose={() => setShowBuilder(false)}
+            workflow={selectedWorkflow}
+            onClose={() => {
+              setShowBuilder(false);
+              setSelectedWorkflow(null);
+            }}
           />
         )}
       </motion.div>
@@ -305,16 +319,156 @@ const OverviewSection = () => {
   );
 };
 
+// Workflow Viewer Component
+const WorkflowViewer = ({ workflow, isOpen, onClose }) => {
+  if (!isOpen || !workflow) return null;
+
+  // Mock workflow steps for demonstration
+  const mockSteps = [
+    { 
+      id: 1, 
+      type: 'trigger', 
+      name: 'Member Joins', 
+      description: 'Triggered when a new member signs up',
+      icon: UserPlus,
+      color: 'bg-green-500'
+    },
+    { 
+      id: 2, 
+      type: 'action', 
+      name: 'Send Welcome Email', 
+      description: 'Send welcome email with gym information',
+      icon: Mail,
+      color: 'bg-blue-600'
+    },
+    { 
+      id: 3, 
+      type: 'condition', 
+      name: 'Wait 24 Hours', 
+      description: 'Wait 24 hours before next step',
+      icon: Clock,
+      color: 'bg-gray-500'
+    },
+    { 
+      id: 4, 
+      type: 'action', 
+      name: 'Send Tips Email', 
+      description: 'Send email with gym tips and guidelines',
+      icon: Mail,
+      color: 'bg-blue-600'
+    }
+  ];
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Eye className="h-5 w-5" />
+            View Workflow: {workflow.name}
+          </DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-6">
+          {/* Workflow Info */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-sm text-muted-foreground">Status</div>
+                <Badge variant={workflow.status === 'active' ? 'default' : 'secondary'}>
+                  {workflow.status}
+                </Badge>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-sm text-muted-foreground">Total Runs</div>
+                <div className="text-2xl font-bold">{workflow.totalRuns || 0}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-sm text-muted-foreground">Last Run</div>
+                <div className="font-medium">{workflow.lastRun || 'Never'}</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Workflow Description */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Description</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">{workflow.description}</p>
+            </CardContent>
+          </Card>
+
+          {/* Workflow Steps */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Workflow Steps</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {mockSteps.map((step, index) => {
+                  const Icon = step.icon;
+                  return (
+                    <div key={step.id} className="flex items-start gap-4">
+                      <div className="flex flex-col items-center">
+                        <div className={`p-3 rounded-full ${step.color} text-white`}>
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        {index < mockSteps.length - 1 && (
+                          <div className="w-px h-8 bg-border mt-2" />
+                        )}
+                      </div>
+                      <div className="flex-1 pt-2">
+                        <h4 className="font-medium">{step.name}</h4>
+                        <p className="text-sm text-muted-foreground">{step.description}</p>
+                        <Badge variant="outline" className="mt-1 text-xs">
+                          {step.type}
+                        </Badge>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 pt-4">
+            <Button onClick={onClose} variant="outline">
+              Close
+            </Button>
+            <Button 
+              onClick={() => {
+                onClose();
+                // TODO: Switch to edit mode
+                console.log('Edit workflow:', workflow.name);
+              }}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Workflow
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 // Workflows List Component
-const WorkflowsList = ({ workflows }) => {
+const WorkflowsList = ({ workflows, onEditWorkflow, onViewWorkflow }) => {
+  const [viewingWorkflow, setViewingWorkflow] = useState(null);
+
   const handleViewWorkflow = (workflow) => {
-    console.log('View workflow:', workflow.name);
-    // TODO: Open workflow in view mode
+    setViewingWorkflow(workflow);
   };
 
   const handleEditWorkflow = (workflow) => {
-    console.log('Edit workflow:', workflow.name);
-    // TODO: Open workflow in edit mode
+    onEditWorkflow(workflow);
   };
 
   const handleCopyWorkflow = (workflow) => {
@@ -410,13 +564,18 @@ const WorkflowsList = ({ workflows }) => {
                   </Button>
                   <Button variant="ghost" size="sm" title="More options">
                     <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </div>
+                  </Button>                </div>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      <WorkflowViewer 
+        workflow={viewingWorkflow}
+        isOpen={!!viewingWorkflow}
+        onClose={() => setViewingWorkflow(null)}
+      />
     </div>
   );
 };
@@ -567,7 +726,7 @@ const AnalyticsSection = () => {
 };
 
 // Workflow Builder Component
-const WorkflowBuilder = ({ isOpen, onClose }) => {
+const WorkflowBuilder = ({ isOpen, onClose, workflow = null }) => {
   const [draggedNode, setDraggedNode] = useState(null);
   const [canvasNodes, setCanvasNodes] = useState([]);
   const [connections, setConnections] = useState([]);
@@ -578,9 +737,58 @@ const WorkflowBuilder = ({ isOpen, onClose }) => {
   const [sourceNodeId, setSourceNodeId] = useState(null);
   const [hoveredNode, setHoveredNode] = useState(null);
   const [tempConnection, setTempConnection] = useState(null);
+  const [workflowName, setWorkflowName] = useState(workflow?.name || '');
+  const [workflowDescription, setWorkflowDescription] = useState(workflow?.description || '');
+  // Load existing workflow data when editing
+  React.useEffect(() => {
+    if (workflow) {
+      setWorkflowName(workflow.name);
+      setWorkflowDescription(workflow.description);
+      // TODO: Load existing nodes and connections from workflow data
+      // For now, we'll show a mock setup for the edited workflow
+      if (workflow.name === 'Welcome New Members') {
+        setCanvasNodes([
+          { 
+            id: 'node-1', 
+            type: 'member-joins', 
+            x: 100, 
+            y: 100, 
+            label: 'Member Joins',
+            icon: UserPlus,
+            color: 'bg-green-500',
+            data: {}
+          },
+          { 
+            id: 'node-2', 
+            type: 'send-email', 
+            x: 300,
+            y: 100, 
+            label: 'Send Welcome Email',
+            icon: Mail,
+            color: 'bg-blue-600',
+            data: { recipient: 'member', template: 'welcome' }
+          }
+        ]);
+        setConnections([
+          { id: 'conn-1', from: 'node-1', to: 'node-2' }
+        ]);
+      }
+    } else {
+      // Reset for new workflow
+      setWorkflowName('');
+      setWorkflowDescription('');
+      setCanvasNodes([]);
+      setConnections([]);
+    }
+  }, [workflow]);
 
   const handleSaveWorkflow = () => {
-    alert('Workflow saved as draft! You can continue editing or test it later.');
+    if (!workflowName.trim()) {
+      alert('Please enter a workflow name before saving.');
+      return;
+    }
+    const action = workflow ? 'updated' : 'saved';
+    alert(`Workflow "${workflowName}" ${action} successfully! ${workflow ? 'Your changes have been applied.' : 'You can continue editing or test it later.'}`);
   };
 
   const handleTestWorkflow = () => {
@@ -795,9 +1003,15 @@ const WorkflowBuilder = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-lg w-full h-full max-w-7xl max-h-[90vh] flex flex-col">        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold">Workflow Builder</h2>
+      <div className="bg-white rounded-lg w-full h-full max-w-7xl max-h-[90vh] flex flex-col">        {/* Header */}        <div className="flex items-center justify-between p-6 border-b">
+          <div>
+            <h2 className="text-xl font-semibold">
+              {workflow ? `Edit Workflow: ${workflow.name}` : 'Create New Workflow'}
+            </h2>
+            {workflow && (
+              <p className="text-sm text-muted-foreground mt-1">{workflow.description}</p>
+            )}
+          </div>
           <div className="flex items-center gap-2 flex-wrap">
             {/* Connection Mode Indicator */}
             {connectionMode && (
@@ -840,11 +1054,17 @@ const WorkflowBuilder = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        <div className="flex flex-1 overflow-hidden">
-          {/* Node Palette */}
+        <div className="flex flex-1 overflow-hidden">          {/* Node Palette */}
           <div className="w-80 border-r bg-gray-50 p-4 overflow-y-auto">
-            <NodePalette onDragStart={handleDragStart} />
-          </div>          {/* Canvas */}
+            <NodePalette 
+              onDragStart={handleDragStart}
+              workflowName={workflowName}
+              workflowDescription={workflowDescription}
+              onWorkflowNameChange={setWorkflowName}
+              onWorkflowDescriptionChange={setWorkflowDescription}
+              isEditing={!!workflow}
+            />
+          </div>{/* Canvas */}
           <div className="flex-1 relative">
             <WorkflowCanvas
               nodes={canvasNodes}
@@ -882,7 +1102,7 @@ const WorkflowBuilder = ({ isOpen, onClose }) => {
 };
 
 // Node Palette Component
-const NodePalette = ({ onDragStart }) => {
+const NodePalette = ({ onDragStart, workflowName, workflowDescription, onWorkflowNameChange, onWorkflowDescriptionChange, isEditing }) => {
   const [draggedItem, setDraggedItem] = useState(null);
 
   const handleDragStart = (node) => {
@@ -896,6 +1116,41 @@ const NodePalette = ({ onDragStart }) => {
 
   return (
     <div className="space-y-6">
+      {/* Workflow Info Form */}
+      <div className="space-y-4 p-4 bg-white border rounded-lg">
+        <h3 className="font-semibold text-sm text-gray-700 flex items-center gap-2">
+          <Settings className="h-4 w-4" />
+          Workflow Details
+        </h3>
+        <div className="space-y-3">
+          <div>
+            <Label htmlFor="workflow-name" className="text-xs font-medium text-gray-600">
+              Workflow Name
+            </Label>
+            <Input
+              id="workflow-name"
+              value={workflowName}
+              onChange={(e) => onWorkflowNameChange(e.target.value)}
+              placeholder="Enter workflow name..."
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="workflow-description" className="text-xs font-medium text-gray-600">
+              Description
+            </Label>
+            <Textarea
+              id="workflow-description"
+              value={workflowDescription}
+              onChange={(e) => onWorkflowDescriptionChange(e.target.value)}
+              placeholder="Describe what this workflow does..."
+              className="mt-1 resize-none"
+              rows={3}
+            />
+          </div>
+        </div>
+      </div>
+
       <div className="text-center p-3 bg-blue-50 border border-blue-200 rounded-lg">
         <div className="text-sm font-medium text-blue-700 mb-1">Drag & Drop</div>
         <div className="text-xs text-blue-600">Drag elements to the canvas to build your workflow</div>
@@ -1274,18 +1529,16 @@ const WorkflowNode = ({
             <X className="h-3 w-3" />
           </button>
         </div>
-      </div>
-
-      {/* Node content */}
+      </div>      {/* Node content */}
       <div className="text-xs text-gray-600">
         {node.type === 'send-email' && (
-          <div>Send email to: {node.data.recipient || 'Not configured'}</div>
+          <div>Send email to: {node.data?.recipient || 'Not configured'}</div>
         )}
         {node.type === 'wait' && (
-          <div>Wait: {node.data.duration || 'Not configured'}</div>
+          <div>Wait: {node.data?.duration || 'Not configured'}</div>
         )}
         {node.type === 'if-then' && (
-          <div>Condition: {node.data.condition || 'Not configured'}</div>
+          <div>Condition: {node.data?.condition || 'Not configured'}</div>
         )}
         {!['send-email', 'wait', 'if-then'].includes(node.type) && (
           <div className="text-gray-400">Click to configure</div>

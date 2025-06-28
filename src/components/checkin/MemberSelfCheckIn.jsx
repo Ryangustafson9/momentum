@@ -178,11 +178,14 @@ const MemberSelfCheckIn = ({
   const getMemberStatusBadge = (status) => {
     const variants = {
       active: 'default',
-      inactive: 'secondary',
       suspended: 'destructive',
-      cancelled: 'destructive'
+      cancelled: 'destructive',
+      expired: 'destructive',
+      frozen: 'secondary',
+      guest: 'outline',
+      archived: 'secondary'
     };
-    
+
     return (
       <Badge variant={variants[status] || 'outline'} className="text-xs">
         {status?.charAt(0).toUpperCase() + status?.slice(1) || 'Unknown'}

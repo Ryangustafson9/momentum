@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -1410,6 +1410,7 @@ const StaffMemberProfilePage = () => {
   const [checkIns, setCheckIns] = useState([]);
   const [bookings, setBookings] = useState([]);  const [membershipLog, setMembershipLog] = useState([]);
   const [currentMemberships, setCurrentMemberships] = useState([]);
+  const [allMemberships, setAllMemberships] = useState([]);
   const [membershipHistory, setMembershipHistory] = useState([]);
   const [isAssignMembershipDialogOpen, setIsAssignMembershipDialogOpen] = useState(false);
   const [isMembershipSignupWizardOpen, setIsMembershipSignupWizardOpen] = useState(false);
@@ -1422,6 +1423,25 @@ const StaffMemberProfilePage = () => {
   // Custom fields state
   const [customFields, setCustomFields] = useState([]);
   const [memberCustomFieldValues, setMemberCustomFieldValues] = useState({});
+
+  // Memoize avatar-related values to prevent unnecessary re-renders
+  const displayName = useMemo(() => {
+    if (memberData?.first_name && memberData?.last_name) {
+      return `${memberData.first_name} ${memberData.last_name}`;
+    } else if (memberData?.first_name) {
+      return memberData.first_name;
+    } else if (memberData?.last_name) {
+      return memberData.last_name;
+    } else if (memberData?.name && memberData.name.trim() !== "") {
+      return memberData.name;
+    } else if (memberData?.email) {
+      return memberData.email.split('@')[0];
+    }
+    return 'Member Name';
+  }, [memberData?.first_name, memberData?.last_name, memberData?.name, memberData?.email]);
+
+  const memberNameForAvatar = useMemo(() => displayName, [displayName]);
+  const avatarSrc = useMemo(() => memberData?.profile_picture_url || '', [memberData?.profile_picture_url]);
 
   // Initialize form data when member data changes
   useEffect(() => {
@@ -1770,11 +1790,10 @@ const StaffMemberProfilePage = () => {
         throw updateError;
       }
 
-      // Update local state with cache-busting parameter
-      const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`;
+      // Update local state with new profile picture URL
       setMemberData(prev => ({
         ...prev,
-        profile_picture_url: cacheBustedUrl
+        profile_picture_url: publicUrl
       }));
 
       console.log('Photo upload completed successfully');
@@ -1850,31 +1869,95 @@ const StaffMemberProfilePage = () => {
         // Set empty billing preferences for now
         setBillingPreferences(null);
 
-        // Fetch current memberships from memberships table
+        // Fetch current memberships from memberships table (active, on hold, and pending)
         try {
+          // First get the memberships
           const { data: memberships, error: membershipsError } = await supabase
             .from('memberships')
-            .select(`
-              *,
-              membership_types (
-                id,
-                name,
-                category,
-                price,
-                billing_cycle
-              )
-            `)
-            .eq('member_id', member.id)
-            .eq('status', 'active');
+            .select('*')
+            .eq('system_member_id', member.system_member_id)
+            .in('status', ['active', 'on_hold', 'pending', 'frozen']);
 
           if (membershipsError) {
             console.error('Error fetching memberships:', membershipsError);
+            setCurrentMemberships([]);
+          } else if (memberships && memberships.length > 0) {
+            // Get membership type IDs
+            const membershipTypeIds = memberships.map(m => m.membership_type_id).filter(Boolean);
+
+            // Fetch membership types separately
+            const { data: membershipTypes, error: typesError } = await supabase
+              .from('membership_types')
+              .select('id, name, category, price, billing_type, duration_months')
+              .in('id', membershipTypeIds);
+
+            if (typesError) {
+              console.error('Error fetching membership types:', typesError);
+              setCurrentMemberships(memberships);
+            } else {
+              // Combine the data
+              const membershipsWithTypes = memberships.map(membership => ({
+                ...membership,
+                membership_type: membershipTypes.find(type => type.id === membership.membership_type_id)
+              }));
+              setCurrentMemberships(membershipsWithTypes);
+            }
           } else {
-            setCurrentMemberships(memberships || []);
+            setCurrentMemberships([]);
           }
         } catch (error) {
           console.error('Error fetching memberships:', error);
           setCurrentMemberships([]);
+        }
+
+        // Fetch ALL memberships (including inactive ones) for status determination
+        try {
+          // First get all memberships
+          const { data: allMembershipsData, error: allMembershipsError } = await supabase
+            .from('memberships')
+            .select('*')
+            .eq('system_member_id', member.system_member_id)
+            .order('updated_at', { ascending: false });
+
+          if (allMembershipsError) {
+            console.error('Error fetching all memberships:', allMembershipsError);
+            setAllMemberships([]);
+            setMembershipHistory([]);
+          } else if (allMembershipsData && allMembershipsData.length > 0) {
+            // Get membership type IDs
+            const membershipTypeIds = allMembershipsData.map(m => m.membership_type_id).filter(Boolean);
+
+            // Fetch membership types separately
+            const { data: membershipTypes, error: typesError } = await supabase
+              .from('membership_types')
+              .select('id, name, category, price, billing_type, duration_months')
+              .in('id', membershipTypeIds);
+
+            if (typesError) {
+              console.error('Error fetching membership types:', typesError);
+              setAllMemberships(allMembershipsData);
+            } else {
+              // Combine the data
+              const allMembershipsWithTypes = allMembershipsData.map(membership => ({
+                ...membership,
+                membership_type: membershipTypes.find(type => type.id === membership.membership_type_id)
+              }));
+              setAllMemberships(allMembershipsWithTypes);
+
+              // Set membership history (inactive memberships only)
+              const historicalMemberships = allMembershipsWithTypes.filter(
+                membership => !['active', 'on_hold', 'pending', 'frozen'].includes(membership.status?.toLowerCase())
+              );
+              setMembershipHistory(historicalMemberships);
+            }
+          } else {
+            setAllMemberships([]);
+            setMembershipHistory([]);
+          }
+        } catch (error) {
+          console.error('Error fetching all memberships:', error);
+          setAllMemberships([]);
+          setMembershipHistory([]);
         }
       } else {
         toast({ title: "Not Found", description: `Member with ID ${systemMemberId} not found.`, variant: "destructive" });
@@ -2195,43 +2278,30 @@ const StaffMemberProfilePage = () => {
       variant: "default"
     });
   };
-
   if (isLoading || !memberData) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <LoadingSpinner size="lg" className="mb-4" />
-          <p className="text-gray-600">Loading member profile...</p>
-          <p className="text-xs text-gray-400 mt-2">
-            Loading: {isLoading ? 'true' : 'false'} |
-            Member: {memberData ? 'loaded' : 'loading'} |
-            Staff: {loggedInStaff ? 'loaded' : 'loading'}
-          </p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center space-y-4">
+          <div className="flex justify-center">
+            <LoadingSpinner size="lg" />
+          </div>
+          <div className="space-y-2">
+            <p className="text-lg font-medium text-gray-700">Loading member profile...</p>
+            <p className="text-xs text-gray-400">
+              Loading: {isLoading ? 'true' : 'false'} |
+              Member: {memberData ? 'loaded' : 'loading'} |
+              Staff: {loggedInStaff ? 'loaded' : 'loading'}
+            </p>
+          </div>
         </div>
       </div>
     );
   }
     const currentMembership = membershipTypes.find(mt => mt.id === memberData.current_membership_type_id);
   
-  // Construct member name with proper fallbacks
-  let displayName = "Member Name"; // Default fallback
-  if (memberData.first_name && memberData.last_name) {
-    displayName = `${memberData.first_name} ${memberData.last_name}`;
-  } else if (memberData.first_name) {
-    displayName = memberData.first_name;
-  } else if (memberData.last_name) {
-    displayName = memberData.last_name;
-  } else if (memberData.name && memberData.name.trim() !== "") {
-    displayName = memberData.name;
-  } else if (memberData.email) {
-    displayName = memberData.email.split('@')[0]; // Use email username as fallback
-  }
+  // displayName is now memoized at the top of the component
   
-  const memberNameForAvatar = displayName;
-  const avatarSrc = memberData.profile_picture_url || '';
 
-  // Debug avatar URL
-  console.log('Avatar rendering with URL:', avatarSrc);
 
   // EditMembershipDialog Component
   const EditMembershipDialog = ({ isOpen, onClose, membership, onMembershipUpdated }) => {
@@ -2406,22 +2476,17 @@ const StaffMemberProfilePage = () => {
 
 
           {/* Profile Content - Left-aligned layout like member portal */}
-          <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-4 lg:space-y-0 lg:space-x-6">
-            {/* Enhanced Profile Photo Section - Left Side */}
+          <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-4 lg:space-y-0 lg:space-x-6">            {/* Enhanced Profile Photo Section - Left Side */}
             <div className="relative flex-shrink-0">
               <div className="relative group">
                 <div className="relative h-24 w-24 lg:h-32 lg:w-32 border-4 border-white shadow-lg transition-all duration-200 group-hover:shadow-xl rounded-full overflow-hidden bg-muted">
                   {avatarSrc ? (
                     <img
-                      key={`${avatarSrc}-${Date.now()}`}
-                      src={`${avatarSrc}?t=${Date.now()}`}
+                      key={avatarSrc}
+                      src={avatarSrc}
                       alt={memberData.name || "Member avatar"}
                       className="w-full h-full object-cover relative z-10"
-                      onLoad={() => {
-                        console.log('Avatar image loaded successfully:', avatarSrc);
-                      }}
                       onError={(e) => {
-                        console.log('Avatar image failed to load:', avatarSrc);
                         e.target.style.display = 'none';
                       }}
                     />
@@ -2437,8 +2502,8 @@ const StaffMemberProfilePage = () => {
                   </div>
                 </div>
 
-                {/* Photo Upload Buttons - Always visible */}
-                <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2">
+                {/* Photo Upload Buttons - Show only on hover */}
+                <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200 ease-in-out">
                   {/* Take Picture Button */}
                   <button
                     onClick={handleTakePhoto}
@@ -2467,19 +2532,7 @@ const StaffMemberProfilePage = () => {
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={handlePhotoUpload}
-              />
-
-              {/* Status Indicator Overlay */}
-              <div className="absolute -bottom-2 -right-2 bg-background rounded-full p-2 shadow-lg">
-                {memberData.status === 'Active' ? (
-                  <CheckSquare className="h-5 w-5 lg:h-6 lg:w-6 text-green-500" />
-                ) : memberData.status === 'Inactive' ? (
-                  <PauseCircle className="h-5 w-5 lg:h-6 lg:w-6 text-yellow-500" />
-                ) : (
-                  <XCircle className="h-5 w-5 lg:h-6 lg:w-6 text-red-500" />
-                )}
-              </div>
+                onChange={handlePhotoUpload}              />
             </div>
 
             {/* Enhanced Name and Identity Section - Right Side */}
@@ -2490,9 +2543,6 @@ const StaffMemberProfilePage = () => {
                   <h1 className="text-2xl lg:text-3xl font-bold text-foreground tracking-tight">
                     {displayName}
                   </h1>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    ID: {memberData?.system_member_id || memberData?.id}
-                  </p>
                 </div>
 
                 {/* Balance Display - Top Right - Inlaid Box */}
@@ -2509,20 +2559,94 @@ const StaffMemberProfilePage = () => {
 
               {/* Status Badges Row */}
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3">
-                {/* Membership Status - Based on Active Memberships */}
+                {/* Membership Status - Based on Detailed Status Logic */}
                 {(() => {
-                  // currentMemberships already contains only active memberships from DB query
-                  const hasActiveMembership = currentMemberships && currentMemberships.length > 0;
-                  const actualStatus = hasActiveMembership ? 'Active Member' : 'No Active Plan';
-                  const statusVar = hasActiveMembership ? 'success' : 'secondary';
+                  // currentMemberships now contains active, on_hold, pending, and frozen memberships
+                  const hasCurrentMembership = currentMemberships && currentMemberships.length > 0;
+
+                  // Check if user has ever had any membership (including inactive ones)
+                  const hasAnyMembershipHistory = allMemberships && allMemberships.length > 0;
+
+                  let actualStatus, statusVar, icon;
+
+                  if (hasCurrentMembership) {
+                    // Get the primary current membership (first one)
+                    const primaryMembership = currentMemberships[0];
+
+                    // Check for pending cancellation first
+                    if (primaryMembership.cancellation_date && new Date(primaryMembership.cancellation_date) > new Date()) {
+                      actualStatus = `Cancel On: ${format(new Date(primaryMembership.cancellation_date), 'MMM dd, yyyy')}`;
+                      statusVar = 'destructive';
+                      icon = <AlertTriangle className="h-4 w-4 mr-1" />;
+                    } else {
+                      // Show status based on membership status
+                      switch (primaryMembership.status?.toLowerCase()) {
+                        case 'active':
+                          actualStatus = 'Active Member';
+                          statusVar = 'default';
+                          icon = <CheckSquare className="h-4 w-4 mr-1" />;
+                          break;
+                        case 'on_hold':
+                        case 'frozen':
+                          actualStatus = 'On Hold';
+                          statusVar = 'secondary';
+                          icon = <PauseCircle className="h-4 w-4 mr-1" />;
+                          break;
+                        case 'pending':
+                          actualStatus = 'Pending';
+                          statusVar = 'secondary';
+                          icon = <Clock className="h-4 w-4 mr-1" />;
+                          break;
+                        default:
+                          actualStatus = 'Active Member';
+                          statusVar = 'default';
+                          icon = <CheckSquare className="h-4 w-4 mr-1" />;
+                      }
+                    }
+                  } else if (hasAnyMembershipHistory) {
+                    // Find the most recent membership to determine status
+                    const mostRecentMembership = allMemberships[0]; // Already ordered by created_at desc
+
+                    switch (mostRecentMembership.status?.toLowerCase()) {
+                      case 'cancelled':
+                        actualStatus = 'Cancelled';
+                        statusVar = 'destructive';
+                        icon = <X className="h-4 w-4 mr-1" />;
+                        break;
+                      case 'expired':
+                        actualStatus = 'Expired';
+                        statusVar = 'secondary';
+                        icon = <Clock className="h-4 w-4 mr-1" />;
+                        break;
+                      case 'pending':
+                        actualStatus = 'Pending';
+                        statusVar = 'secondary';
+                        icon = <Clock className="h-4 w-4 mr-1" />;
+                        break;
+                      case 'on_hold':
+                      case 'frozen':
+                        actualStatus = 'On Hold';
+                        statusVar = 'secondary';
+                        icon = <PauseCircle className="h-4 w-4 mr-1" />;
+                        break;
+                      default:
+                        actualStatus = 'No Active Plan';
+                        statusVar = 'secondary';
+                        icon = <AlertTriangle className="h-4 w-4 mr-1" />;
+                    }
+                  } else {
+                    // No membership history - this is a guest
+                    actualStatus = 'Guest';
+                    statusVar = 'outline';
+                    icon = <User className="h-4 w-4 mr-1" />;
+                  }
 
                   return (
                     <Badge
                       variant={statusVar}
                       className="px-3 py-1.5 text-sm font-medium"
                     >
-                      {hasActiveMembership && <CheckSquare className="h-4 w-4 mr-1" />}
-                      {!hasActiveMembership && <AlertTriangle className="h-4 w-4 mr-1" />}
+                      {icon}
                       {actualStatus}
                     </Badge>
                   );
@@ -2532,7 +2656,8 @@ const StaffMemberProfilePage = () => {
                 <Badge variant="secondary" className="px-3 py-1.5 text-sm">
                   {memberData.role === 'admin' ? 'Administrator' :
                    memberData.role === 'staff' ? 'Staff Member' :
-                   currentMemberships.filter(m => m.status === 'active').length > 0 ? 'Member' : 'Non-Member'}
+                   currentMemberships.length > 0 ? 'Member' :
+                   (allMemberships && allMemberships.length > 0) ? 'Non-Member' : 'Non-member'}
                 </Badge>
               </div>
 
@@ -3005,7 +3130,7 @@ const StaffMemberProfilePage = () => {
                           ) : (
                             <TableRow>
                               <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                                No active memberships found
+                                No current memberships found
                               </TableCell>
                             </TableRow>
                           )}

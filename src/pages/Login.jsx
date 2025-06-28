@@ -5,12 +5,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getGymName } from '@/utils/gymBranding';
+import { Settings, EyeOff } from 'lucide-react';
 import { getDefaultRoute, normalizeRole } from '@/utils/roleUtils';
 import { showToast } from '@/utils/toastUtils';
 import { useLoading } from '@/hooks/useLoading';
 import PasswordResetModal from '@/components/PasswordResetModal';
-import { brandingService } from '@/services/brandingService.js';
+import { useBranding } from '@/hooks/useBranding';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -20,28 +20,41 @@ const Login = () => {
   const [formErrors, setFormErrors] = useState({});
   const [loginError, setLoginError] = useState('');
   const [showPasswordReset, setShowPasswordReset] = useState(false);
-  const [branding, setBranding] = useState({ logo_url: '' });
+  const [showDevLogins, setShowDevLogins] = useState(false);
+  const [devKeySequence, setDevKeySequence] = useState('');
 
   const { login } = useAuth();
   const navigate = useNavigate();
   const { withLoading, isLoading } = useLoading();
+  const { branding, clubName, logoUrl } = useBranding();
 
-  // Get club name
-  const clubName = getGymName();
 
-  // Fetch branding information
+
+  // Keyboard shortcut to toggle dev logins (Ctrl+Shift+D)
   useEffect(() => {
-    brandingService.getBranding().then(setBranding).catch(() => {});
-  }, []);
+    const handleKeyDown = (e) => {
+      // Check for Ctrl+Shift+D
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        setShowDevLogins(prev => !prev);
+        return;
+      }
 
-  // Add this effect to refetch branding when the window regains focus
-  useEffect(() => {
-    const handleFocus = () => {
-      brandingService.getBranding().then(setBranding).catch(() => {});
+      // Check for secret key sequence "devmode"
+      const newSequence = devKeySequence + e.key.toLowerCase();
+      if (newSequence.includes('devmode')) {
+        setShowDevLogins(true);
+        setDevKeySequence('');
+      } else if ('devmode'.startsWith(newSequence)) {
+        setDevKeySequence(newSequence);
+      } else {
+        setDevKeySequence('');
+      }
     };
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, []);
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [devKeySequence]);
 
   // Dev login function for quick testing
   const handleDevLogin = async (userType) => {
@@ -155,12 +168,31 @@ const Login = () => {
         <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-6 border border-white/20 relative overflow-hidden">
           {/* Decorative gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
+
+          {/* Settings Button - Top Right */}
+          <div className="absolute top-4 right-4 z-20">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowDevLogins(prev => !prev)}
+              className="h-8 w-8 p-0 rounded-full hover:bg-gray-100/80 transition-colors"
+              title={showDevLogins ? "Hide Dev Logins (Ctrl+Shift+D)" : "Show Dev Logins (Ctrl+Shift+D)"}
+            >
+              {showDevLogins ? (
+                <EyeOff className="h-4 w-4 text-gray-500" />
+              ) : (
+                <Settings className="h-4 w-4 text-gray-500" />
+              )}
+            </Button>
+          </div>
+
           <div className="relative z-10">
             {/* Club Logo at Top */}
             <div className="text-center mb-5">
               {!clubLogoError ? (
                 <img
-                  src={branding.logo_url || "/assets/NordicFitness.png"}
+                  src={branding.logoUrl || "/assets/momentum-logo.svg"}
                   alt="Club Logo"
                   className="h-16 mx-auto mb-4 object-contain drop-shadow-lg"
                   onError={() => setClubLogoError(true)}
@@ -278,14 +310,26 @@ const Login = () => {
 
 
 
-            {/* Dev Login Buttons - Show in development and for testing */}
-            {(process.env.NODE_ENV === 'development' ||
+            {/* Dev Login Buttons - Show when enabled */}
+            {showDevLogins && (process.env.NODE_ENV === 'development' ||
               window.location.hostname.includes('momentumapp') ||
               window.location.hostname.includes('pages.dev') ||
               new URLSearchParams(window.location.search).has('dev')) && (
               <div className="mt-8 pt-6 border-t border-gray-200/50">
                 <div className="text-center mb-4">
-                  <p className="text-sm font-medium text-gray-600 mb-4">🔧 Development Quick Login</p>
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <p className="text-sm font-medium text-gray-600">🔧 Development Quick Login</p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowDevLogins(false)}
+                      className="h-6 w-6 p-0 rounded-full hover:bg-gray-100 transition-colors"
+                      title="Hide Dev Logins"
+                    >
+                      <EyeOff className="h-3 w-3 text-gray-400" />
+                    </Button>
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <Button
                       type="button"
@@ -319,7 +363,8 @@ const Login = () => {
                     </Button>
                   </div>
                   <p className="text-xs text-gray-500 mt-3">
-                    Quick login for testing purposes
+                    Quick login for testing purposes<br/>
+                    <span className="text-gray-400">Shortcuts: Ctrl+Shift+D or type "devmode"</span>
                   </p>
                 </div>
               </div>

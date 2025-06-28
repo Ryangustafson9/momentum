@@ -1,25 +1,54 @@
 import { supabase } from '@/lib/supabaseClient';
+import { brandingService } from '@/services/brandingService';
 
 // Cache for performance
 let cachedSettings = {
-  gym_name: 'Nordic Fitness',
-  contact_email: 'info@nordicfitness.com',
+  gym_name: 'Momentum Fitness',
+  contact_email: 'info@momentumfitness.com',
   contact_phone: '(555) 123-4567',
   address: '',
   website: '',
   online_joining_enabled: true,
-  logo_url: '' // Add logo support
+  logo_url: ''
 };
 
-// Get gym name
-export const getGymName = () => {
-  return 'Nordic Fitness';
+// Cache for branding data
+let cachedBranding = null;
+
+// Get gym name from branding service
+export const getGymName = async () => {
+  try {
+    if (!cachedBranding) {
+      cachedBranding = await brandingService.getBranding();
+    }
+    return cachedBranding.clubName || 'Momentum Fitness';
+  } catch (error) {
+    console.warn('Failed to load gym name from branding service:', error);
+    return 'Momentum Fitness';
+  }
 };
 
-// Get gym logo (ADD THIS MISSING EXPORT)
-export const getGymLogo = () => {
-  // Fixed: Use correct case-sensitive filename
-  return `${import.meta.env.BASE_URL}assets/NordicFitness.png`;
+// Synchronous version for immediate use (uses cache)
+export const getGymNameSync = () => {
+  return cachedBranding?.clubName || cachedSettings.gym_name || 'Momentum Fitness';
+};
+
+// Get gym logo from branding service
+export const getGymLogo = async () => {
+  try {
+    if (!cachedBranding) {
+      cachedBranding = await brandingService.getBranding();
+    }
+    return cachedBranding.logoUrl || `${import.meta.env.BASE_URL}assets/momentum-logo.svg`;
+  } catch (error) {
+    console.warn('Failed to load gym logo from branding service:', error);
+    return `${import.meta.env.BASE_URL}assets/momentum-logo.svg`;
+  }
+};
+
+// Synchronous version for immediate use (uses cache)
+export const getGymLogoSync = () => {
+  return cachedBranding?.logoUrl || cachedSettings.logo_url || `${import.meta.env.BASE_URL}assets/momentum-logo.svg`;
 };
 
 // Get contact information
@@ -42,8 +71,7 @@ export const getOperationalSettings = () => {
 // Load all settings from database
 export const loadGymSettings = async () => {
   try {
-    
-    
+    // Load general settings
     const { data: settings, error } = await supabase
       .from('general_settings')
       .select('*')
@@ -52,36 +80,53 @@ export const loadGymSettings = async () => {
     if (!error && settings) {
       // Update cache with database values
       cachedSettings = {
-        gym_name: settings.gym_name || 'Nordic Fitness',
-        contact_email: settings.contact_email || 'info@nordicfitness.com',
+        gym_name: settings.gym_name || 'Momentum Fitness',
+        contact_email: settings.contact_email || 'info@momentumfitness.com',
         contact_phone: settings.contact_phone || '(555) 123-4567',
         address: settings.address || '',
         website: settings.website || '',
         online_joining_enabled: settings.online_joining_enabled !== false,
-        logo_url: settings.logo_url || '' // Add logo support
+        logo_url: settings.logo_url || ''
       };
-      
-      
-    } else {
-      
     }
+
+    // Load branding data
+    try {
+      cachedBranding = await brandingService.getBranding();
+      // Override gym_name and logo_url with branding data if available
+      if (cachedBranding.clubName) {
+        cachedSettings.gym_name = cachedBranding.clubName;
+      }
+      if (cachedBranding.logoUrl) {
+        cachedSettings.logo_url = cachedBranding.logoUrl;
+      }
+    } catch (brandingError) {
+      console.warn('Failed to load branding data:', brandingError);
+    }
+
   } catch (error) {
-    
+    console.warn('Failed to load gym settings:', error);
   }
-  
+
   return cachedSettings;
 };
 
 // Initialize gym branding (call this on app start and after settings changes)
 export const initializeGymBranding = async () => {
   await loadGymSettings();
-  
+
   // Optional: Update document title
   if (typeof document !== 'undefined') {
     document.title = `${cachedSettings.gym_name} - Management System`;
   }
-  
-  return cachedSettings;
+
+  return { ...cachedSettings, branding: cachedBranding };
+};
+
+// Force refresh branding cache
+export const refreshBrandingCache = async () => {
+  cachedBranding = null;
+  return await loadGymSettings();
 };
 
 // Get current cached settings (synchronous)

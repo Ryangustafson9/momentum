@@ -464,13 +464,13 @@ const MemberSidebar = ({ isExpanded, toggleSidebar, onLogout }) => {
               size="sm"
               onClick={handleLogout}
               className={cn(
-                "text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors duration-200",
+                "text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors duration-200",
                 actualIsExpanded ? "flex items-center" : "w-full p-2"
               )}
               title="Sign Out"
             >
-              {renderIcon("LogOut", cn("h-4 w-4", actualIsExpanded ? "mr-2" : ""))}
-              {actualIsExpanded && <span className="text-sm">Sign Out</span>}
+              {renderIcon("LogOut", cn("h-4 w-4 text-red-600", actualIsExpanded ? "mr-2" : ""))}
+              {actualIsExpanded && <span className="text-sm text-red-600">Sign Out</span>}
             </Button>
 
             {/* Settings Button */}

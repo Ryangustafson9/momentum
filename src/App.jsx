@@ -35,7 +35,7 @@ import ContactUs from '@/pages/member-portal/ContactUs';
 import StaffDashboard from '@/pages/staff-portal/Dashboard';
 
 import Classes from '@/pages/staff-portal/Classes';
-import CheckIn from '@/pages/staff-portal/CheckInEnhanced';
+import CheckIn from '@/pages/staff-portal/CheckIn';
 import Memberships from '@/pages/staff-portal/Memberships';
 import Schedule from '@/pages/staff-portal/Schedule';
 import Attendance from '@/pages/staff-portal/Attendance';

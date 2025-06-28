@@ -10,7 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CheckCircle, Star, Dumbbell, Crown, AlertCircle, Lock, Edit3, Settings, Users, Calendar, Target, ArrowRight, ArrowLeft, User, Mail, Phone, Shield, Wifi, WifiOff, RefreshCw } from 'lucide-react';
-import { getGymName, getContactInfo, isFeatureEnabled, initializeGymBranding, getGymColors } from '@/utils/gymBranding.js';
+import { getContactInfo, isFeatureEnabled, initializeGymBranding, getGymColors } from '@/utils/gymBranding.js';
+import { useBranding } from '@/hooks/useBranding';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast.js';
 import { normalizeRole } from '@/utils/roleUtils';
@@ -20,6 +21,7 @@ const JoinOnline = () => {
   const { user, signup, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { clubName } = useBranding();
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [onlineJoiningEnabled, setOnlineJoiningEnabled] = useState(null);
   const [membershipPlans, setMembershipPlans] = useState([]);
@@ -614,7 +616,7 @@ const JoinOnline = () => {
           className="bg-white/90 backdrop-blur rounded-2xl p-8 shadow-xl w-full max-w-md text-center"
         >
           <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            Join Nordic Fitness
+            Join {clubName}
           </h1>
           <p className="text-gray-600 mb-6">
             Please sign in to view membership options and complete your registration.

@@ -19,7 +19,7 @@ import {
   Smartphone
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
-import { getGymName } from '@/utils/gymBranding';
+import { useBranding } from '@/hooks/useBranding';
 
 const MembershipSuccess = () => {
   const { user, loading: authLoading } = useAuth();

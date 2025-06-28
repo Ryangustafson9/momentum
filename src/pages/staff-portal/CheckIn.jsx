@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { User, BarChart3, Clock, CheckCircle, QrCode } from 'lucide-react';
+import {
+  QrCode,
+  MapPin,
+  UserCheck
+} from 'lucide-react';
 import { ManualCheckIn, CheckInService } from '@/components/checkin';
 import QRBarcodeScanner from '@/components/checkin/QRBarcodeScanner';
-import StaffPageHeader from '@/components/staff/StaffPageHeader';
+import RecentActivityFeed from '@/components/checkin/RecentActivityFeed';
 import StaffPageContainer from '@/components/staff/StaffPageContainer';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -24,17 +26,13 @@ const CheckInPage = () => {
     successfulCheckIns: 0,
     failedAttempts: 0
   });
-  const [recentActivity, setRecentActivity] = useState([]);
-
-  // Load initial stats and activity
+  // Load initial stats
   useEffect(() => {
     loadCheckInStats();
-    loadRecentActivity();
 
     // Set up periodic refresh
     const interval = setInterval(() => {
       loadCheckInStats();
-      loadRecentActivity();
     }, 30000); // Refresh every 30 seconds
 
     return () => clearInterval(interval);
@@ -69,17 +67,6 @@ const CheckInPage = () => {
     }
   };
 
-  const loadRecentActivity = async () => {
-    try {
-      const result = await CheckInService.getRecentCheckIns(null, 10);
-      if (result.data) {
-        setRecentActivity(result.data);
-      }
-    } catch (error) {
-      console.error('Error loading recent activity:', error);
-    }
-  };
-
   const handleCheckInSuccess = (result) => {
     const member = result.member;
     const memberName = `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email;
@@ -90,9 +77,6 @@ const CheckInPage = () => {
       todayCheckIns: prev.todayCheckIns + 1,
       successfulCheckIns: prev.successfulCheckIns + 1
     }));
-
-    // Add to recent activity
-    setRecentActivity(prev => [result.checkinRecord, ...prev.slice(0, 9)]);
 
     toast({
       title: "Check-In Successful",
@@ -125,12 +109,6 @@ const CheckInPage = () => {
       variant: "destructive"
     });
   };
-  const formatTime = (timestamp) => {
-    return new Date(timestamp).toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -138,75 +116,71 @@ const CheckInPage = () => {
       transition={{ duration: 0.5 }}
     >
       <StaffPageContainer className="space-y-6 p-4 md:p-6">
-        <div className="flex items-start justify-between">
-          <StaffPageHeader
-            title="Member Check-In"
-            description="Manual check-in system for member access"
-          />
-          <div className="text-right mt-2">
-            <p className="text-sm text-muted-foreground">
-              Location: Main Location
-            </p>
+        {/* Page Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 border border-gray-300 rounded-lg bg-white">
+              <UserCheck className="h-5 w-5 text-indigo-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Check-In Dashboard</h1>
+              <p className="text-gray-600">Monitor member activity and manage check-ins</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-gray-600 bg-white px-3 py-2 rounded-lg border">
+              <MapPin className="h-4 w-4" />
+              <span className="text-sm font-medium">Main Location</span>
+            </div>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-4 text-center">
-              <CheckCircle className="h-8 w-8 mx-auto text-green-500 mb-2" />
-              <p className="text-2xl font-bold text-green-600">{checkInStats.todayCheckIns}</p>
-              <p className="text-sm text-gray-600">Today's Check-Ins</p>
-            </CardContent>
-          </Card>
+        {/* Two-Column Layout - Responsive */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Mobile: Show monitoring dashboard first on small screens */}
+          <div className="lg:hidden lg:col-span-3 space-y-6 order-1">
+            {/* Mobile Quick Stats */}
+            <div className="grid grid-cols-2 gap-4">
+              <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+                <CardContent className="p-3">
+                  <div className="text-center">
+                    <p className="text-xs font-medium text-green-700">Today</p>
+                    <p className="text-xl font-bold text-green-900">{checkInStats.todayCheckIns}</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-orange-50 to-red-50 border-orange-200">
+                <CardContent className="p-3">
+                  <div className="text-center">
+                    <p className="text-xs font-medium text-orange-700">Alerts</p>
+                    <p className="text-xl font-bold text-orange-900">{checkInStats.failedAttempts}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-          <Card>
-            <CardContent className="p-4 text-center">
-              <CheckCircle className="h-8 w-8 mx-auto text-blue-500 mb-2" />
-              <p className="text-2xl font-bold text-blue-600">{checkInStats.successfulCheckIns}</p>
-              <p className="text-sm text-gray-600">Successful Check-Ins</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4 text-center">
-              <BarChart3 className="h-8 w-8 mx-auto text-orange-500 mb-2" />
-              <p className="text-2xl font-bold text-orange-600">{checkInStats.failedAttempts}</p>
-              <p className="text-sm text-gray-600">Failed Attempts</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Check-In Interface */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
-          {/* QR/Barcode Scanner */}
-          <div>
-            <QRBarcodeScanner
-              onCheckInSuccess={handleCheckInSuccess}
-              onCheckInFailed={handleCheckInFailed}
-              locationId={null}
-              staffMemberId={user?.id}
-              deviceInfo={{
-                interface_type: 'staff_portal',
-                device_name: 'Staff Portal Scanner',
-                page: 'check_in'
-              }}
+            {/* Mobile Activity Feed */}
+            <RecentActivityFeed
+              maxItems={8}
+              refreshInterval={15000}
+              showStats={false}
+              className="h-64"
             />
           </div>
-
-          {/* Manual Check-In */}
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Manual Check-In
+          {/* Left Column - Check-in Interface (25% width) */}
+          <div className="lg:col-span-1 space-y-6 order-2 lg:order-1">
+            {/* Member Search/Scanner */}
+            <Card className="border-2 border-indigo-100 bg-gradient-to-r from-indigo-50 to-purple-50">
+              <CardHeader className="border-b-2 border-indigo-100 bg-gradient-to-r from-indigo-100 to-purple-100">
+                <CardTitle className="flex items-center gap-2 text-indigo-900">
+                  <QrCode className="h-5 w-5" />
+                  Member Check-In
                 </CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Search for members and check them in manually
+                <p className="text-sm text-indigo-700">
+                  Search members by name, email, or member ID
                 </p>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4">
                 <ManualCheckIn
                   onCheckInSuccess={handleCheckInSuccess}
                   onCheckInFailed={handleCheckInFailed}
@@ -219,53 +193,126 @@ const CheckInPage = () => {
                 />
               </CardContent>
             </Card>
-          </div>
 
-        </div>
-
-        {/* Recent Activity Section */}
-        <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  Recent Activity
+            {/* QR/Barcode Scanner */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <QrCode className="h-5 w-5" />
+                  QR Scanner
                 </CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Latest member check-ins
+                <p className="text-sm text-muted-foreground">
+                  Or scan QR code
                 </p>
               </CardHeader>
-              <CardContent>
-                {recentActivity.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <User className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                    <p className="text-sm">No recent activity</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {recentActivity.map((activity) => (
-                      <div key={activity.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div>
-                          <p className="font-medium text-sm">
-                            {activity.profile?.first_name} {activity.profile?.last_name}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {formatTime(activity.check_in_time)}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <Badge
-                            variant={activity.validation_status === 'valid' ? 'default' : 'destructive'}
-                            className="text-xs"
-                          >
-                            {activity.validation_status}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              <CardContent className="pt-0">
+                <QRBarcodeScanner
+                  onCheckInSuccess={handleCheckInSuccess}
+                  onCheckInFailed={handleCheckInFailed}
+                  locationId={null}
+                  staffMemberId={user?.id}
+                  deviceInfo={{
+                    interface_type: 'staff_portal',
+                    device_name: 'Staff Portal Scanner',
+                    page: 'check_in'
+                  }}
+                />
               </CardContent>
             </Card>
+
+            {/* Quick Stats */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Today's Stats</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-gray-600">Check-ins</span>
+                  </div>
+                  <span className="text-2xl font-bold text-green-600">{checkInStats.todayCheckIns}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                    <span className="text-sm text-gray-600">Need Attention</span>
+                  </div>
+                  <span className="text-2xl font-bold text-orange-600">{checkInStats.failedAttempts}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                    <span className="text-sm text-gray-600">VIP / Recent</span>
+                  </div>
+                  <span className="text-2xl font-bold text-purple-600">2</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column - Monitoring Dashboard (75% width) - Desktop Only */}
+          <div className="hidden lg:block lg:col-span-3 space-y-6 order-1 lg:order-2">
+            {/* Quick Stats Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-green-700">Today's Check-ins</p>
+                      <p className="text-2xl font-bold text-green-900">{checkInStats.todayCheckIns}</p>
+                    </div>
+                    <div className="p-2 bg-green-100 rounded-full">
+                      <UserCheck className="h-6 w-6 text-green-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-blue-700">Success Rate</p>
+                      <p className="text-2xl font-bold text-blue-900">
+                        {checkInStats.todayCheckIns > 0
+                          ? Math.round((checkInStats.successfulCheckIns / checkInStats.todayCheckIns) * 100)
+                          : 0}%
+                      </p>
+                    </div>
+                    <div className="p-2 bg-blue-100 rounded-full">
+                      <QrCode className="h-6 w-6 text-blue-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-purple-700">Current Occupancy</p>
+                      <p className="text-2xl font-bold text-purple-900">
+                        {Math.max(0, checkInStats.todayCheckIns - Math.floor(checkInStats.todayCheckIns * 0.3))}
+                      </p>
+                    </div>
+                    <div className="p-2 bg-purple-100 rounded-full">
+                      <MapPin className="h-6 w-6 text-purple-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Real-time Activity Feed */}
+            <RecentActivityFeed
+              maxItems={15}
+              refreshInterval={15000}
+              showStats={false}
+              className="h-full"
+            />
+          </div>
+        </div>
       </StaffPageContainer>
     </motion.div>
   );

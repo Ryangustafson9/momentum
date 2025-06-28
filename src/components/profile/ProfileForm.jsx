@@ -7,6 +7,7 @@ import { Save, AlertTriangle, CheckCircle, User, Phone, Mail, MapPin, Calendar, 
 import ProfileFormField from './ProfileFormField';
 import { useFormValidation, profileValidationConfigs } from '@/utils/profileFormValidation';
 import { cn } from '@/lib/utils';
+import { getUserStatusOptions } from '@/utils/statusUtils';
 
 /**
  * Unified profile form component for creating and editing user profiles
@@ -89,14 +90,7 @@ const ProfileForm = ({
     return touched[fieldName] && !errors[fieldName] && formData[fieldName];
   };
 
-  const statusOptions = [
-    { value: 'active', label: 'Active' },
-    { value: 'inactive', label: 'Inactive' },
-    { value: 'suspended', label: 'Suspended' },
-    { value: 'cancelled', label: 'Cancelled' },
-    { value: 'frozen', label: 'Frozen' },
-    { value: 'guest', label: 'Guest' }
-  ];
+  const statusOptions = getUserStatusOptions();
 
   if (!showSections) {
     // Simple form layout without sections
