@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Search, Plus, User, Mail, Phone, Calendar, Filter, X } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { cn } from '@/lib/utils';
-import ProfileCreationWizard from './ProfileCreationWizard';
+import CreateMemberDialog from '@/components/staff/CreateMemberDialog';
 
 /**
  * Enhanced profile search component with create new functionality
@@ -26,7 +26,7 @@ const ProfileSearch = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [showCreateWizard, setShowCreateWizard] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
   // Debounced search function
@@ -106,17 +106,17 @@ const ProfileSearch = ({
       };
       onCreateNew(initialData);
     } else {
-      setShowCreateWizard(true);
+      setShowCreateDialog(true);
     }
   };
 
-  const handleWizardComplete = (newProfile) => {
-    setShowCreateWizard(false);
+  const handleCreateSuccess = (newProfile) => {
+    setShowCreateDialog(false);
     if (newProfile) {
       onProfileSelect?.(newProfile);
       toast({
-        title: "Profile Created",
-        description: `${newProfile.first_name} ${newProfile.last_name} has been created successfully.`
+        title: "Member Created",
+        description: `${newProfile.display_name} has been created successfully.`
       });
     }
   };
@@ -278,17 +278,11 @@ const ProfileSearch = ({
         </div>
       )}
 
-      {/* Profile Creation Wizard */}
-      <ProfileCreationWizard
-        isOpen={showCreateWizard}
-        onClose={() => setShowCreateWizard(false)}
-        onComplete={handleWizardComplete}
-        userRole={userRole}
-        initialData={{
-          first_name: searchQuery.split(' ')[0] || '',
-          last_name: searchQuery.split(' ').slice(1).join(' ') || '',
-          email: searchQuery.includes('@') ? searchQuery : ''
-        }}
+      {/* Create Member Dialog */}
+      <CreateMemberDialog
+        isOpen={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
+        onSuccess={handleCreateSuccess}
       />
     </div>
   );

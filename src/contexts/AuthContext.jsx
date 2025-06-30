@@ -8,6 +8,9 @@ import { createProfileSafe, validateAuthUserExists } from '@/utils/profileValida
 import { useProfileFetcher } from '@/hooks/useProfileFetcher';
 import { logger } from '@/utils/logger';
 import { PermissionsService } from '@/services/permissionsService';
+// 🔐 SECURITY: Import audit logging and account security services
+import { auditLogger } from '@/services/auditLogService';
+import { accountSecurityService } from '@/services/accountSecurityService';
 
 /**
  * 🔐 AuthContext - Centralized Authentication Management
@@ -36,7 +39,20 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider = ({ children }) => {  // ⚡ PERFORMANCE: Initialize with cached user for faster UI hydration
+export const AuthProvider = ({ children }) => {
+  // 🔐 SECURITY: Helper function to get client IP address
+  const getClientIp = async () => {
+    try {
+      // In production, you might want to get this from request headers or a service
+      // For now, return a placeholder that can be enhanced later
+      return 'client-browser';
+    } catch (error) {
+      logger.warn('Failed to get client IP:', error);
+      return 'unknown';
+    }
+  };
+
+  // ⚡ PERFORMANCE: Initialize with cached user for faster UI hydration
   const [user, setUser] = useState(() => {
     try {
       // Use localStorage for cached user data (persistent across refreshes)
@@ -337,12 +353,19 @@ export const AuthProvider = ({ children }) => {  // ⚡ PERFORMANCE: Initialize 
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       subscription?.unsubscribe();
     };
-  }, []);
-
-  const login = async (email, password) => {
+  }, []);  const login = async (email, password) => {
     setLoading(true);
 
-    try {
+    try {      // 🔐 SECURITY: Check for account lockout before attempting login
+      const clientIp = await getClientIp();
+      const lockoutCheck = await accountSecurityService.checkAccountLockout(email, clientIp);
+      
+      if (lockoutCheck.isLocked) {
+        const error = new Error(`Account temporarily locked due to multiple failed attempts. Try again in ${Math.ceil(lockoutCheck.remainingTime / 60000)} minutes.`);
+        await auditLogger.logFailedLogin(email, clientIp, 'Account locked');
+        throw error;
+      }
+
       // ⚠️ SCHEMA ERROR FIX: Try login with better error handling
       let data, error;
 
@@ -361,11 +384,12 @@ export const AuthProvider = ({ children }) => {  // ⚡ PERFORMANCE: Initialize 
           throw new Error('Database configuration issue. Please contact support or try again later.');
         }
         throw schemaError;
-      }
-
-      if (error) throw error;
-
-      // ⭐ IMMEDIATE: Fetch profile right after login
+      }      if (error) {
+        // 🔐 SECURITY: Log failed login attempt and apply lockout logic
+        await auditLogger.logFailedLogin(email, clientIp, error.message);
+        await accountSecurityService.recordFailedAttempt(email, clientIp);
+        throw error;
+      }// ⭐ IMMEDIATE: Fetch profile right after login
       let userProfile = null;
       if (data.user) {
         try {
@@ -393,8 +417,10 @@ export const AuthProvider = ({ children }) => {  // ⚡ PERFORMANCE: Initialize 
           
         }
       }
-      
-      storage.local.set('last_login', new Date().toISOString());
+        storage.local.set('last_login', new Date().toISOString());
+        // 🔐 SECURITY: Log successful login and clear any lockout records
+      await auditLogger.logSuccessfulLogin(data.user.id, data.user.email, clientIp);
+      await accountSecurityService.clearFailedAttempts(email, clientIp);
       
       // ⭐ RETURN: User with profile data
       const returnUser = userProfile || {
@@ -424,11 +450,13 @@ export const AuthProvider = ({ children }) => {  // ⚡ PERFORMANCE: Initialize 
       setLoading(false);
     }
   };
-
   const signup = async (email, password, userData) => {
     setLoading(true);
 
     try {
+      // 🔐 SECURITY: Get client IP for audit logging
+      const clientIp = await getClientIp();
+
       // ⚠️ RACE CONDITION FIX: Check for existing users before creating auth user
       // This prevents orphaned auth users and provides better error messages
       const { data: existingProfile, error: existingProfileError } = await supabase
@@ -444,6 +472,12 @@ export const AuthProvider = ({ children }) => {  // ⚡ PERFORMANCE: Initialize 
 
       // Check if email already exists in profiles
       if (existingProfile) {
+        // 🔐 SECURITY: Log attempted signup with existing email
+        await auditLogger.logSecurityEvent('signup_attempt_existing_email', {
+          email,
+          client_ip: clientIp,
+          risk_level: 'medium'
+        });
         throw new Error('An account with this email already exists. Please try logging in instead.');
       }
 
@@ -460,9 +494,16 @@ export const AuthProvider = ({ children }) => {  // ⚡ PERFORMANCE: Initialize 
       });
 
       if (error) {
+        // 🔐 SECURITY: Log failed signup attempt
+        await auditLogger.logSecurityEvent('signup_failed', {
+          email,
+          client_ip: clientIp,
+          error: error.message,
+          risk_level: 'low'
+        });
         
         throw error;
-      }      // Only create profile if auth user was created successfully
+      }// Only create profile if auth user was created successfully
       if (data.user) {
         
 
@@ -510,16 +551,22 @@ export const AuthProvider = ({ children }) => {  // ⚡ PERFORMANCE: Initialize 
           // Cache the normalized user data securely
           await enhancedStorage.secure.set('cached_user', normalizedUser);
           enhancedStorage.session.set('cached_user_timestamp', Date.now());
-          
-          // ⭐ FIX: Set user state immediately so signup component can show success
+            // ⭐ FIX: Set user state immediately so signup component can show success
           setUser(normalizedUser);
           
+          // 🔐 SECURITY: Log successful user registration
+          await auditLogger.logUserRegistration(normalizedUser.id, normalizedUser.email, clientIp, {
+            first_name: userData.firstName,
+            last_name: userData.lastName,
+            role: 'nonmember'
+          });
+
           
 
         } catch (profileCreationError) {
           
           throw profileCreationError;
-        }        showToast.success(
+        }showToast.success(
           'Account Created!',
           'Please check your email to verify your account.'
         );
@@ -577,8 +624,11 @@ export const AuthProvider = ({ children }) => {  // ⚡ PERFORMANCE: Initialize 
         throw new Error('Failed to send reset email. Please try again.');
       }
     }
-  };
-  const logout = async () => {
+  };  const logout = async () => {
+    // 🔐 SECURITY: Log logout attempt with user context
+    const currentUser = user;
+    const clientIp = await getClientIp();
+    
     // Attempting logout
     try {
       // Clearing storage
@@ -597,6 +647,11 @@ export const AuthProvider = ({ children }) => {  // ⚡ PERFORMANCE: Initialize 
         throw error;
       }
 
+      // 🔐 SECURITY: Log successful logout
+      if (currentUser?.id) {
+        await auditLogger.logUserLogout(currentUser.id, currentUser.email, clientIp);
+      }
+
       // Supabase signOut successful, clearing user state
       setUser(null);
       setUserPermissions([]); // Clear permissions
@@ -611,7 +666,7 @@ export const AuthProvider = ({ children }) => {  // ⚡ PERFORMANCE: Initialize 
       // FALLBACK: Even if logout fails, redirect to login
       window.location.href = '/login';
     }
-  };  // ⚡ PERFORMANCE FIX: Memoize context value to prevent unnecessary re-renders
+  };// ⚡ PERFORMANCE FIX: Memoize context value to prevent unnecessary re-renders
   const value = useMemo(() => ({
     user,
     authReady,

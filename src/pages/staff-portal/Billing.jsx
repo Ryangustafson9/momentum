@@ -29,7 +29,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const BillingPage = () => {
   const { toast } = useToast();
-  
+
   const [activeTab, setActiveTab] = useState('overview');
   const [transactions, setTransactions] = useState([]);
   const [pendingPayments, setPendingPayments] = useState([]);
@@ -443,7 +443,7 @@ const BillingPage = () => {
             Manage payments, transactions, and billing operations
           </p>
         </div>
-        
+
         <div className="flex items-center space-x-3">
           <Badge className="bg-green-100 text-green-800">
             <CheckCircle className="w-4 h-4 mr-1" />
@@ -463,15 +463,15 @@ const BillingPage = () => {
           <TabsTrigger value="transactions">Transactions</TabsTrigger>
           <TabsTrigger value="pending">Pending</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="overview" className="mt-6">
           <OverviewTab />
         </TabsContent>
-        
+
         <TabsContent value="transactions" className="mt-6">
           <TransactionsTab />
         </TabsContent>
-        
+
         <TabsContent value="pending" className="mt-6">
           <PendingTab />
         </TabsContent>

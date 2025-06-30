@@ -14,7 +14,7 @@ import {
   Download,
   PlusCircle
 } from 'lucide-react';
-import { MemberProfileService } from '@/services/memberProfileService';
+import CreateMemberDialog from '@/components/staff/CreateMemberDialog';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,7 +48,7 @@ const AdvancedMemberSearchModal = ({
   const [joinDateFilter, setJoinDateFilter] = useState('all');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [membershipTypes, setMembershipTypes] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const { toast } = useToast();
@@ -210,44 +210,23 @@ const AdvancedMemberSearchModal = ({
     onClose();
   };
 
-  const handleCreateNewMember = async () => {
-    if (isCreatingProfile) return; // Prevent double-clicks
+  const handleCreateNewMember = () => {
+    setShowCreateDialog(true);
+  };
 
-    setIsCreatingProfile(true);
+  const handleCreateSuccess = (newMember) => {
+    toast({
+      title: "Member Created",
+      description: `${newMember.display_name} has been successfully created.`,
+    });
 
-    try {
-      // Create temporary profile from search query
-      const { data: newProfile, error } = await MemberProfileService.createFromSearchQuery(searchTerm);
-
-      if (error) {
-        throw error;
-      }
-
-      if (!newProfile) {
-        throw new Error('Failed to create profile');
-      }
-
-      toast({
-        title: "Profile Created",
-        description: `Created draft profile for ${newProfile.first_name} ${newProfile.last_name}`,
-      });
-
-      // Navigate to the new profile page
-      if (navigate) {
-        navigate(`/staff-portal/profile/${newProfile.system_member_id}`);
-      }
-      onClose();
-
-    } catch (error) {
-      console.error('Error creating temporary profile:', error);
-      toast({
-        title: "Error",
-        description: `Failed to create profile: ${error.message}`,
-        variant: "destructive",
-      });
-    } finally {
-      setIsCreatingProfile(false);
+    // Navigate to the new member's profile
+    if (navigate) {
+      const profileId = newMember.system_member_id || newMember.id;
+      navigate(`/staff-portal/profile/${profileId}`);
     }
+    setShowCreateDialog(false);
+    onClose();
   };
   const getRoleColor = (role) => {
     switch (role) {
@@ -492,29 +471,11 @@ const AdvancedMemberSearchModal = ({
                 <div className="mt-4 pt-4 border-t border-gray-200">
                   <Button
                     variant="outline"
-                    onClick={isCreatingProfile ? undefined : handleCreateNewMember}
-                    disabled={isCreatingProfile}
-                    className="w-full text-primary hover:text-primary/80 border-primary hover:border-primary/80 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={handleCreateNewMember}
+                    className="w-full text-primary hover:text-primary/80 border-primary hover:border-primary/80"
                   >
-                    {isCreatingProfile ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
-                    ) : (
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                    )}
-                    {isCreatingProfile ? 'Creating Profile...' : (
-                      <>
-                        Create New Member: {(() => {
-                          const nameParts = searchTerm.trim().split(/\s+/);
-                          const firstName = nameParts[0] || '';
-                          const lastName = nameParts.slice(1).join(' ') || '';
-                          return (
-                            <span className="font-semibold">
-                              {firstName} {lastName}
-                            </span>
-                          );
-                        })()}
-                      </>
-                    )}
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Create New Member
                   </Button>
                 </div>
               )}
@@ -529,29 +490,11 @@ const AdvancedMemberSearchModal = ({
                   {searchTerm.trim().length >= 2 && (
                     <Button
                       variant="outline"
-                      onClick={isCreatingProfile ? undefined : handleCreateNewMember}
-                      disabled={isCreatingProfile}
-                      className="mt-2 text-primary hover:text-primary/80 border-primary hover:border-primary/80 disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={handleCreateNewMember}
+                      className="mt-2 text-primary hover:text-primary/80 border-primary hover:border-primary/80"
                     >
-                      {isCreatingProfile ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
-                      ) : (
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                      )}
-                      {isCreatingProfile ? 'Creating Profile...' : (
-                        <>
-                          Create New Member: {(() => {
-                            const nameParts = searchTerm.trim().split(/\s+/);
-                            const firstName = nameParts[0] || '';
-                            const lastName = nameParts.slice(1).join(' ') || '';
-                            return (
-                              <span className="font-semibold">
-                                {firstName} {lastName}
-                              </span>
-                            );
-                          })()}
-                        </>
-                      )}
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Create New Member
                     </Button>
                   )}
                 </div>
@@ -560,6 +503,13 @@ const AdvancedMemberSearchModal = ({
           </div>
         </div>
       </DialogContent>
+
+      {/* Create Member Dialog */}
+      <CreateMemberDialog
+        isOpen={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
+        onSuccess={handleCreateSuccess}
+      />
     </Dialog>
   );
 };

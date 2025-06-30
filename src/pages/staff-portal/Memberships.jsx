@@ -161,7 +161,7 @@ const MembershipsFilterControlsAndTabs = React.memo(({
     switch (category) {
       case 'Membership': return <Users className="mr-2 h-4 w-4" />;
       case 'Staff': return <Shield className="mr-2 h-4 w-4" />;
-      case 'Add-on': return <Package className="mr-2 h-4 w-4" />;
+      case 'Add-On': return <Package className="mr-2 h-4 w-4" />;
       case 'Guest': return <Ticket className="mr-2 h-4 w-4" />;
       default: return <PlusCircle className="mr-2 h-4 w-4" />;
     }
@@ -250,10 +250,10 @@ const StatsCardSkeleton = () => (
 
 const MembershipStatsCards = React.memo(({ membershipTypes, isLoading }) => {
   const stats = React.useMemo(() => {
-    const memberPlans = membershipTypes.filter(t => ['Membership', 'Member Plans'].includes(t.category));
-    const staffPlans = membershipTypes.filter(t => ['Staff', 'Staff Plans'].includes(t.category));
-    const addons = membershipTypes.filter(t => ['Add-On', 'Add-on', 'Add-ons'].includes(t.category));
-    const guestPlans = membershipTypes.filter(t => ['Guest', 'Guest Plans'].includes(t.category));
+    const memberPlans = membershipTypes.filter(t => t.category === 'Membership');
+    const staffPlans = membershipTypes.filter(t => t.category === 'Staff');
+    const addons = membershipTypes.filter(t => t.category === 'Add-On');
+    const guestPlans = membershipTypes.filter(t => t.category === 'Guest');
 
     return {
       memberPlans: {
@@ -362,7 +362,7 @@ const getUniqueCategoriesForTabs = () => {
   const tabItems = [
     { value: 'All', label: 'All' },
     { value: 'Membership', label: 'Membership' },
-    { value: 'Add-on', label: 'Add-On' },
+    { value: 'Add-On', label: 'Add-On' },
     { value: 'Guest', label: 'Guest' },
     { value: 'Staff', label: 'Staff' }
   ];
@@ -514,20 +514,8 @@ const MembershipsPage = () => {
       if (activeTabCategory === 'All') {
         matchesCategory = true;
       } else {
-        // Map the tab categories to database categories
-        const categoryMap = {
-          'Membership': ['Membership', 'Member Plans'],
-          'Add-on': ['Add-On', 'Add-on', 'Add-ons'],  // Handle all variants
-          'Guest': ['Guest', 'Guest Plans'],
-          'Staff': ['Staff', 'Staff Plans']
-        };
-
-        const dbCategories = categoryMap[activeTabCategory];
-        if (Array.isArray(dbCategories)) {
-          matchesCategory = dbCategories.includes(type.category);
-        } else {
-          matchesCategory = type.category === activeTabCategory;
-        }
+        // Direct category matching with the new standardized categories
+        matchesCategory = type.category === activeTabCategory;
       }      const result = matchesSearch && matchesCategory;
       return result;
     });

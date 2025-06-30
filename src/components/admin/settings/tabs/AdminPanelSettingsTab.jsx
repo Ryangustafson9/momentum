@@ -42,11 +42,11 @@ import { supabase } from '@/lib/supabaseClient';
 import StaffPermissionsManagement from '@/components/admin/StaffPermissionsManagement';
 import SuperAdminLocationManager from '@/components/admin/SuperAdminLocationManager';
 import ConfigurationTemplatesManager from '@/components/admin/ConfigurationTemplatesManager';
-import BillingConfigurationManager from '@/components/admin/BillingConfigurationManager';
-import PaymentProcessorHub from '@/components/admin/PaymentProcessorHub';
+import BillingConfigurationManager from '@/components/billing/BillingConfigurationManager';
+import PaymentProcessorHub from '@/components/billing/PaymentProcessorHub';
 import MigrationWorkflowManager from '@/components/admin/MigrationWorkflowManager';
-import BillingConfigurationPanel from '@/components/admin/BillingConfigurationPanel';
-import BillingAnalyticsDashboard from '@/components/admin/BillingAnalyticsDashboard';
+import BillingConfigurationPanel from '@/components/billing/BillingConfigurationPanel';
+import BillingAnalyticsDashboard from '@/components/billing/BillingAnalyticsDashboard';
 import MultiLocationManagementSimple from '@/components/admin/MultiLocationManagementSimple';
 
 // Mock data for super admin overview

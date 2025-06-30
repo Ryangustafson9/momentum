@@ -105,7 +105,7 @@ const JoinOnlineCheckout = () => {
       const { data: addons, error: addonsError } = await supabase
         .from('membership_types')
         .select('*')
-        .in('category', ['Add-on', 'Add-ons']) // Check both possible category names
+        .in('category', ['Add-On']) // Use correct category name
         .eq('available_online', true)
         .eq('active', true)
         .order('price', { ascending: true });
@@ -171,7 +171,7 @@ const JoinOnlineCheckout = () => {
       const { data: allAddons, error: allAddonsError } = await supabase
         .from('membership_types')
         .select('*')
-        .in('category', ['Add-on', 'Add-ons']) // Check both possible category names
+        .eq('category', 'Add-On')
         .eq('available_online', true)
         .eq('active', true)
         .order('price', { ascending: true });      if (allAddonsError) {

@@ -7,7 +7,7 @@ import {
   canAccessRoute,
   getUnauthorizedRedirect
 } from '@/utils/accessControl';
-import { AuthLoader } from '@/components/FullPageLoader.jsx';
+import { AuthLoader } from '@/components/shared/FullPageLoader';
 
 /**
  * PrivateRoute - Authentication and Authorization Guard

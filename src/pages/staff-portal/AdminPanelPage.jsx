@@ -1,106 +1,168 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import StaffPermissionsManagement from '@/components/admin/StaffPermissionsManagement';
 import ConfigurationTemplatesManager from '@/components/admin/ConfigurationTemplatesManager';
-import BillingConfigurationManager from '@/components/admin/BillingConfigurationManager';
-import PaymentProcessorHub from '@/components/admin/PaymentProcessorHub';
+import BillingConfigurationManager from '@/components/billing/BillingConfigurationManager';
+import PaymentProcessorHub from '@/components/billing/PaymentProcessorHub';
 import MigrationWorkflowManager from '@/components/admin/MigrationWorkflowManager';
-import BillingConfigurationPanel from '@/components/admin/BillingConfigurationPanel';
+import BillingConfigurationPanel from '@/components/billing/BillingConfigurationPanel';
 import MultiLocationManagement from '@/components/admin/MultiLocationManagement';
-import { motion } from 'framer-motion';
-import { 
-  SlidersHorizontal, 
-  Shield, 
-  Building2, 
-  FileText, 
-  DollarSign, 
-  CreditCard,   
-  ArrowRightLeft
+import ScriptsAndCronManager from '@/components/admin/ScriptsAndCronManager';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  SlidersHorizontal,
+  Shield,
+  Building2,
+  FileText,
+  DollarSign,
+  CreditCard,
+  ArrowRightLeft,
+  Clock
 } from 'lucide-react';
+
+// Enhanced Tab Configuration
+const ADMIN_TAB_CONFIG = [
+  {
+    id: 'permissions',
+    label: 'Permissions',
+    icon: Shield,
+    description: 'Manage staff roles and permissions',
+    color: 'red'
+  },
+  {
+    id: 'multi-location',
+    label: 'Multi-Location',
+    icon: Building2,
+    description: 'Configure multiple gym locations',
+    color: 'blue'
+  },
+  {
+    id: 'templates',
+    label: 'Templates',
+    icon: FileText,
+    description: 'Manage configuration templates',
+    color: 'purple'
+  },
+  {
+    id: 'billing',
+    label: 'Billing',
+    icon: DollarSign,
+    description: 'Configure billing settings and policies',
+    color: 'green'
+  },
+  {
+    id: 'payments',
+    label: 'Payments',
+    icon: CreditCard,
+    description: 'Payment processor configuration',
+    color: 'indigo'
+  },
+  {
+    id: 'migrations',
+    label: 'Migrations',
+    icon: ArrowRightLeft,
+    description: 'Data migration and import tools',
+    color: 'orange'
+  },
+  {
+    id: 'scripts',
+    label: 'Scripts & Cron',
+    icon: Clock,
+    description: 'Automated tasks and scheduled jobs',
+    color: 'teal'
+  }
+];
+
+// Enhanced Tab Trigger Component
+const EnhancedTabTrigger = ({ tab, isActive }) => {
+  const Icon = tab.icon;
+
+  return (
+    <TabsTrigger
+      value={tab.id}
+      title={tab.description} // Add tooltip with description
+      className={`
+        relative flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium
+        transition-all duration-200 rounded-lg border border-transparent
+        ${isActive
+          ? 'bg-white text-primary shadow-sm border-gray-200'
+          : 'text-gray-600 hover:bg-white/60 hover:text-primary hover:shadow-sm'
+        }
+      `}
+    >
+      <Icon className="h-4 w-4" />
+      <span className="hidden sm:inline">{tab.label}</span>
+    </TabsTrigger>
+  );
+};
 const AdminPanelPage = () => {
+  const [activeTab, setActiveTab] = useState('permissions');
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="container mx-auto px-2 sm:px-4 py-6"
+      className="container mx-auto py-8 px-4 md:px-6 space-y-6"
     >
-      <Card className="bg-card shadow-xl rounded-lg">
-        <CardHeader className="border-b dark:border-slate-700">
-          <CardTitle className="text-2xl font-bold text-primary flex items-center">
-            <SlidersHorizontal className="mr-3 h-6 w-6" /> Admin Panel
-          </CardTitle>            <CardDescription>
-            Advanced administration tools for staff permissions, multi-location management, billing configuration, payment processing, and system migrations.
-          </CardDescription>
-        </CardHeader>          <CardContent className="p-0">
-          <Tabs defaultValue="permissions" className="w-full">
-            <TabsList className="grid w-full grid-cols-6 rounded-none border-b dark:border-slate-700">
-              <TabsTrigger
-                value="permissions"
-                className="py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none text-xs"
-              >
-                <Shield className="mr-1 h-3 w-3" /> Permissions
-              </TabsTrigger>
-              <TabsTrigger
-                value="multi-location"
-                className="py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none text-xs"
-              >
-                <Building2 className="mr-1 h-3 w-3" /> Multi-Location
-              </TabsTrigger>
-              <TabsTrigger
-                value="templates"
-                className="py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none text-xs"
-              >
-                <FileText className="mr-1 h-3 w-3" /> Templates
-              </TabsTrigger>
-              <TabsTrigger
-                value="billing"
-                className="py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none text-xs"
-              >
-                <DollarSign className="mr-1 h-3 w-3" /> Billing
-              </TabsTrigger>
-              <TabsTrigger
-                value="payments"
-                className="py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none text-xs"
-              >
-                <CreditCard className="mr-1 h-3 w-3" /> Payments
-              </TabsTrigger>
-              <TabsTrigger
-                value="migrations"
-                className="py-3 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none text-xs"
-              >
-                <ArrowRightLeft className="mr-1 h-3 w-3" /> Migrations
-              </TabsTrigger>
-            </TabsList>            
-            
-            <TabsContent value="permissions" className="p-4 md:p-6">
-              <StaffPermissionsManagement />
-            </TabsContent>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
+          <p className="text-gray-600 mt-1">
+            Manage system settings, permissions, and configurations
+          </p>
+        </div>
+        <Badge className="bg-blue-100 text-blue-800">
+          <SlidersHorizontal className="w-4 h-4 mr-1" />
+          System Configuration
+        </Badge>
+      </div>
 
-            <TabsContent value="multi-location" className="p-4 md:p-6">
-              <MultiLocationManagement />
-            </TabsContent>
+      {/* Enhanced Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="bg-gray-100 p-1 rounded-xl grid w-full grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-1">
+          {ADMIN_TAB_CONFIG.map(tab => (
+            <EnhancedTabTrigger
+              key={tab.id}
+              tab={tab}
+              isActive={activeTab === tab.id}
+            />
+          ))}
+        </TabsList>
 
-            <TabsContent value="templates" className="p-4 md:p-6">
-              <ConfigurationTemplatesManager />
-            </TabsContent>            <TabsContent value="billing" className="p-4 md:p-6">
-              <BillingConfigurationManager />
-            </TabsContent>
-
-            <TabsContent value="payments" className="p-4 md:p-6">
-              <PaymentProcessorHub />
-            </TabsContent>
-
-            <TabsContent value="migrations" className="p-4 md:p-6">
-              <MigrationWorkflowManager />
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+        {/* Tab Content with Enhanced Styling */}
+        <div className="mt-6">
+          <AnimatePresence mode="wait">
+            {ADMIN_TAB_CONFIG.map(tab => (
+              activeTab === tab.id && (
+                <TabsContent key={tab.id} value={tab.id} className="m-0">
+                  <motion.div
+                    key={activeTab}
+                    initial={{ y: 10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -10, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="bg-white rounded-xl border border-gray-200 shadow-sm p-6"
+                  >
+                    {/* Render appropriate component based on tab */}
+                    {tab.id === 'permissions' && <StaffPermissionsManagement />}
+                    {tab.id === 'multi-location' && <MultiLocationManagement />}
+                    {tab.id === 'templates' && <ConfigurationTemplatesManager />}
+                    {tab.id === 'billing' && <BillingConfigurationManager />}
+                    {tab.id === 'payments' && <PaymentProcessorHub />}
+                    {tab.id === 'migrations' && <MigrationWorkflowManager />}
+                    {tab.id === 'scripts' && <ScriptsAndCronManager />}
+                  </motion.div>
+                </TabsContent>
+              )
+            ))}
+          </AnimatePresence>
+        </div>
+      </Tabs>
     </motion.div>
   );
 };
-
 export default AdminPanelPage;

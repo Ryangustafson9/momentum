@@ -15,18 +15,9 @@ export class FamilyManagementService {
         .from('family_members')
         .select(`
           *,
-          family_member:profiles!family_member_id(*),
-          shared_membership:memberships!shared_membership_id(
-            *,
-            membership_type:membership_types!current_membership_type_id(*)
-          ),
-          sponsored_membership:memberships!sponsored_membership_id(
-            *,
-            membership_type:membership_types!current_membership_type_id(*)
-          )
+          family_member:profiles!family_member_id(*)
         `)
         .eq('primary_member_id', primaryMemberId)
-        .eq('status', 'active')
         .order('created_at', { ascending: true });
 
       if (error) throw error;
@@ -103,13 +94,10 @@ export class FamilyManagementService {
         primary_member_id: primaryMemberId,
         family_member_id: familyMemberProfile.id,
         relationship: familyMemberData.relationship,
-        relationship_type: familyMemberData.relationshipType || 'shared',
-        can_check_in_others: familyMemberData.canCheckInOthers || false,
-        can_view_billing: familyMemberData.canViewBilling || false,
-        can_manage_family: familyMemberData.canManageFamily || false,
-        emergency_contact_priority: familyMemberData.emergencyContactPriority || 0,
-        notes: familyMemberData.notes || null,
-        status: 'active'
+        primary_member_first_name: familyMemberData.primaryMemberFirstName,
+        primary_member_last_name: familyMemberData.primaryMemberLastName,
+        family_member_first_name: familyMemberProfile.first_name,
+        family_member_last_name: familyMemberProfile.last_name
       };
 
       const { data: newRelation, error: relationError } = await supabase
@@ -136,12 +124,6 @@ export class FamilyManagementService {
         .from('family_members')
         .update({
           relationship: updateData.relationship,
-          relationship_type: updateData.relationshipType,
-          can_check_in_others: updateData.canCheckInOthers,
-          can_view_billing: updateData.canViewBilling,
-          can_manage_family: updateData.canManageFamily,
-          emergency_contact_priority: updateData.emergencyContactPriority,
-          notes: updateData.notes,
           updated_at: new Date().toISOString()
         })
         .eq('id', familyMemberId)
@@ -163,10 +145,7 @@ export class FamilyManagementService {
     try {
       const { data, error } = await supabase
         .from('family_members')
-        .update({ 
-          status: 'inactive',
-          updated_at: new Date().toISOString()
-        })
+        .delete()
         .eq('id', familyMemberId)
         .select()
         .single();
@@ -179,55 +158,7 @@ export class FamilyManagementService {
     }
   }
 
-  /**
-   * Link family member to shared membership
-   */
-  static async linkToSharedMembership(familyMemberId, membershipId) {
-    try {
-      const { data, error } = await supabase
-        .from('family_members')
-        .update({
-          relationship_type: 'shared',
-          shared_membership_id: membershipId,
-          sponsored_membership_id: null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', familyMemberId)
-        .select()
-        .single();
 
-      if (error) throw error;
-      return { data, error: null };
-    } catch (error) {
-      console.error('Error linking to shared membership:', error);
-      return { data: null, error };
-    }
-  }
-
-  /**
-   * Link family member to sponsored membership
-   */
-  static async linkToSponsoredMembership(familyMemberId, membershipId) {
-    try {
-      const { data, error } = await supabase
-        .from('family_members')
-        .update({
-          relationship_type: 'sponsored',
-          sponsored_membership_id: membershipId,
-          shared_membership_id: null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', familyMemberId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return { data, error: null };
-    } catch (error) {
-      console.error('Error linking to sponsored membership:', error);
-      return { data: null, error };
-    }
-  }
 
   /**
    * Get family member statistics
@@ -236,17 +167,18 @@ export class FamilyManagementService {
     try {
       const { data, error } = await supabase
         .from('family_members')
-        .select('relationship_type, status')
+        .select('relationship')
         .eq('primary_member_id', primaryMemberId);
 
       if (error) throw error;
 
       const stats = {
         total: data.length,
-        active: data.filter(m => m.status === 'active').length,
-        shared: data.filter(m => m.relationship_type === 'shared' && m.status === 'active').length,
-        sponsored: data.filter(m => m.relationship_type === 'sponsored' && m.status === 'active').length,
-        inactive: data.filter(m => m.status === 'inactive').length
+        active: data.length, // All records are considered active
+        relationships: data.reduce((acc, member) => {
+          acc[member.relationship] = (acc[member.relationship] || 0) + 1;
+          return acc;
+        }, {})
       };
 
       return { data: stats, error: null };

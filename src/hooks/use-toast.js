@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 const TOAST_LIMIT = 3;
-const TOAST_DURATION = 5000; // ms before auto-dismiss
+const TOAST_DURATION = 3000; // ms before auto-dismiss
 
 // Action types
 const actionTypes = {

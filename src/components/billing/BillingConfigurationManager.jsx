@@ -48,9 +48,8 @@ const BillingConfigurationManager = () => {
   // Default configuration structure
   const defaultConfig = {
     // Billing Cycles & Timing
-    membership_billing_type: 'monthly',
     billing_cycle_type: 'anniversary', // anniversary, unified, custom
-    unified_billing_date: 1, // 1-28 for unified billing
+    unified_billing_day: 1, // 1-28 for unified billing
     billing_advance_days: 0, // 0 = bill on due date, 7 = bill 7 days early
     proration_enabled: true,
     proration_method: 'daily', // daily, monthly
@@ -71,7 +70,19 @@ const BillingConfigurationManager = () => {
     auto_suspend_days: 14,
     auto_cancel_enabled: false,
     auto_cancel_days: 60,
-    
+
+    // House Charge Billing (separate from membership billing)
+    house_charge_billing_enabled: true,
+    house_charge_billing_frequency: 'daily', // daily, weekly, monthly
+    house_charge_billing_time: '18:00', // time of day to process
+    house_charge_minimum_amount: 0.01, // minimum amount to charge
+    house_charge_batch_threshold: 50.00, // batch charges under this amount
+    house_charge_auto_payment: true,
+    house_charge_grace_period_hours: 24,
+    house_charge_retry_enabled: true,
+    house_charge_retry_attempts: 2,
+    house_charge_retry_interval_hours: 24,
+
     // Family & Group Discounts
     family_discount_enabled: true,
     family_discount_type: 'percentage', // percentage, flat
@@ -156,22 +167,23 @@ const BillingConfigurationManager = () => {
   };
 
   useEffect(() => {
-    if (currentLocation) {
-      loadBillingConfig();
-    }
+    // Load billing config for current location or default location in single-location mode
+    loadBillingConfig();
   }, [currentLocation]);
 
   const loadBillingConfig = async () => {
     setLoading(true);
     try {
-      const result = await LocationService.getBillingConfig(currentLocation.id);
+      // Use currentLocation.id if available, otherwise use default location for single-location mode
+      const locationId = currentLocation?.id || '00000000-0000-0000-0000-000000000001';
+      const result = await LocationService.getBillingConfig(locationId);
       if (result.data) {
         setConfig({ ...defaultConfig, ...result.data });
       } else {
         setConfig(defaultConfig);
       }
     } catch (error) {
-      
+      console.warn('Failed to load billing config, using defaults:', error);
       setConfig(defaultConfig);
     } finally {
       setLoading(false);
@@ -221,8 +233,29 @@ const BillingConfigurationManager = () => {
 
     // Validate billing cycle settings
     if (config.billing_cycle_type === 'unified') {
-      if (config.unified_billing_date < 1 || config.unified_billing_date > 28) {
-        errors.unified_billing_date = 'Unified billing date must be between 1 and 28';
+      if (config.unified_billing_day < 1 || config.unified_billing_day > 28) {
+        errors.unified_billing_day = 'Unified billing day must be between 1 and 28';
+      }
+    }
+
+    // Validate house charge billing settings
+    if (config.house_charge_billing_enabled) {
+      if (config.house_charge_minimum_amount < 0.01) {
+        errors.house_charge_minimum_amount = 'Minimum amount must be at least $0.01';
+      }
+      if (config.house_charge_batch_threshold < 0) {
+        errors.house_charge_batch_threshold = 'Batch threshold cannot be negative';
+      }
+      if (config.house_charge_grace_period_hours < 0 || config.house_charge_grace_period_hours > 168) {
+        errors.house_charge_grace_period_hours = 'Grace period must be between 0 and 168 hours (1 week)';
+      }
+      if (config.house_charge_retry_enabled) {
+        if (config.house_charge_retry_attempts < 1 || config.house_charge_retry_attempts > 5) {
+          errors.house_charge_retry_attempts = 'Retry attempts must be between 1 and 5';
+        }
+        if (config.house_charge_retry_interval_hours < 1 || config.house_charge_retry_interval_hours > 168) {
+          errors.house_charge_retry_interval_hours = 'Retry interval must be between 1 and 168 hours';
+        }
       }
     }
 
@@ -242,7 +275,9 @@ const BillingConfigurationManager = () => {
 
     setSaving(true);
     try {
-      const result = await LocationService.updateBillingConfig(currentLocation.id, config);
+      // Use currentLocation.id if available, otherwise use default location for single-location mode
+      const locationId = currentLocation?.id || '00000000-0000-0000-0000-000000000001';
+      const result = await LocationService.updateBillingConfig(locationId, config);
       if (result.data) {
         setHasChanges(false);
         toast({
@@ -251,6 +286,7 @@ const BillingConfigurationManager = () => {
         });
       }
     } catch (error) {
+      console.error('Failed to save billing config:', error);
       toast({
         title: "Error",
         description: "Failed to update billing configuration",
@@ -309,12 +345,22 @@ const BillingConfigurationManager = () => {
 
   return (
     <div className="space-y-6">
+      {/* Single-location mode indicator */}
+      {!currentLocation && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            Running in single-location mode. Changes will be saved as default settings for your gym.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Billing Configuration</h2>
           <p className="text-muted-foreground">
-            Configure detailed billing settings for {currentLocation?.name}
+            Configure detailed billing settings {currentLocation?.name ? `for ${currentLocation.name}` : 'for your gym'}
           </p>
         </div>
         <div className="flex gap-2">
@@ -390,24 +436,6 @@ const BillingConfigurationManager = () => {
           >
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Billing Type</Label>
-                <Select
-                  value={config.membership_billing_type}
-                  onValueChange={(value) => updateConfig('membership_billing_type', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="annual">Annual</SelectItem>
-                    <SelectItem value="session_based">Session-Based</SelectItem>
-                    <SelectItem value="flexible">Flexible</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
                 <Label>Billing Cycle</Label>
                 <Select
                   value={config.billing_cycle_type}
@@ -427,15 +455,15 @@ const BillingConfigurationManager = () => {
 
             {config.billing_cycle_type === 'unified' && (
               <div>
-                <Label>Unified Billing Date</Label>
+                <Label>Unified Billing Day</Label>
                 <Input
                   type="number"
                   min="1"
                   max="28"
-                  value={config.unified_billing_date}
-                  onChange={(e) => updateConfig('unified_billing_date', parseInt(e.target.value))}
+                  value={config.unified_billing_day}
+                  onChange={(e) => updateConfig('unified_billing_day', parseInt(e.target.value))}
                 />
-                <ValidationError field="unified_billing_date" />
+                <ValidationError field="unified_billing_day" />
                 <p className="text-sm text-muted-foreground mt-1">
                   Day of month to bill all members (1-28)
                 </p>
@@ -654,6 +682,148 @@ const BillingConfigurationManager = () => {
                   </div>
                 )}
               </div>
+            </div>
+          </ConfigSection>
+
+          {/* House Charge Billing Section */}
+          <ConfigSection
+            title="House Charge Billing"
+            description="Configure billing for day passes, guest fees, personal training, and other charges"
+            icon={Receipt}
+          >
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>House Charge Billing Enabled</Label>
+                  <p className="text-sm text-muted-foreground">Enable automatic billing for house charges</p>
+                </div>
+                <Switch
+                  checked={config.house_charge_billing_enabled}
+                  onCheckedChange={(checked) => updateConfig('house_charge_billing_enabled', checked)}
+                />
+              </div>
+
+              {config.house_charge_billing_enabled && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label>Billing Frequency</Label>
+                      <Select
+                        value={config.house_charge_billing_frequency}
+                        onValueChange={(value) => updateConfig('house_charge_billing_frequency', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="daily">Daily</SelectItem>
+                          <SelectItem value="weekly">Weekly</SelectItem>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label>Billing Time</Label>
+                      <Input
+                        type="time"
+                        value={config.house_charge_billing_time}
+                        onChange={(e) => updateConfig('house_charge_billing_time', e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Minimum Amount ($)</Label>
+                      <Input
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        value={config.house_charge_minimum_amount}
+                        onChange={(e) => updateConfig('house_charge_minimum_amount', parseFloat(e.target.value))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Batch Threshold ($)</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={config.house_charge_batch_threshold}
+                        onChange={(e) => updateConfig('house_charge_batch_threshold', parseFloat(e.target.value))}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Batch charges under this amount together
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label>Grace Period (Hours)</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="168"
+                        value={config.house_charge_grace_period_hours}
+                        onChange={(e) => updateConfig('house_charge_grace_period_hours', parseInt(e.target.value))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Auto-Payment for House Charges</Label>
+                      <p className="text-sm text-muted-foreground">Automatically charge payment methods on file</p>
+                    </div>
+                    <Switch
+                      checked={config.house_charge_auto_payment}
+                      onCheckedChange={(checked) => updateConfig('house_charge_auto_payment', checked)}
+                    />
+                  </div>
+
+                  {config.house_charge_auto_payment && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label>Retry Failed Payments</Label>
+                          <p className="text-sm text-muted-foreground">Retry failed house charge payments</p>
+                        </div>
+                        <Switch
+                          checked={config.house_charge_retry_enabled}
+                          onCheckedChange={(checked) => updateConfig('house_charge_retry_enabled', checked)}
+                        />
+                      </div>
+
+                      {config.house_charge_retry_enabled && (
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label>Retry Attempts</Label>
+                            <Input
+                              type="number"
+                              min="1"
+                              max="5"
+                              value={config.house_charge_retry_attempts}
+                              onChange={(e) => updateConfig('house_charge_retry_attempts', parseInt(e.target.value))}
+                            />
+                          </div>
+
+                          <div>
+                            <Label>Retry Interval (Hours)</Label>
+                            <Input
+                              type="number"
+                              min="1"
+                              max="168"
+                              value={config.house_charge_retry_interval_hours}
+                              onChange={(e) => updateConfig('house_charge_retry_interval_hours', parseInt(e.target.value))}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </ConfigSection>
         </TabsContent>        {/* Continue with other tabs... */}

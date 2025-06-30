@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
 import { getGymColors } from '@/utils/gymBranding';
-import LoadingSpinner from '@/components/LoadingSpinner';
+import LoadingSpinner from '@/components/shared/LoadingSpinner';
 
 const ChoosePlanStep = ({ formData, updateFormData, onNext, canProceed }) => {
   const [membershipTypes, setMembershipTypes] = useState([]);

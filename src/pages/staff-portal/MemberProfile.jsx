@@ -986,14 +986,26 @@ const InlineEditField = ({
   placeholder = "",
   options = null,
   onChange,
-  className = ""
+  className = "",
+  tabIndex = 0
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [localValue, setLocalValue] = useState(value || '');
+  const inputRef = React.useRef(null);
 
   useEffect(() => {
     setLocalValue(value || '');
   }, [value]);
+
+  // Auto-focus and select text when entering edit mode
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      if (type === 'text' || type === 'email' || type === 'tel') {
+        inputRef.current.select(); // Select all text for easy replacement
+      }
+    }
+  }, [isEditing, type]);
 
   const handleChange = (e) => {
     const newValue = e.target.value;
@@ -1007,6 +1019,9 @@ const InlineEditField = ({
       setIsEditing(false);
     } else if (e.key === 'Escape') {
       setLocalValue(value || '');
+      setIsEditing(false);
+    } else if (e.key === 'Tab') {
+      // Let tab work naturally to move to next field
       setIsEditing(false);
     }
   };
@@ -1045,6 +1060,7 @@ const InlineEditField = ({
                 </Select>
               ) : type === 'textarea' ? (
                 <Textarea
+                  ref={inputRef}
                   value={localValue}
                   onChange={handleChange}
                   onKeyDown={handleKeyDown}
@@ -1052,10 +1068,10 @@ const InlineEditField = ({
                   placeholder={placeholder}
                   className="w-64 min-h-[80px]"
                   rows={3}
-                  autoFocus
                 />
               ) : (
                 <Input
+                  ref={inputRef}
                   type={type}
                   value={localValue}
                   onChange={handleChange}
@@ -1063,14 +1079,24 @@ const InlineEditField = ({
                   onBlur={() => setIsEditing(false)}
                   placeholder={placeholder}
                   className="w-64 h-9"
-                  autoFocus
+                  tabIndex={tabIndex}
                 />
               )}
             </div>
           ) : (
             <div
-              className="py-1 cursor-pointer hover:bg-gray-50 transition-colors flex items-center rounded px-2 w-64"
+              className="py-1 cursor-pointer hover:bg-gray-50 transition-colors flex items-center rounded px-2 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-blue-50"
               onClick={() => setIsEditing(true)}
+              onFocus={() => setIsEditing(true)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setIsEditing(true);
+                }
+              }}
+              tabIndex={tabIndex}
+              role="button"
+              aria-label={`Edit ${label}`}
             >
               {value ? (
                 <span className="text-sm text-gray-900">{value}</span>
@@ -1258,6 +1284,9 @@ const CustomFieldInlineEdit = ({
       setIsEditing(false);
     } else if (e.key === 'Escape') {
       setLocalValue(value || '');
+      setIsEditing(false);
+    } else if (e.key === 'Tab') {
+      // Let tab work naturally to move to next field
       setIsEditing(false);
     }
   };
@@ -1452,16 +1481,16 @@ const StaffMemberProfilePage = () => {
         email: memberData.email || '',
         phone: memberData.phone || '',
         address: memberData.address || '',
-        city: memberData.city || '',
-        state: memberData.state || '',
-        zip_code: memberData.zip_code || '',
-        date_of_birth: memberData.date_of_birth || '',
+        date_of_birth: memberData.date_of_birth || memberData.dob || '',
+        dob: memberData.dob || memberData.date_of_birth || '',
         gender: memberData.gender || '',
         access_card_number: memberData.access_card_number || '',
         emergency_contact_name: memberData.emergency_contact_name || '',
         emergency_contact_phone: memberData.emergency_contact_phone || '',
+        emergency_contact_email: memberData.emergency_contact_email || '',
         emergency_contact_relationship: memberData.emergency_contact_relationship || '',
-        notes: memberData.notes || '',
+        join_date: memberData.join_date || '',
+        status: memberData.status || '',
         ...memberCustomFieldValues
       };
       setFormData(initialData);
@@ -1474,8 +1503,11 @@ const StaffMemberProfilePage = () => {
     setFormData(prev => {
       const newData = { ...prev, [fieldName]: value };
       // Check if there are unsaved changes
-      const hasChanges = Object.keys(newData).some(key => newData[key] !== originalData[key]);
-      console.log('Has changes:', hasChanges, { newData, originalData });
+      const hasChanges = Object.keys(newData).some(key => {
+        const originalValue = originalData[key];
+        const newValue = newData[key];
+        return originalValue !== newValue;
+      });
       setHasUnsavedChanges(hasChanges);
       return newData;
     });
@@ -1501,16 +1533,72 @@ const StaffMemberProfilePage = () => {
     });
   }, [originalData]);
 
+  // Validate required fields
+  const validateRequiredFields = () => {
+    const errors = [];
+
+
+
+    if (!formData.first_name || formData.first_name.trim() === '') {
+      errors.push('First Name');
+    }
+
+    if (!formData.last_name || formData.last_name.trim() === '') {
+      errors.push('Last Name');
+    }
+
+    if (!formData.email || formData.email.trim() === '') {
+      errors.push('Email');
+    } else if (!/\S+@\S+\.\S+/.test(formData.email.trim())) {
+      errors.push('Valid Email Address');
+    }
+
+    if (!formData.phone || formData.phone.trim() === '') {
+      errors.push('Phone Number');
+    }
+    return errors;
+  };
+
   // Global save function
   const handleGlobalSave = async () => {
-    console.log('handleGlobalSave called', { 
-      memberDataId: memberData?.id, 
-      hasUnsavedChanges, 
-      formData 
+    console.log('handleGlobalSave called', {
+      memberDataId: memberData?.id,
+      hasUnsavedChanges,
+      formData,
+      originalData
     });
-    
-    if (!memberData?.id || !hasUnsavedChanges) {
-      console.log('Early return - no member ID or no unsaved changes');
+
+
+
+    if (!memberData?.id) {
+      console.log('Early return - no member ID');
+      toast({
+        title: "Save Failed",
+        description: "No member ID found. Please refresh the page and try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!hasUnsavedChanges) {
+      console.log('Early return - no unsaved changes');
+      toast({
+        title: "No Changes",
+        description: "No changes to save.",
+        variant: "default"
+      });
+      return;
+    }
+
+    // Validate required fields before saving
+    const validationErrors = validateRequiredFields();
+
+    if (validationErrors.length > 0) {
+      toast({
+        title: "Required Fields Missing",
+        description: `Please complete the following required fields: ${validationErrors.join(', ')}`,
+        variant: "destructive"
+      });
       return;
     }
 
@@ -1520,11 +1608,11 @@ const StaffMemberProfilePage = () => {
       const customFieldUpdates = {};
       const profileUpdates = {};
 
-      // Define which fields are valid for the profiles table
+      // Define which fields are valid for the profiles table (based on actual database schema)
       const validProfileFields = [
-        'first_name', 'last_name', 'email', 'phone', 'address', 'date_of_birth', 'gender',
+        'first_name', 'last_name', 'email', 'phone', 'address', 'date_of_birth', 'dob', 'gender',
         'emergency_contact_name', 'emergency_contact_relationship', 'emergency_contact_phone',
-        'access_card_number', 'status', 'notes'
+        'emergency_contact_email', 'access_card_number', 'status', 'join_date'
       ];
 
       Object.keys(formData).forEach(key => {
@@ -1532,7 +1620,26 @@ const StaffMemberProfilePage = () => {
           const fieldId = key.replace('custom_field_', '');
           customFieldUpdates[fieldId] = formData[key];
         } else if (validProfileFields.includes(key)) {
-          profileUpdates[key] = formData[key];
+          let value = formData[key];
+
+          // Handle date fields - convert empty strings to null
+          if ((key === 'date_of_birth' || key === 'dob' || key === 'join_date') && value === '') {
+            value = null;
+          }
+
+          // Handle gender field - don't allow empty strings, skip if empty
+          if (key === 'gender' && value === '') {
+            return; // Skip this field entirely if gender is empty
+          }
+
+          // Handle other empty string fields that should be null
+          if (value === '' && (key === 'phone' || key === 'address' || key === 'access_card_number' ||
+              key === 'emergency_contact_name' || key === 'emergency_contact_phone' ||
+              key === 'emergency_contact_email' || key === 'emergency_contact_relationship')) {
+            value = null;
+          }
+
+          profileUpdates[key] = value;
         } else {
           console.log('Skipping invalid profile field:', key, formData[key]);
         }
@@ -1579,11 +1686,11 @@ const StaffMemberProfilePage = () => {
       setOriginalData(formData);
       setHasUnsavedChanges(false);
 
-      console.log('Save completed successfully');
+      console.log('Save completed successfully - save button should disappear');
       toast({
         title: "Profile Updated",
         description: "All changes have been saved successfully.",
-        variant: "default"
+        variant: "success"
       });
 
     } catch (error) {
@@ -2464,7 +2571,7 @@ const StaffMemberProfilePage = () => {
     );
   };
 
-  return (    <div className="min-h-screen transition-all duration-500 bg-gray-50">
+  return (    <div className="min-h-screen transition-all duration-500 bg-gray-50 relative">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -2847,6 +2954,7 @@ const StaffMemberProfilePage = () => {
                           isRequired={true}
                           placeholder="Enter first name"
                           onChange={handleFieldChange}
+                          tabIndex={1}
                         />
                         <InlineEditField
                           label="Last Name"
@@ -2855,6 +2963,7 @@ const StaffMemberProfilePage = () => {
                           isRequired={true}
                           placeholder="Enter last name"
                           onChange={handleFieldChange}
+                          tabIndex={2}
                         />
                         <InlineEditField
                           label="Date of Birth"
@@ -2863,6 +2972,7 @@ const StaffMemberProfilePage = () => {
                           type="date"
                           placeholder="Select date of birth"
                           onChange={handleFieldChange}
+                          tabIndex={3}
                         />
                       </div>
 
@@ -2894,6 +3004,7 @@ const StaffMemberProfilePage = () => {
                           ]}
                           placeholder="Select gender"
                           onChange={handleFieldChange}
+                          tabIndex={4}
                         />
                         <InlineEditField
                           label="Email"
@@ -2903,6 +3014,7 @@ const StaffMemberProfilePage = () => {
                           isRequired={true}
                           placeholder="Enter email address"
                           onChange={handleFieldChange}
+                          tabIndex={5}
                         />
                       </div>
 
@@ -2914,6 +3026,7 @@ const StaffMemberProfilePage = () => {
                           fieldName="access_card_number"
                           placeholder="Enter access card number"
                           onChange={handleFieldChange}
+                          tabIndex={6}
                         />
                         <div></div> {/* Empty middle column */}
                         <InlineEditField
@@ -2924,6 +3037,7 @@ const StaffMemberProfilePage = () => {
                           isRequired={true}
                           placeholder="Enter phone number"
                           onChange={handleFieldChange}
+                          tabIndex={7}
                         />
                       </div>
 
@@ -2955,6 +3069,7 @@ const StaffMemberProfilePage = () => {
                           fieldName="emergency_contact_name"
                           placeholder="Enter emergency contact name"
                           onChange={handleFieldChange}
+                          tabIndex={8}
                         />
                         <InlineEditField
                           label="Relationship"
@@ -2970,6 +3085,7 @@ const StaffMemberProfilePage = () => {
                           ]}
                           placeholder="Select relationship"
                           onChange={handleFieldChange}
+                          tabIndex={9}
                         />
                         <InlineEditField
                           label="Emergency Phone"
@@ -2978,6 +3094,7 @@ const StaffMemberProfilePage = () => {
                           type="tel"
                           placeholder="Enter emergency contact phone"
                           onChange={handleFieldChange}
+                          tabIndex={10}
                         />
                         </div>
                       </div>
@@ -3603,9 +3720,9 @@ const StaffMemberProfilePage = () => {
         </>
       )}
 
-      {/* Floating Global Save Button - Bottom Right */}
+      {/* Floating Global Save Button - Bottom Center of Main Content */}
       {hasUnsavedChanges && (
-        <div className="fixed bottom-6 right-6 flex items-center gap-2 z-50">
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 flex items-center gap-2 z-40" style={{ marginLeft: '8rem' }}>
           <Button
             variant="outline"
             size="sm"

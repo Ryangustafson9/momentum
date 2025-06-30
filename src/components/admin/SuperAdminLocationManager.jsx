@@ -43,8 +43,8 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import LocationService from '@/lib/services/locationService';
-import BillingConfigurationManager from './BillingConfigurationManager';
-import PaymentProcessorHub from './PaymentProcessorHub';
+import BillingConfigurationManager from '../billing/BillingConfigurationManager';
+import PaymentProcessorHub from '../billing/PaymentProcessorHub';
 import MigrationWorkflowManager from './MigrationWorkflowManager';
 
 const SuperAdminLocationManager = ({ organizationId }) => {

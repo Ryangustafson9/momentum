@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { LocationProvider } from '@/contexts/LocationContext';
 import { CheckInProvider } from '@/contexts/CheckInContext';
+import { ClubProvider } from '@/hooks/useClubContext.jsx';
 import PrivateRoute from '@/components/PrivateRoute'; // ✅ FIXED: This file exists
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary'; // ✅ FIXED: Correct path
 import { JoinOnlineRoute } from '@/components/ClubSettingsRoute.jsx';
@@ -145,6 +146,7 @@ function App() {
       <NotificationProvider>
         <LocationProvider>
           <CheckInProvider>
+            <ClubProvider>
             <div className="App min-h-screen bg-gray-50">
             <Suspense fallback={<SuspenseFallback />}>
               <Routes>
@@ -281,6 +283,7 @@ function App() {
                       <LocationManagement />
                     </PrivateRoute>
                   } />
+
                   <Route index element={<Navigate to="/staff-portal/dashboard" replace />} />
                 </Route>
 
@@ -410,6 +413,7 @@ function App() {
               {/* <MobileBottomNavigation /> */}
               {/* <PWAInstallPrompt /> */}
             </div>
+            </ClubProvider>
           </CheckInProvider>
         </LocationProvider>
       </NotificationProvider>

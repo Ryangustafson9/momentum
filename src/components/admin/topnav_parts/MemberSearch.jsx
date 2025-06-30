@@ -5,17 +5,17 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { matchesSearchTerm, getSearchRelevanceScore, HIGHLIGHT_COLORS } from '@/utils/searchHighlight.jsx';
 import HighlightedText from '@/components/ui/HighlightedText';
-import { MemberProfileService } from '@/services/memberProfileService';
 import { MemberTaggingService } from '@/services/memberTaggingService';
 import { useToast } from '@/hooks/use-toast';
+import CreateMemberDialog from '@/components/staff/CreateMemberDialog';
 
 const MemberSearch = ({ allMembers, navigate }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
   const [memberTags, setMemberTags] = useState({});
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const searchRef = useRef(null);
   const debounceRef = useRef(null);
   const { toast } = useToast();
@@ -150,43 +150,22 @@ const MemberSearch = ({ allMembers, navigate }) => {
     setShowSearchDropdown(false);
   };
 
-  const handleCreateNewMember = async () => {
-    if (isCreatingProfile) return; // Prevent double-clicks
+  const handleCreateNewMember = () => {
+    setShowCreateDialog(true);
+    setShowSearchDropdown(false);
+  };
 
-    setIsCreatingProfile(true);
+  const handleCreateSuccess = (newMember) => {
+    toast({
+      title: "Member Created",
+      description: `${newMember.display_name} has been successfully created.`,
+    });
 
-    try {
-      // Create temporary profile from search query
-      const { data: newProfile, error } = await MemberProfileService.createFromSearchQuery(searchTerm);
-
-      if (error) {
-        throw error;
-      }
-
-      if (!newProfile) {
-        throw new Error('Failed to create profile');
-      }
-
-      toast({
-        title: "Profile Created",
-        description: `Created draft profile for ${newProfile.first_name} ${newProfile.last_name}`,
-      });
-
-      // Navigate to the new profile page
-      const profileId = newProfile.system_member_id || newProfile.id;
-      navigate(`/staff-portal/profile/${profileId}`);
-      setSearchTerm('');
-      setShowSearchDropdown(false);
-
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: `Failed to create profile: ${error.message}`,
-        variant: "destructive",
-      });
-    } finally {
-      setIsCreatingProfile(false);
-    }
+    // Navigate to the new member's profile
+    const profileId = newMember.system_member_id || newMember.id;
+    navigate(`/staff-portal/profile/${profileId}`);
+    setSearchTerm('');
+    setShowCreateDialog(false);
   };
 
   const getRoleColor = (role) => {
@@ -335,34 +314,13 @@ const MemberSearch = ({ allMembers, navigate }) => {
                 <div className="border-t border-gray-100 dark:border-gray-700">
                   <div
                     role="button"
-                    className={`px-4 py-3 text-sm font-medium transition-colors flex items-center ${
-                      isCreatingProfile
-                        ? 'text-gray-400 cursor-not-allowed'
-                        : 'text-primary hover:text-primary/80 hover:bg-primary/5 cursor-pointer'
-                    }`}
-                    onClick={isCreatingProfile ? undefined : handleCreateNewMember}
-                    onKeyDown={(e) => e.key === 'Enter' && !isCreatingProfile && handleCreateNewMember()}
+                    className="px-4 py-3 text-sm font-medium transition-colors flex items-center text-primary hover:text-primary/80 hover:bg-primary/5 cursor-pointer"
+                    onClick={handleCreateNewMember}
+                    onKeyDown={(e) => e.key === 'Enter' && handleCreateNewMember()}
                     tabIndex={0}
                   >
-                    {isCreatingProfile ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
-                    ) : (
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                    )}
-                    {isCreatingProfile ? 'Creating Profile...' : (
-                      <>
-                        Create New Member: {(() => {
-                          const nameParts = searchTerm.trim().split(/\s+/);
-                          const firstName = nameParts[0] || '';
-                          const lastName = nameParts.slice(1).join(' ') || '';
-                          return (
-                            <span className="font-semibold">
-                              {firstName} {lastName}
-                            </span>
-                          );
-                        })()}
-                      </>
-                    )}
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Create New Member
                   </div>
                 </div>
               </>
@@ -378,40 +336,26 @@ const MemberSearch = ({ allMembers, navigate }) => {
                 </p>
                 <div
                   role="button"
-                  className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    isCreatingProfile
-                      ? 'text-gray-400 cursor-not-allowed'
-                      : 'text-primary hover:text-primary/80 cursor-pointer hover:bg-primary/5'
-                  }`}
-                  onClick={isCreatingProfile ? undefined : handleCreateNewMember}
-                  onKeyDown={(e) => e.key === 'Enter' && !isCreatingProfile && handleCreateNewMember()}
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors text-primary hover:text-primary/80 cursor-pointer hover:bg-primary/5"
+                  onClick={handleCreateNewMember}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreateNewMember()}
                   tabIndex={0}
                 >
-                  {isCreatingProfile ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
-                  ) : (
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                  )}
-                  {isCreatingProfile ? 'Creating Profile...' : (
-                    <>
-                      Create New Member: {(() => {
-                        const nameParts = searchTerm.trim().split(/\s+/);
-                        const firstName = nameParts[0] || '';
-                        const lastName = nameParts.slice(1).join(' ') || '';
-                        return (
-                          <span className="font-semibold">
-                            {firstName} {lastName}
-                          </span>
-                        );
-                      })()}
-                    </>
-                  )}
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Create New Member
                 </div>
               </div>
             )}
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Create Member Dialog */}
+      <CreateMemberDialog
+        isOpen={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
+        onSuccess={handleCreateSuccess}
+      />
     </div>
   );
 };

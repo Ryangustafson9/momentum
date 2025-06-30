@@ -34,7 +34,7 @@ const TestDataButton = () => {
             name: 'Basic Membership',
             price: 49.99,
             billing_type: 'Monthly',
-            category: 'Member Plans',
+            category: 'Membership',
             available_for_sale: true,
             available_online: true,
             features: ['Gym Access', 'Basic Classes']

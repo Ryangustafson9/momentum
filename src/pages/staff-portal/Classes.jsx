@@ -22,7 +22,7 @@ import {
   useCreateClassWithResources
 } from '@/hooks/useScheduling';
 import { LoadingSpinner } from '@/shared/components/LoadingStates';
-import EmptyState from '@/components/EmptyState.jsx';
+import EmptyState from '@/components/shared/EmptyState';
 import StaffPageHeader from '@/components/staff/StaffPageHeader';
 import StaffPageContainer from '@/components/staff/StaffPageContainer';
 

@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/lib/supabaseClient';
-import BillingScheduleTable from '../BillingScheduleTable';
+import BillingScheduleTable from '../../billing/BillingScheduleTable';
 
 const MembershipSaleStep = ({ data, updateData, errors }) => {
   const [membershipPlans, setMembershipPlans] = useState([]);
@@ -47,7 +47,7 @@ const MembershipSaleStep = ({ data, updateData, errors }) => {
         .from('membership_types')
         .select('*')
         .eq('available_for_sale', true)
-        .in('category', ['Add-on'])
+        .in('category', ['Add-On'])
         .order('price');
 
       if (addOnsError) throw addOnsError;

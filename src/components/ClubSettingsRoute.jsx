@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { isOnlineJoiningAllowed, clubSettingsUtils } from '@/services/clubSettingsService';
-import { AuthLoader } from '@/components/FullPageLoader.jsx';
+import { AuthLoader } from '@/components/shared/FullPageLoader';
 import { getGymName } from '@/utils/gymBranding';
 
 /**

@@ -5,6 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, CheckCircle, XCircle, Shield, Calendar } from 'lucide-react';
 
+// Get badge color based on category
+const getCategoryColor = (category) => {
+  switch (category) {
+    case 'Membership': return '#3B82F6'; // Blue
+    case 'Add-On': return '#10B981'; // Green
+    case 'Staff': return '#8B5CF6'; // Purple
+    case 'Guest': return '#F59E0B'; // Orange
+    default: return '#3B82F6'; // Default blue
+  }
+};
+
 const isValidUUID = (uuid) => {
     if (!uuid || typeof uuid !== 'string') return false;
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -31,7 +42,7 @@ const MembershipTableContent = ({ types, visibleColumns, onEdit, onDelete, onVie
         <TableRow key={type.id}>
           {visibleColumns.name && (
             <TableCell className="font-medium">
-              <Badge style={{ backgroundColor: type.color || '#6366f1', color: 'white', borderColor: type.color || '#6366f1' }} className="cursor-default text-xs sm:text-sm rounded-md">
+              <Badge style={{ backgroundColor: getCategoryColor(type.category), color: 'white', borderColor: getCategoryColor(type.category) }} className="cursor-default text-xs sm:text-sm rounded-md">
                 {type.name}
               </Badge>
             </TableCell>

@@ -61,18 +61,9 @@ const FamilyManagementDialog = ({ memberData, isOpen, onClose, onUpdate }) => {
         .from('family_members')
         .select(`
           *,
-          family_member:profiles!family_member_id(*),
-          shared_membership:memberships!shared_membership_id(
-            *,
-            membership_type:membership_types!current_membership_type_id(*)
-          ),
-          sponsored_membership:memberships!sponsored_membership_id(
-            *,
-            membership_type:membership_types!current_membership_type_id(*)
-          )
+          family_member:profiles!family_member_id(*)
         `)
-        .eq('primary_member_id', memberData.id)
-        .eq('status', 'active');
+        .eq('primary_member_id', memberData.id);
 
       if (error) throw error;
       setFamilyMembers(data || []);
@@ -126,13 +117,10 @@ const FamilyManagementDialog = ({ memberData, isOpen, onClose, onUpdate }) => {
         primary_member_id: memberData.id,
         family_member_id: familyMemberProfile.id,
         relationship: newMemberForm.relationship,
-        relationship_type: newMemberForm.relationshipType,
-        can_check_in_others: newMemberForm.canCheckInOthers,
-        can_view_billing: newMemberForm.canViewBilling,
-        can_manage_family: newMemberForm.canManageFamily,
-        emergency_contact_priority: newMemberForm.emergencyContactPriority,
-        notes: newMemberForm.notes,
-        status: 'active'
+        primary_member_first_name: memberData.first_name,
+        primary_member_last_name: memberData.last_name,
+        family_member_first_name: familyMemberProfile.first_name,
+        family_member_last_name: familyMemberProfile.last_name
       };
 
       const { error: relationError } = await supabase

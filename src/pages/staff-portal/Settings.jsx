@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Settings, Bell, Shield, CreditCard, Users, LayoutDashboard, BarChart3, Palette, ClipboardList } from 'lucide-react';
+import { Settings, Bell, Shield, CreditCard, Users, LayoutDashboard, BarChart3, Palette, ClipboardList, Database } from 'lucide-react';
 import SettingsPageLayout from '@/components/admin/settings/SettingsPageLayout.jsx';
 import SettingsTabs from '@/components/admin/settings/SettingsTabs.jsx';
 import GeneralSettingsTab from '@/components/admin/settings/tabs/GeneralSettingsTab.jsx';
@@ -10,6 +10,7 @@ import ReportingSettingsTab from '@/components/admin/settings/tabs/ReportingSett
 import AppearanceSettingsTab from '@/components/admin/settings/tabs/AppearanceSettingsTab.jsx';
 import BrandingSettingsTab from '@/components/admin/settings/tabs/BrandingSettingsTab.jsx';
 import CustomFieldsSettingsTab from '@/components/admin/settings/tabs/CustomFieldsSettingsTab.jsx';
+import SystemSettingsPanel from '@/components/admin/settings/SystemSettingsPanel.jsx';
 
 import { TabsContent } from '@/components/ui/tabs';
 import { initializeGymBranding } from '@/utils/gymBranding.js';
@@ -17,10 +18,17 @@ import { initializeGymBranding } from '@/utils/gymBranding.js';
 
 
 const settingsTabsConfig = [
-  { 
-    value: "general", 
-    label: "General", 
-    Icon: Settings, 
+  {
+    value: "system",
+    label: "System",
+    Icon: Database,
+    component: <SystemSettingsPanel />,
+    description: "Configure system-wide features like multi-location support and core functionality."
+  },
+  {
+    value: "general",
+    label: "General",
+    Icon: Settings,
     component: <GeneralSettingsTab />,
     description: "Manage basic gym information and operational settings."
   },

@@ -178,9 +178,10 @@ const FamilyMemberAutocomplete = ({ memberData, onMemberAdded, onCancel }) => {
         primary_member_id: memberData.id,
         family_member_id: familyMemberProfile.id,
         relationship: formData.relationship,
-        relationship_type: formData.linkedByMembership ? 'shared' : 'sponsored',
-        billing_responsibility: formData.linkedByBilling ? 'primary' : 'independent',
-        status: 'active'
+        primary_member_first_name: memberData.first_name,
+        primary_member_last_name: memberData.last_name,
+        family_member_first_name: familyMemberProfile.first_name,
+        family_member_last_name: familyMemberProfile.last_name
       };
 
       const { error: relationError } = await supabase
