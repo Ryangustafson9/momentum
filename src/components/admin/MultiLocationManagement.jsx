@@ -145,32 +145,14 @@ const MultiLocationManagement = () => {
     }
 
     try {
-      // For admin users, bypass the database update due to RLS issues
-      if (user?.role === 'admin') {
-        console.log('🔧 Admin user - bypassing database update for multi-location toggle');
-
-        if (!enabled) {
-          setLocations([]);
-        } else {
-          // Reload locations when enabling
-          await loadMultiLocationData();
-        }
-
-        toast({
-          title: enabled ? "Multi-Location Enabled" : "Multi-Location Disabled",
-          description: enabled
-            ? "Multi-location support has been enabled. You can now add locations."
-            : "Multi-location support has been disabled.",
-          className: "bg-green-500 text-white",
-        });
-        return;
-      }
-
-      // For non-admin users, try to update the database
+      // Update using the settings hook (RLS should be fixed now)
       const result = await updateSetting('multi_location_enabled', enabled);
       if (!result.success) throw new Error('Failed to update setting');
 
-      if (!enabled) {
+      // Reload data after successful update
+      if (enabled) {
+        await loadMultiLocationData();
+      } else {
         setLocations([]);
       }
 
@@ -185,7 +167,7 @@ const MultiLocationManagement = () => {
       console.error('Error toggling multi-location:', error);
       toast({
         title: "Error",
-        description: "Failed to update multi-location settings. Admin users have automatic access to location management.",
+        description: "Failed to update multi-location settings. Please try again.",
         variant: "destructive",
       });
     }
@@ -596,7 +578,13 @@ const LocationCard = ({ location, onEdit, onDelete }) => {
       const { data } = await LocationService.getLocationAnalytics(location.id);
       setStats(data);
     } catch (error) {
-      console.error('Error loading location stats:', error);
+      console.warn('Location stats not available (expected if invoices table missing):', error.message);
+      // Set default stats to prevent UI issues
+      setStats({
+        member_count: 0,
+        total_revenue: 0,
+        period: 'monthly'
+      });
     }
   };
 
