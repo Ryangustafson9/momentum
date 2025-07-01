@@ -5,6 +5,8 @@
 export const navLinks = [
   { to: "/staff-portal/dashboard", label: "Homepage", icon: "Home" },
   { to: "/staff-portal/checkin", label: "Check-in", icon: "UserCheck" },
+  { to: "/staff-portal/timeclock", label: "Timeclock", icon: "Clock" },
+  { to: "/staff-portal/members", label: "Members", icon: "Users" },
   { to: "/staff-portal/memberships", label: "Plan Management", icon: "Briefcase" },
   { to: "/staff-portal/classes", label: "Classes", icon: "Calendar" },
   { to: "/staff-portal/schedule", label: "Schedule", icon: "Zap" },

@@ -1,16 +1,13 @@
 /**
- * 🚫 DEACTIVATED PAGE - Members.jsx
- * 
- * This page has been temporarily deactivated in favor of:
- * - Basic member search in top navbar
- * - Advanced search modal (planned feature)
- * - Individual member profiles via direct navigation
- * 
- * The page code is preserved for potential future reactivation.
- * To reactivate:
- * 1. Uncomment the route in App.jsx 
- * 2. Uncomment the nav link in adminNavLinks.js
- * 3. Remove this deactivation note
+ * ✅ ENHANCED MEMBERS PAGE - Members.jsx
+ *
+ * Comprehensive member management interface with:
+ * - Advanced search and filtering
+ * - Bulk operations (status changes, exports)
+ * - Member status management workflow
+ * - Quick actions and member creation
+ *
+ * This is the primary interface for staff to manage all members.
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -27,11 +24,11 @@ import DeleteMemberDialog from '@/components/admin/members/DeleteMemberDialog';
 import AssignMembershipDialog from '@/components/admin/members/AssignMembershipDialog';
 import ImpersonationConfirmationDialog from '@/components/admin/members/ImpersonationConfirmationDialog';
 
-// Member Service Functions
+// Enhanced Member Service Functions
 const memberService = {
-  async getMembers() {
+  async getMembers(filters = {}) {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('profiles')
         .select(`
           *,
@@ -46,23 +43,107 @@ const memberService = {
               category
             )
           )
-        `)
-        .order('created_at', { ascending: false });
+        `, { count: 'exact' });
+
+      // Apply filters
+      if (filters.search) {
+        query = query.or(`first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,display_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,phone.ilike.%${filters.search}%,system_member_id.ilike.%${filters.search}%`);
+      }
+
+      if (filters.status && filters.status !== 'all') {
+        query = query.eq('status', filters.status);
+      }
+
+      if (filters.role && filters.role !== 'all') {
+        query = query.eq('role', filters.role);
+      }
+
+      if (filters.membershipStatus && filters.membershipStatus !== 'all') {
+        // This will need to be handled in post-processing since it's a relationship
+      }
+
+      const { data, error, count } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
 
       // Process the data to add computed fields
-      const processedData = (data || []).map(profile => ({
+      let processedData = (data || []).map(profile => ({
         ...profile,
         name: profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email,
         current_membership: profile.memberships?.[0] || null,
-        current_membership_type_id: profile.memberships?.[0]?.membership_type?.id || null
+        current_membership_type_id: profile.memberships?.[0]?.membership_type?.id || null,
+        membership_status: profile.memberships?.[0]?.status || 'none'
       }));
 
-      return processedData;
+      // Apply membership status filter if specified
+      if (filters.membershipStatus && filters.membershipStatus !== 'all') {
+        processedData = processedData.filter(member =>
+          member.membership_status === filters.membershipStatus
+        );
+      }
+
+      return {
+        data: processedData,
+        count: processedData.length,
+        error: null
+      };
     } catch (error) {
       console.error('Error fetching members:', error);
-      throw error;
+      return { data: [], count: 0, error };
+    }
+  },
+
+  async updateMemberStatus(memberId, newStatus) {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', memberId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error updating member status:', error);
+      return { data: null, error };
+    }
+  },
+
+  async bulkUpdateStatus(memberIds, newStatus) {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .in('id', memberIds)
+        .select();
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error bulk updating member status:', error);
+      return { data: null, error };
+    }
+  },
+
+  async deleteMember(memberId) {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', memberId);
+
+      if (error) throw error;
+      return { error: null };
+    } catch (error) {
+      console.error('Error deleting member:', error);
+      return { error };
     }
   },
 
@@ -101,20 +182,34 @@ const memberService = {
 };
 
 const MembersPage = () => {
+  // Core state
   const [members, setMembers] = useState([]);
   const [membershipTypes, setMembershipTypes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+
+  // Filter state
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState('all');
   const [membershipFilter, setMembershipFilter] = useState('all');
+
+  // Selection and bulk operations
+  const [selectedMembers, setSelectedMembers] = useState(new Set());
+  const [isSelectAllChecked, setIsSelectAllChecked] = useState(false);
+
+  // Dialog state
   const [currentMember, setCurrentMember] = useState(null);
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isAssignMembershipDialogOpen, setIsAssignMembershipDialogOpen] = useState(false);
   const [isImpersonateDialogOpen, setIsImpersonateDialogOpen] = useState(false);
+  const [isBulkStatusDialogOpen, setIsBulkStatusDialogOpen] = useState(false);
 
+  // Action state
   const [memberToAssignPlan, setMemberToAssignPlan] = useState(null);
   const [memberToImpersonate, setMemberToImpersonate] = useState(null);
+  const [bulkStatusAction, setBulkStatusAction] = useState('');
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -122,28 +217,83 @@ const MembersPage = () => {
   const fetchMembers = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [membersData, membershipTypesData] = await Promise.all([
-        memberService.getMembers(),
+      const filters = {
+        search: searchTerm,
+        status: statusFilter,
+        role: roleFilter,
+        membershipStatus: membershipFilter
+      };
+
+      const [membersResult, membershipTypesData] = await Promise.all([
+        memberService.getMembers(filters),
         memberService.getMembershipTypes()
       ]);
-      
-      setMembers(membersData);
+
+      setMembers(membersResult.data || []);
+      setTotalCount(membersResult.count || 0);
       setMembershipTypes(membershipTypesData);
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast({ 
-        title: 'Error', 
-        description: `Failed to fetch members: ${error.message}`, 
-        variant: 'destructive' 
+      toast({
+        title: 'Error',
+        description: `Failed to fetch members: ${error.message}`,
+        variant: 'destructive'
       });
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [searchTerm, statusFilter, roleFilter, membershipFilter, toast]);
 
   useEffect(() => {
     fetchMembers();
   }, [fetchMembers]);
+
+  // Selection handlers
+  const handleSelectMember = (memberId, isSelected) => {
+    const newSelected = new Set(selectedMembers);
+    if (isSelected) {
+      newSelected.add(memberId);
+    } else {
+      newSelected.delete(memberId);
+    }
+    setSelectedMembers(newSelected);
+    setIsSelectAllChecked(newSelected.size === members.length && members.length > 0);
+  };
+
+  const handleSelectAll = (isSelected) => {
+    if (isSelected) {
+      setSelectedMembers(new Set(members.map(m => m.id)));
+    } else {
+      setSelectedMembers(new Set());
+    }
+    setIsSelectAllChecked(isSelected);
+  };
+
+  // Bulk operations
+  const handleBulkStatusChange = async (newStatus) => {
+    if (selectedMembers.size === 0) return;
+
+    try {
+      const memberIds = Array.from(selectedMembers);
+      await memberService.bulkUpdateStatus(memberIds, newStatus);
+
+      toast({
+        title: "Success",
+        description: `Updated status for ${memberIds.length} members.`,
+        variant: "default",
+      });
+
+      setSelectedMembers(new Set());
+      setIsSelectAllChecked(false);
+      fetchMembers();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update member status.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const filteredMembers = members.filter(member => {
     const searchLower = searchTerm.toLowerCase();

@@ -28,6 +28,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import AssignMembershipDialog from '@/components/admin/members/AssignMembershipDialog';
 import AddressAutocomplete from '@/components/ui/AddressAutocomplete';
 import FamilyManagementDialog from '@/components/staff/FamilyManagementDialog';
+import MemberQuickStats from '@/components/member-profile/MemberQuickStats';
+import MemberActivityTimeline from '@/components/member-profile/MemberActivityTimeline';
+import MemberNotesLog from '@/components/member-profile/MemberNotesLog';
 import FamilySection from '@/components/staff/FamilySection';
 import MembershipSignupWizard from '@/components/staff/MembershipSignupWizard';
 
@@ -2895,7 +2898,21 @@ const StaffMemberProfilePage = () => {
           <StaffNotesSection memberId={memberData.id} staffId={loggedInStaff.id} />
         </div>
       </div>
-      </div>      {/* Modern Tab Navigation - Separate from content */}
+      </div>
+
+      {/* Enhanced Member Insights Section */}
+      <div className="space-y-6 mb-6">
+        {/* Quick Stats */}
+        <MemberQuickStats memberId={memberData.id} memberData={memberData} />
+
+        {/* Activity Timeline and Notes */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <MemberActivityTimeline memberId={memberData.id} memberData={memberData} />
+          <MemberNotesLog memberId={memberData.id} />
+        </div>
+      </div>
+
+      {/* Modern Tab Navigation - Separate from content */}
       <div className="mb-3.5">
         <Tabs defaultValue="demographics" className="w-full">
           <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:grid-cols-6 bg-muted">

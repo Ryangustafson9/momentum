@@ -37,6 +37,8 @@ import StaffDashboard from '@/pages/staff-portal/Dashboard';
 
 import Classes from '@/pages/staff-portal/Classes';
 import CheckIn from '@/pages/staff-portal/CheckIn';
+import Timeclock from '@/pages/staff-portal/Timeclock';
+import Members from '@/pages/staff-portal/Members';
 import Memberships from '@/pages/staff-portal/Memberships';
 import Schedule from '@/pages/staff-portal/Schedule';
 import Attendance from '@/pages/staff-portal/Attendance';
@@ -249,6 +251,8 @@ function App() {
 
                   <Route path="classes" element={<Classes />} />
                   <Route path="checkin" element={<CheckIn />} />
+                  <Route path="timeclock" element={<Timeclock />} />
+                  <Route path="members" element={<Members />} />
                   <Route path="memberships" element={<Memberships />} />
                   <Route path="schedule" element={<Schedule />} />
                   <Route path="attendance" element={<Attendance />} />
@@ -299,6 +303,8 @@ function App() {
                   <Route path="dashboard" element={<StaffDashboard />} />
                   <Route path="classes" element={<Classes />} />
                   <Route path="checkin" element={<CheckIn />} />
+                  <Route path="timeclock" element={<Timeclock />} />
+                  <Route path="members" element={<Members />} />
                   <Route path="memberships" element={<Memberships />} />
                   <Route path="schedule" element={<Schedule />} />
                   <Route path="attendance" element={<Attendance />} />

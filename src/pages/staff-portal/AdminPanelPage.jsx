@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import StaffPermissionsManagement from '@/components/admin/StaffPermissionsManagement';
 import ConfigurationTemplatesManager from '@/components/admin/ConfigurationTemplatesManager';
 import BillingConfigurationManager from '@/components/billing/BillingConfigurationManager';
+import SystemSettingsManager from '@/components/admin/SystemSettingsManager';
 import PaymentProcessorHub from '@/components/billing/PaymentProcessorHub';
 import MigrationWorkflowManager from '@/components/admin/MigrationWorkflowManager';
 import BillingConfigurationPanel from '@/components/billing/BillingConfigurationPanel';
@@ -19,7 +20,8 @@ import {
   DollarSign,
   CreditCard,
   ArrowRightLeft,
-  Clock
+  Clock,
+  Settings
 } from 'lucide-react';
 
 // Enhanced Tab Configuration
@@ -72,6 +74,13 @@ const ADMIN_TAB_CONFIG = [
     icon: Clock,
     description: 'Automated tasks and scheduled jobs',
     color: 'teal'
+  },
+  {
+    id: 'system-settings',
+    label: 'System Settings',
+    icon: Settings,
+    description: 'Global system features and toggles',
+    color: 'gray'
   }
 ];
 
@@ -155,6 +164,7 @@ const AdminPanelPage = () => {
                     {tab.id === 'payments' && <PaymentProcessorHub />}
                     {tab.id === 'migrations' && <MigrationWorkflowManager />}
                     {tab.id === 'scripts' && <ScriptsAndCronManager />}
+                    {tab.id === 'system-settings' && <SystemSettingsManager />}
                   </motion.div>
                 </TabsContent>
               )

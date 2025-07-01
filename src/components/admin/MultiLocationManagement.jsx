@@ -55,6 +55,7 @@ const MultiLocationManagement = () => {
   const [migrationStatus, setMigrationStatus] = useState(null);
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [editingLocation, setEditingLocation] = useState(null);
+  const [showInactive, setShowInactive] = useState(false);
   const [locationForm, setLocationForm] = useState({
     name: '',
     address: '',
@@ -88,11 +89,18 @@ const MultiLocationManagement = () => {
 
           // Admin users can see all locations across all organizations
           if (user?.role === 'admin') {
-            console.log('🔍 Admin user detected, fetching all locations...');
-            const { data: allLocations, error: allError } = await supabase
+            console.log('🔍 Admin user detected, fetching locations...', { showInactive });
+            let query = supabase
               .from('locations')
-              .select('*')
-              .order('name');
+              .select('*');
+
+            // Filter by active status when NOT showing inactive
+            if (!showInactive) {
+              query = query.or('is_active.is.null,is_active.eq.true');
+            }
+            // When showInactive is true, show ALL locations (no filter needed)
+
+            const { data: allLocations, error: allError } = await query.order('name');
 
             console.log('📊 Raw query result:', { data: allLocations, error: allError });
 
@@ -102,10 +110,15 @@ const MultiLocationManagement = () => {
             }
             locationsData = allLocations || [];
             console.log('✅ Admin user - loaded all locations:', locationsData.length, locationsData);
+            console.log('🔍 Location active status breakdown:', locationsData.map(loc => ({
+              name: loc.name,
+              is_active: loc.is_active,
+              id: loc.id
+            })));
           }
           // Regular staff users see only their organization's locations
           else if (user?.organization_id) {
-            const { data: orgLocations, error: orgError } = await LocationService.getOrganizationLocations(user.organization_id);
+            const { data: orgLocations, error: orgError } = await LocationService.getOrganizationLocations(user.organization_id, showInactive);
             if (orgError) throw orgError;
             locationsData = orgLocations || [];
             console.log('Staff user - loaded org locations:', locationsData.length);
@@ -284,9 +297,11 @@ const MultiLocationManagement = () => {
 
   const handleDeleteLocation = async (locationId) => {
     try {
+      console.log('🗑️ Attempting to delete location:', locationId);
       const { error } = await LocationService.deleteLocation(locationId);
       if (error) throw error;
 
+      console.log('✅ Location deleted successfully, refreshing data...');
       await loadMultiLocationData(); // Refresh locations
 
       toast({
@@ -295,7 +310,7 @@ const MultiLocationManagement = () => {
         className: "bg-green-500 text-white",
       });
     } catch (error) {
-      console.error('Error deleting location:', error);
+      console.error('❌ Error deleting location:', error);
       toast({
         title: "Error",
         description: "Failed to delete location.",
@@ -433,7 +448,21 @@ const MultiLocationManagement = () => {
                     Manage your gym locations and their configurations
                   </CardDescription>
                 </div>
-              <Dialog open={showLocationDialog} onOpenChange={setShowLocationDialog}>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="show-inactive"
+                      checked={showInactive}
+                      onCheckedChange={(checked) => {
+                        setShowInactive(checked);
+                        loadMultiLocationData(); // Reload with new filter
+                      }}
+                    />
+                    <Label htmlFor="show-inactive" className="text-sm">
+                      Show Inactive
+                    </Label>
+                  </div>
+                  <Dialog open={showLocationDialog} onOpenChange={setShowLocationDialog}>
                 <DialogTrigger asChild>
                   <Button onClick={() => {
                     setEditingLocation(null);
@@ -528,7 +557,8 @@ const MultiLocationManagement = () => {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-            </div>
+                </div>
+              </div>
           </CardHeader>
           
           <CardContent>
@@ -543,16 +573,16 @@ const MultiLocationManagement = () => {
                   </p>
                 </div>
               ) : (
-              <div className="grid gap-4">
-                {locations.map((location) => (
-                  <LocationCard
-                    key={location.id}
-                    location={location}
-                    onEdit={handleEditLocation}
-                    onDelete={handleDeleteLocation}
-                  />
-                ))}
-              </div>
+                <div className="grid gap-4">
+                  {locations.map((location) => (
+                    <LocationCard
+                      key={location.id}
+                      location={location}
+                      onEdit={handleEditLocation}
+                      onDelete={handleDeleteLocation}
+                    />
+                  ))}
+                </div>
               );
             })()}
           </CardContent>
@@ -598,11 +628,11 @@ const LocationCard = ({ location, onEdit, onDelete }) => {
               {location.is_primary && (
                 <Badge variant="default" className="text-xs">Primary</Badge>
               )}
-              <Badge 
-                variant={location.status === 'active' ? 'default' : 'secondary'}
+              <Badge
+                variant={location.is_active === false ? 'destructive' : 'default'}
                 className="text-xs"
               >
-                {location.status || 'Active'}
+                {location.is_active === false ? 'Inactive' : 'Active'}
               </Badge>
             </div>
             

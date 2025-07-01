@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LogOut, ChevronLeft, ChevronRight, Settings, GripVertical, Edit3,
   Home, Users, Calendar, BarChart2, UserCheck, Zap, UserCog, Briefcase,
-  Mail, CreditCard, Wrench, ShoppingCart, Building, GitBranch
+  Mail, CreditCard, Wrench, ShoppingCart, Building, GitBranch, Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -48,6 +48,7 @@ const iconMap = {
   ShoppingCart,
   Building,
   GitBranch,
+  Clock,
   Edit3,
   LogOut,
   Settings
@@ -241,6 +242,7 @@ const AdminSidebar = ({ onLogout, isExpanded, toggleSidebar, user }) => {
       return true;
     });
 
+    console.log('🔍 AdminSidebar: Filtered navigation links:', filteredLinks);
     setOrderedNavLinks(filteredLinks);
   }, [user?.role]);
 

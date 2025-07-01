@@ -208,10 +208,12 @@ export class LocationService {
   }
 
   /**
-   * Delete a location (soft delete by setting is_active to false)
+   * Delete a location (soft delete - marks as inactive)
    */
   static async deleteLocation(locationId) {
     try {
+      console.log('🗑️ LocationService: Soft deleting location with ID:', locationId);
+
       const { data, error } = await supabase
         .from('locations')
         .update({
@@ -222,10 +224,15 @@ export class LocationService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('🚨 LocationService: Delete error:', error);
+        throw error;
+      }
+
+      console.log('✅ LocationService: Location soft deleted successfully:', data);
       return { data, error: null };
     } catch (error) {
-      console.error('Error deleting location:', error);
+      console.error('❌ LocationService: Error deleting location:', error);
       return { data: null, error };
     }
   }
@@ -751,18 +758,17 @@ export class LocationService {
         memberCount = 0;
       }
 
-      // Try to get revenue data - handle if invoices table doesn't exist
+      // Try to get revenue data from transactions table
       try {
         const { data: revenueData } = await supabase
-          .from('invoices')
+          .from('transactions')
           .select('total_amount')
-          .eq('location_id', locationId)
-          .eq('status', 'paid')
+          .eq('status', 'completed')
           .gte('created_at', this.getPeriodStartDate(period));
 
-        totalRevenue = revenueData?.reduce((sum, invoice) => sum + parseFloat(invoice.total_amount), 0) || 0;
+        totalRevenue = revenueData?.reduce((sum, transaction) => sum + parseFloat(transaction.total_amount), 0) || 0;
       } catch (revenueError) {
-        console.warn('Invoices table not available for analytics:', revenueError.message);
+        console.warn('Transactions table not available for analytics:', revenueError.message);
         totalRevenue = 0;
       }
 
