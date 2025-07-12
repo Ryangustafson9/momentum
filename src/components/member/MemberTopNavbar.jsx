@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBranding } from '@/hooks/useBranding';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -16,14 +17,34 @@ import { Bell, User, LogOut, Settings } from 'lucide-react';
 const MemberTopNavbar = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { branding, loading: brandingLoading } = useBranding();
   const [notifications] = useState([]);
+  const [logoLoaded, setLogoLoaded] = useState(false);
+  const [logoError, setLogoError] = useState(false);
+
+  // Reset logo states when branding changes
+  useEffect(() => {
+    if (branding.logoUrl) {
+      setLogoLoaded(false);
+      setLogoError(false);
+    }
+  }, [branding.logoUrl]);
+
+  const handleLogoLoad = () => {
+    setLogoLoaded(true);
+  };
+
+  const handleLogoError = () => {
+    setLogoError(true);
+    setLogoLoaded(true);
+  };
 
   const handleSignOut = async () => {
     try {
       await logout();
       navigate('/login');
     } catch (error) {
-      
+
     }
   };
 
@@ -41,11 +62,26 @@ const MemberTopNavbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo/Brand */}
           <div className="flex items-center">
-            <img
-              src="/assets/momentum-logo.svg"
-              alt="Momentum Gym"
-              className="h-10 w-16 object-contain"
-            />
+            {/* Show loading spinner while branding is loading or logo is loading */}
+            {(brandingLoading || (!logoLoaded && branding.logoUrl && !logoError)) && (
+              <div className="h-10 w-16 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+              </div>
+            )}
+
+            {/* Show logo only if we have a logoUrl and it's loaded successfully */}
+            {branding.logoUrl && !brandingLoading && (
+              <img
+                src={branding.logoUrl}
+                alt="Club Logo"
+                className={`h-10 w-16 object-contain transition-opacity duration-200 ${
+                  logoLoaded ? 'opacity-100' : 'opacity-0 absolute'
+                }`}
+                onLoad={handleLogoLoad}
+                onError={handleLogoError}
+                style={{ display: logoError ? 'none' : 'block' }}
+              />
+            )}
           </div>
 
           {/* Right side - Notifications and User Menu */}

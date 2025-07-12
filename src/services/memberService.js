@@ -5,19 +5,15 @@ import { sanitizeError } from '@/utils/requestUtils';
 export const memberService = {
   // Get all members with optional filtering
   async getMembers(filters = {}) {
-    
-    
+
+
     let query = supabase
       .from('profiles')
       .select(`
         *,
-        memberships:memberships!auth_user_id(
+        memberships:memberships!user_id(
           *,
-          membership_type:membership_types!current_membership_type_id(*)
-        ),
-        addon_memberships:addon_memberships!member_id(
-          *,
-          addon_type:membership_types!addon_type_id(*)
+          membership_type:membership_types!membership_type_id(*)
         )
       `)
       .eq('role', 'member')
@@ -86,41 +82,180 @@ export const memberService = {
     return data;
   },
 
-  // Get member's membership details
+  // Get member's membership details (primary membership only)
   async getMemberMembership(memberId) {
-    
-    
+
+
     const { data, error } = await supabase
       .from('memberships')
       .select(`
         *,
-        membership_type:membership_types!current_membership_type_id(*)
+        membership_type:membership_types!membership_type_id(*)
       `)
-      .eq('auth_user_id', memberId)
-      .maybeSingle();    if (error) {
+      .eq('user_id', memberId)
+      .eq('plan_type', 'Membership')
+      .maybeSingle();
+
+    if (error) {
       throw sanitizeError(error, 'Get member membership');
     }
 
-    
+
     return data;
   },
 
-  // Get member's add-ons
+  // Get member's add-ons (now from unified memberships table)
   async getMemberAddons(memberId) {
-    
-    
+
+
     const { data, error } = await supabase
-      .from('addon_memberships')
+      .from('memberships')
       .select(`
         *,
-        addon_type:membership_types!addon_type_id(*)
+        membership_type:membership_types!membership_type_id(*)
       `)
-      .eq('member_id', memberId);    if (error) {
+      .eq('user_id', memberId)
+      .eq('plan_type', 'Add-On');
+
+    if (error) {
       throw sanitizeError(error, 'Get member add-ons');
     }
 
-    
+
     return data || [];
+  },
+
+  // Get all memberships for a member (primary + add-ons + staff + guest)
+  async getAllMemberMemberships(memberId) {
+
+
+    const { data, error } = await supabase
+      .from('memberships')
+      .select(`
+        *,
+        membership_type:membership_types!membership_type_id(*)
+      `)
+      .eq('user_id', memberId)
+      .order('plan_type', { ascending: true }); // Membership first, then Add-On, Staff, Guest
+
+    if (error) {
+      throw sanitizeError(error, 'Get all member memberships');
+    }
+
+    // Group by plan type for easier consumption
+    const grouped = {
+      primary: data?.filter(m => m.plan_type === 'Membership') || [],
+      addons: data?.filter(m => m.plan_type === 'Add-On') || [],
+      staff: data?.filter(m => m.plan_type === 'Staff') || [],
+      guest: data?.filter(m => m.plan_type === 'Guest') || []
+    };
+
+
+    return { raw: data || [], grouped };
+  },
+
+  // Add a new membership (any plan type)
+  async addMembership(membershipData) {
+
+
+    const { data, error } = await supabase
+      .from('memberships')
+      .insert([{
+        user_id: membershipData.user_id || membershipData.member_id,
+        organization_id: membershipData.organization_id,
+        location_id: membershipData.location_id,
+        membership_type_id: membershipData.membership_type_id || membershipData.membership_plan_id,
+        plan_type: membershipData.plan_type || 'Membership',
+        status: membershipData.status || 'active',
+        start_date: membershipData.start_date || new Date().toISOString().split('T')[0],
+        expiration_date: membershipData.end_date,
+        next_payment_date: membershipData.next_billing_date,
+        monthly_rate: membershipData.monthly_rate || 0,
+        setup_fee: membershipData.setup_fee || 0,
+        billing_frequency: membershipData.billing_frequency || 'monthly',
+        auto_renew: membershipData.auto_renew !== undefined ? membershipData.auto_renew : true,
+        notes: membershipData.notes,
+        created_by: membershipData.created_by
+      }])
+      .select(`
+        *,
+        membership_type:membership_types!membership_type_id(*)
+      `)
+      .single();
+
+    if (error) {
+      throw sanitizeError(error, 'Add membership');
+    }
+
+
+    return data;
+  },
+
+  // Update membership
+  async updateMembership(membershipId, updates) {
+
+
+    const { data, error } = await supabase
+      .from('memberships')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', membershipId)
+      .select(`
+        *,
+        membership_type:membership_types!membership_type_id(*)
+      `)
+      .single();
+
+    if (error) {
+      throw sanitizeError(error, 'Update membership');
+    }
+
+
+    return data;
+  },
+
+  // Get billing summary for a member
+  async getMemberBillingSummary(memberId) {
+
+
+    const { data, error } = await supabase
+      .from('memberships')
+      .select(`
+        *,
+        membership_type:membership_types!membership_type_id(name, price, billing_type)
+      `)
+      .eq('user_id', memberId)
+      .in('status', ['active', 'pending']);
+
+    if (error) {
+      throw sanitizeError(error, 'Get member billing summary');
+    }
+
+    // Calculate totals
+    const summary = {
+      totalMonthlyAmount: 0,
+      primaryMembership: null,
+      addons: [],
+      nextBillingDate: null,
+      totalItems: data?.length || 0
+    };
+
+    data?.forEach(membership => {
+      const amount = membership.monthly_rate || membership.membership_type?.price || 0;
+      summary.totalMonthlyAmount += amount;
+
+      if (membership.plan_type === 'Membership') {
+        summary.primaryMembership = membership;
+        summary.nextBillingDate = membership.next_payment_date;
+      } else if (membership.plan_type === 'Add-On') {
+        summary.addons.push(membership);
+      }
+    });
+
+
+    return summary;
   },
 
   // Update member profile

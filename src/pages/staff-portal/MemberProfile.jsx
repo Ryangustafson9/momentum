@@ -29,8 +29,6 @@ import AssignMembershipDialog from '@/components/admin/members/AssignMembershipD
 import AddressAutocomplete from '@/components/ui/AddressAutocomplete';
 import FamilyManagementDialog from '@/components/staff/FamilyManagementDialog';
 import MemberQuickStats from '@/components/member-profile/MemberQuickStats';
-import MemberActivityTimeline from '@/components/member-profile/MemberActivityTimeline';
-import MemberNotesLog from '@/components/member-profile/MemberNotesLog';
 import FamilySection from '@/components/staff/FamilySection';
 import MembershipSignupWizard from '@/components/staff/MembershipSignupWizard';
 
@@ -766,9 +764,9 @@ const BillingHistorySection = ({ memberId }) => {
                   <TableRow key={`${item.type}-${item.id}`}>
                     <TableCell>
                       <div className="text-sm">
-                        {format(new Date(item.created_at), 'MMM d, yyyy')}
+                        {item.created_at && isValid(new Date(item.created_at)) ? format(new Date(item.created_at), 'MMM d, yyyy') : 'Invalid date'}
                         <div className="text-xs text-muted-foreground">
-                          {format(new Date(item.created_at), 'h:mm a')}
+                          {item.created_at && isValid(new Date(item.created_at)) ? format(new Date(item.created_at), 'h:mm a') : ''}
                         </div>
                       </div>
                     </TableCell>
@@ -937,7 +935,7 @@ const StaffNotesSection = ({ memberId, staffId }) => {
               <div key={note.id} className="p-3 border rounded-md bg-slate-50 dark:bg-slate-800/50 relative group">
                 <p className="text-sm whitespace-pre-wrap">{note.content}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  By: {note.staff?.name || 'Unknown Staff'} on {format(new Date(note.created_at), 'PPp')}
+                  By: {note.staff?.name || 'Unknown Staff'} on {note.created_at && isValid(new Date(note.created_at)) ? format(new Date(note.created_at), 'PPp') : 'Unknown date'}
                   {note.updated_at && new Date(note.updated_at).getTime() !== new Date(note.created_at).getTime() && (
                     <em> (edited {formatDistanceToNow(new Date(note.updated_at), { addSuffix: true })})</em>
                   )}
@@ -2114,7 +2112,7 @@ const StaffMemberProfilePage = () => {
         city: memberData?.city || '',
         state: memberData?.state || '',
         zip_code: memberData?.zip_code || '',
-        dob: memberData?.dob && isValid(new Date(memberData.dob)) ? format(new Date(memberData.dob), 'yyyy-MM-dd') : '',
+        dob: memberData?.dob && isValid(new Date(memberData?.dob)) ? format(new Date(memberData.dob), 'yyyy-MM-dd') : '',
         gender: memberData?.gender || '',
         emergency_contact_name: memberData?.emergency_contact_name || '',
         emergency_contact_phone: memberData?.emergency_contact_phone || '',
@@ -2407,7 +2405,9 @@ const StaffMemberProfilePage = () => {
       </div>
     );
   }
-    const currentMembership = membershipTypes.find(mt => mt.id === memberData.current_membership_type_id);
+
+  // Safe access to memberData after null check
+  const currentMembership = membershipTypes.find(mt => mt.id === memberData?.current_membership_type_id);
   
   // displayName is now memoized at the top of the component
   
@@ -2426,11 +2426,22 @@ const StaffMemberProfilePage = () => {
 
     useEffect(() => {
       if (membership && isOpen) {
+        const formatSafeDate = (dateString) => {
+          if (!dateString) return '';
+          try {
+            const date = new Date(dateString);
+            return isValid(date) ? format(date, 'yyyy-MM-dd') : '';
+          } catch (error) {
+            console.warn('Invalid date format:', dateString);
+            return '';
+          }
+        };
+
         setFormData({
           status: membership.status || '',
-          start_date: membership.start_date ? format(new Date(membership.start_date), 'yyyy-MM-dd') : '',
-          end_date: membership.end_date ? format(new Date(membership.end_date), 'yyyy-MM-dd') : '',
-          next_payment_date: membership.next_payment_date ? format(new Date(membership.next_payment_date), 'yyyy-MM-dd') : '',
+          start_date: formatSafeDate(membership.start_date),
+          end_date: formatSafeDate(membership.end_date),
+          next_payment_date: formatSafeDate(membership.next_payment_date),
           notes: membership.notes || ''
         });
       }
@@ -2594,7 +2605,7 @@ const StaffMemberProfilePage = () => {
                     <img
                       key={avatarSrc}
                       src={avatarSrc}
-                      alt={memberData.name || "Member avatar"}
+                      alt={memberData?.name || "Member avatar"}
                       className="w-full h-full object-cover relative z-10"
                       onError={(e) => {
                         e.target.style.display = 'none';
@@ -2685,7 +2696,8 @@ const StaffMemberProfilePage = () => {
 
                     // Check for pending cancellation first
                     if (primaryMembership.cancellation_date && new Date(primaryMembership.cancellation_date) > new Date()) {
-                      actualStatus = `Cancel On: ${format(new Date(primaryMembership.cancellation_date), 'MMM dd, yyyy')}`;
+                      const cancelDate = new Date(primaryMembership.cancellation_date);
+                      actualStatus = `Cancel On: ${isValid(cancelDate) ? format(cancelDate, 'MMM dd, yyyy') : 'Invalid date'}`;
                       statusVar = 'destructive';
                       icon = <AlertTriangle className="h-4 w-4 mr-1" />;
                     } else {
@@ -2764,8 +2776,8 @@ const StaffMemberProfilePage = () => {
 
                 {/* Member Type */}
                 <Badge variant="secondary" className="px-3 py-1.5 text-sm">
-                  {memberData.role === 'admin' ? 'Administrator' :
-                   memberData.role === 'staff' ? 'Staff Member' :
+                  {memberData?.role === 'admin' ? 'Administrator' :
+                   memberData?.role === 'staff' ? 'Staff Member' :
                    currentMemberships.length > 0 ? 'Member' :
                    (allMemberships && allMemberships.length > 0) ? 'Non-Member' : 'Non-member'}
                 </Badge>
@@ -2782,11 +2794,11 @@ const StaffMemberProfilePage = () => {
                 {/* Join Date */}
                 <div className="flex items-center gap-2">
                   <CalendarDays className="h-4 w-4" />
-                  <span>Joined: {memberData.join_date ? format(new Date(memberData.join_date), 'PP') : 'N/A'}</span>
+                  <span>Joined: {memberData?.join_date && isValid(new Date(memberData.join_date)) ? format(new Date(memberData.join_date), 'PP') : 'N/A'}</span>
                 </div>
 
                 {/* Email with Action Button */}
-                {memberData.email && (
+                {memberData?.email && (
                   <div className="flex items-center gap-2">
                     <Mail className="h-4 w-4" />
                     <span className="truncate max-w-[150px]">{memberData.email}</span>
@@ -2805,7 +2817,7 @@ const StaffMemberProfilePage = () => {
               {/* Additional Status Indicators */}
               <div className="mt-3 flex flex-wrap items-center justify-center lg:justify-start gap-2">
                 {/* First Visit Indicator */}
-                {memberData.join_date && new Date(memberData.join_date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) && (
+                {memberData?.join_date && new Date(memberData.join_date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) && (
                   <Badge variant="outline" className="border-yellow-500 text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-600">
                     <Star className="h-3 w-3 mr-1" />
                     New Member
@@ -2850,8 +2862,8 @@ const StaffMemberProfilePage = () => {
              description="Primary contact details"
              className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20"
            >
-              <InfoRow label="Email Address" value={memberData.email} icon={Mail}>
-                {memberData.email && (
+              <InfoRow label="Email Address" value={memberData?.email} icon={Mail}>
+                {memberData?.email && (
                   <div className="flex items-center justify-between">
                     <p className="font-medium text-sm truncate">{memberData.email}</p>
                     <Button variant="ghost" size="sm" onClick={() => window.location.href = `mailto:${memberData.email}`}>
@@ -2860,8 +2872,8 @@ const StaffMemberProfilePage = () => {
                   </div>
                 )}
               </InfoRow>
-              <InfoRow label="Phone Number" value={memberData.phone} icon={Phone}>
-                {memberData.phone && (
+              <InfoRow label="Phone Number" value={memberData?.phone} icon={Phone}>
+                {memberData?.phone && (
                   <div className="flex items-center justify-between">
                     <p className="font-medium text-sm">{memberData.phone}</p>
                     <Button variant="ghost" size="sm" onClick={() => window.location.href = `tel:${memberData.phone}`}>
@@ -2870,8 +2882,8 @@ const StaffMemberProfilePage = () => {
                   </div>
                 )}
               </InfoRow>
-              <InfoRow label="Home Address" value={memberData.address} icon={Home} />
-              <InfoRow label="Date of Birth" value={memberData.dob ? format(new Date(memberData.dob), 'PP') : 'Not provided'} icon={CalendarDays} />
+              <InfoRow label="Home Address" value={memberData?.address} icon={Home} />
+              <InfoRow label="Date of Birth" value={memberData?.dob && isValid(new Date(memberData.dob)) ? format(new Date(memberData.dob), 'PP') : 'Not provided'} icon={CalendarDays} />
             </ProfileSectionCard>
             
             <ProfileSectionCard 
@@ -2880,9 +2892,9 @@ const StaffMemberProfilePage = () => {
               description="Who to contact in an emergency"
               className="bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20"
             >
-              <InfoRow label="Contact Name" value={memberData.emergency_contact_name} icon={User} />
-              <InfoRow label="Contact Phone" value={memberData.emergency_contact_phone} icon={Phone}>
-                {memberData.emergency_contact_phone && (
+              <InfoRow label="Contact Name" value={memberData?.emergency_contact_name} icon={User} />
+              <InfoRow label="Contact Phone" value={memberData?.emergency_contact_phone} icon={Phone}>
+                {memberData?.emergency_contact_phone && (
                   <div className="flex items-center justify-between">
                     <p className="font-medium text-sm">{memberData.emergency_contact_phone}</p>
                     <Button variant="ghost" size="sm" onClick={() => window.location.href = `tel:${memberData.emergency_contact_phone}`}>
@@ -2895,7 +2907,7 @@ const StaffMemberProfilePage = () => {
         </div>
         
         <div className="lg:col-span-2">
-          <StaffNotesSection memberId={memberData.id} staffId={loggedInStaff.id} />
+          <StaffNotesSection memberId={memberData?.id} staffId={loggedInStaff?.id} />
         </div>
       </div>
       </div>
@@ -2903,13 +2915,9 @@ const StaffMemberProfilePage = () => {
       {/* Enhanced Member Insights Section */}
       <div className="space-y-6 mb-6">
         {/* Quick Stats */}
-        <MemberQuickStats memberId={memberData.id} memberData={memberData} />
+        <MemberQuickStats memberId={memberData?.id} memberData={memberData} />
 
-        {/* Activity Timeline and Notes */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <MemberActivityTimeline memberId={memberData.id} memberData={memberData} />
-          <MemberNotesLog memberId={memberData.id} />
-        </div>
+
       </div>
 
       {/* Modern Tab Navigation - Separate from content */}
@@ -3344,13 +3352,13 @@ const StaffMemberProfilePage = () => {
                                   )}>
                                     <div className="space-y-1">
                                       {membership.start_date && (
-                                        <div>Start: {format(new Date(membership.start_date), 'MMM d, yyyy')}</div>
+                                        <div>Start: {isValid(new Date(membership.start_date)) ? format(new Date(membership.start_date), 'MMM d, yyyy') : 'Invalid date'}</div>
                                       )}
                                       {membership.cancel_date && (
-                                        <div>Cancelled: {format(new Date(membership.cancel_date), 'MMM d, yyyy')}</div>
+                                        <div>Cancelled: {isValid(new Date(membership.cancel_date)) ? format(new Date(membership.cancel_date), 'MMM d, yyyy') : 'Invalid date'}</div>
                                       )}
                                       {membership.end_date && (
-                                        <div>End: {format(new Date(membership.end_date), 'MMM d, yyyy')}</div>
+                                        <div>End: {isValid(new Date(membership.end_date)) ? format(new Date(membership.end_date), 'MMM d, yyyy') : 'Invalid date'}</div>
                                       )}                                    </div>
                                   </TableCell>
                                   <TableCell className="text-right">
@@ -3573,7 +3581,7 @@ const StaffMemberProfilePage = () => {
             </ProfileSectionCard>
 
             {/* Billing History Section */}
-            <BillingHistorySection memberId={memberData.id} />
+            <BillingHistorySection memberId={memberData?.id} />
           </TabsContent>
 
           {/* Notes & Documents Tab - Member notes and document management */}
@@ -3641,7 +3649,7 @@ const StaffMemberProfilePage = () => {
                   description="Internal notes about this member"
 
                 >
-                  <StaffNotesSection memberId={memberData.id} staffId={loggedInStaff.id} />
+                  <StaffNotesSection memberId={memberData?.id} staffId={loggedInStaff?.id} />
                 </ProfileSectionCard>
               </div>
             </div>
@@ -3661,9 +3669,9 @@ const StaffMemberProfilePage = () => {
           <AssignMembershipDialog
             isOpen={isAssignMembershipDialogOpen}
             onClose={() => setIsAssignMembershipDialogOpen(false)}
-            memberId={memberData.id}
-            memberName={memberData.name}
-            currentMembershipTypeId={memberData.current_membership_type_id}
+            memberId={memberData?.id}
+            memberName={memberData?.name}
+            currentMembershipTypeId={memberData?.current_membership_type_id}
             onMembershipAssigned={handleMembershipAssigned}
           />
 
@@ -3671,22 +3679,22 @@ const StaffMemberProfilePage = () => {
           <MembershipSignupWizard
             isOpen={isMembershipSignupWizardOpen}
             onClose={() => setIsMembershipSignupWizardOpen(false)}
-            memberId={memberData.id}
+            memberId={memberData?.id}
             initialMemberData={{
-              first_name: memberData.first_name,
-              last_name: memberData.last_name,
-              email: memberData.email,
-              phone: memberData.phone,
-              address: memberData.address,
-              city: memberData.city,
-              state: memberData.state,
-              zip_code: memberData.zip_code,
-              date_of_birth: memberData.date_of_birth,
-              gender: memberData.gender,
-              access_card_number: memberData.access_card_number,
-              emergency_contact_name: memberData.emergency_contact_name,
-              emergency_contact_relationship: memberData.emergency_contact_relationship,
-              emergency_contact_phone: memberData.emergency_contact_phone
+              first_name: memberData?.first_name,
+              last_name: memberData?.last_name,
+              email: memberData?.email,
+              phone: memberData?.phone,
+              address: memberData?.address,
+              city: memberData?.city,
+              state: memberData?.state,
+              zip_code: memberData?.zip_code,
+              date_of_birth: memberData?.date_of_birth,
+              gender: memberData?.gender,
+              access_card_number: memberData?.access_card_number,
+              emergency_contact_name: memberData?.emergency_contact_name,
+              emergency_contact_relationship: memberData?.emergency_contact_relationship,
+              emergency_contact_phone: memberData?.emergency_contact_phone
             }}
             onComplete={handleMembershipSignupComplete}
           />

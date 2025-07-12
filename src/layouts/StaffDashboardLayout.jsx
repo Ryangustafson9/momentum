@@ -3,9 +3,10 @@ import { Outlet, useLocation } from 'react-router-dom';
 import AdminSidebar from '@/components/admin/AdminSidebar.jsx';
 import TopNavbar from '@/components/admin/TopNavbar.jsx';
 import { supabase } from '@/lib/supabaseClient';
-import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import AskMoChat from '@/components/ui/AskMoChat';
+import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
+import '@/styles/responsive.css';
 
 const pageTitles = {
   '/': 'Dashboard',
@@ -88,32 +89,33 @@ const AdminDashboardLayout = ({ children }) => {
   }
 
   return (
-    <div className="flex h-screen bg-muted/40 dark:bg-slate-950 overflow-hidden">
-      <AdminSidebar
-        onLogout={logout}
-        user={user}
-        isExpanded={isSidebarExpanded}
-        toggleSidebar={toggleSidebar}
-      />
-      <div className={cn(
-        "flex flex-col flex-1 transition-all duration-300 ease-in-out",
-        isSidebarExpanded ? "md:ml-64" : "md:ml-20" 
-      )}>        <TopNavbar
+    <ResponsiveLayout
+      sidebar={
+        <AdminSidebar
+          onLogout={logout}
+          user={user}
+          isExpanded={isSidebarExpanded}
+          toggleSidebar={toggleSidebar}
+        />
+      }
+      header={
+        <TopNavbar
           user={user}
           onLogout={logout}
           startRoleImpersonation={handleStartImpersonation}
           allMembers={allMembers}
         />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8 bg-slate-50 dark:bg-slate-900">
-          <div className="w-full">
-            {children ? children : <Outlet key={location.pathname} />}
-          </div>
-        </main>
+      }
+      className="bg-muted/40 dark:bg-slate-950"
+      enableSidebarToggle={true}
+    >
+      <div className="w-full bg-slate-50 dark:bg-slate-900 min-h-full">
+        {children ? children : <Outlet key={location.pathname} />}
       </div>
 
       {/* Ask Mo - Global Momentum AI Assistant for Staff Portal */}
       <AskMoChat />
-    </div>
+    </ResponsiveLayout>
   );
 };
 

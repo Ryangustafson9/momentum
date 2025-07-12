@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CheckCircle, AlertCircle, Loader2, X } from 'lucide-react';
-import { getGymColors } from '@/utils/gymBranding';
+import { getGymColors, getGymLogo, getGymName } from '@/utils/gymBranding';
 import { useBranding } from '@/hooks/useBranding';
 import { supabase } from '@/lib/supabaseClient';
 import { capitalizeName, calculatePasswordStrength } from '@/utils/formHelpers.js';
@@ -550,30 +550,7 @@ const Signup = () => {
                   </div>
                 )}
                 
-                {/* Success feedback for valid email */}
-                {validationState === EMAIL_VALIDATION_STATES.VALID && (
-                  <div className="mt-2">
-                    <div className="relative overflow-hidden bg-white/70 backdrop-blur-md border border-green-300/40 rounded-xl p-3 shadow-lg">
-                      {/* Animated background gradient */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-green-400/5 via-emerald-400/5 to-green-400/5"></div>
-                      
-                      {/* Content */}
-                      <div className="relative flex items-center space-x-2.5">
-                        {/* Icon with glow effect */}
-                        <div className="relative">
-                          <div className="w-6 h-6 bg-gradient-to-br from-green-400 via-green-500 to-green-600 rounded-full flex items-center justify-center shadow-md">
-                            <CheckCircle className="w-3.5 h-3.5 text-white" />
-                          </div>
-                          <div className="absolute inset-0 bg-green-400/30 rounded-full blur-sm"></div>
-                        </div>
-                        
-                        <span className="text-sm font-medium bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                          Email is available
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
+
               </div>
 
               {/* PASSWORD FIELD WITH STRENGTH INDICATOR */}

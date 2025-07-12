@@ -15,6 +15,7 @@ import Login from '@/pages/Login';
 import Signup from '@/pages/Signup';
 import Dashboard from '@/pages/Dashboard';
 import NotFound from '@/pages/NotFound';
+import SSOLogin from '@/pages/SSOLogin';
 
 // Member pages - ✅ FIXED: Updated to correct paths
 import MemberDashboard from '@/pages/member-portal/Dashboard';
@@ -40,6 +41,7 @@ import CheckIn from '@/pages/staff-portal/CheckIn';
 import Timeclock from '@/pages/staff-portal/Timeclock';
 import Members from '@/pages/staff-portal/Members';
 import Memberships from '@/pages/staff-portal/Memberships';
+import Services from '@/pages/staff-portal/Services';
 import Schedule from '@/pages/staff-portal/Schedule';
 import Attendance from '@/pages/staff-portal/Attendance';
 import Billing from '@/pages/staff-portal/Billing';
@@ -98,7 +100,19 @@ const SuspenseFallback = () => (
 );
 
 function App() {
-  const { user, authReady } = useAuth();
+  // Add defensive check for AuthProvider context
+  let user, authReady;
+  try {
+    const authContext = useAuth();
+    user = authContext.user;
+    authReady = authContext.authReady;
+  } catch (error) {
+    console.error('AuthProvider context not available:', error);
+    // Fallback values when AuthProvider is not available
+    user = null;
+    authReady = false;
+  }
+
   const [emergencyLoadingTimeout, setEmergencyLoadingTimeout] = useState(false);
   
   // Emergency timeout to prevent infinite loading
@@ -118,8 +132,8 @@ function App() {
     authReady
   });
 
-  // Show loading during auth initialization
-  if (!authReady && !emergencyLoadingTimeout) {
+  // Show loading during auth initialization or if AuthProvider is not available
+  if ((!authReady && !emergencyLoadingTimeout) || (user === undefined && authReady === undefined)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -130,13 +144,18 @@ function App() {
     );
   }
 
-  // Show error if auth failed to initialize
-  if (!authReady && emergencyLoadingTimeout) {
+  // Show error if auth failed to initialize or AuthProvider is not available
+  if ((!authReady && emergencyLoadingTimeout) || (user === undefined && authReady === undefined && emergencyLoadingTimeout)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-500 mb-2">⚠️</div>
-          <p className="text-sm text-muted-foreground">Authentication timeout. Please refresh the page.</p>
+          <p className="text-sm text-muted-foreground">
+            {user === undefined && authReady === undefined
+              ? "AuthProvider context error. Please refresh the page."
+              : "Authentication timeout. Please refresh the page."
+            }
+          </p>
         </div>
       </div>
     );
@@ -155,7 +174,8 @@ function App() {
               {/* Public routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
-              <Route path="/dashboard" element={<Dashboard />} />              <Route path="/join-online" element={
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/sso-login" element={<SSOLogin />} />              <Route path="/join-online" element={
                 <JoinOnlineRoute>
                   <JoinOnline />
                 </JoinOnlineRoute>
@@ -254,6 +274,7 @@ function App() {
                   <Route path="timeclock" element={<Timeclock />} />
                   <Route path="members" element={<Members />} />
                   <Route path="memberships" element={<Memberships />} />
+                  <Route path="services" element={<Services />} />
                   <Route path="schedule" element={<Schedule />} />
                   <Route path="attendance" element={<Attendance />} />
                   <Route path="billing" element={<Billing />} />
@@ -306,6 +327,7 @@ function App() {
                   <Route path="timeclock" element={<Timeclock />} />
                   <Route path="members" element={<Members />} />
                   <Route path="memberships" element={<Memberships />} />
+                  <Route path="services" element={<Services />} />
                   <Route path="schedule" element={<Schedule />} />
                   <Route path="attendance" element={<Attendance />} />
                   <Route path="billing" element={<Billing />} />

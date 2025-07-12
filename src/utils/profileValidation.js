@@ -120,10 +120,8 @@ export async function createProfileSafe(profileData) {
         role: profileData.role || 'nonmember',
         first_name: profileData.first_name || '',
         last_name: profileData.last_name || '',
-        display_name: profileData.display_name || `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim(),
-        phone: profileData.phone || null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        phone: profileData.phone || null
+        // Removed display_name, created_at, updated_at as they are auto-generated
       }])
       .select()
       .single();

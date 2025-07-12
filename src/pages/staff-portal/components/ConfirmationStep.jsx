@@ -61,14 +61,12 @@ const ConfirmationStep = ({ formData, updateFormData, onPrev }) => {
         role: 'member',
         first_name: formData.firstName,
         last_name: formData.lastName,
-        display_name: `${formData.firstName} ${formData.lastName}`,
         phone: formData.phone || null,
         date_of_birth: formData.dateOfBirth || null,
         emergency_contact_name: formData.emergencyContact || null,
         emergency_contact_phone: formData.emergencyPhone || null,
-        address: formData.address || null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        address: formData.address || null
+        // Removed display_name, created_at, updated_at as they are auto-generated
       };
 
       const { error: profileError } = await supabase

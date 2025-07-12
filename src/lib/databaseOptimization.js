@@ -348,9 +348,9 @@ export const optimizedQueries = {
 
         // Attendance statistics
         supabase
-          .from('member_attendance')
+          .from('checkin_history')
           .select('check_in_time, check_out_time')
-          .eq('member_id', memberId)
+          .eq('profile_id', memberId)
           .gte('check_in_time', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
       ]);
 
@@ -378,7 +378,7 @@ export const optimizedQueries = {
       const [todayStats, recentMembers, upcomingClasses, systemHealth] = await Promise.all([
         // Today's statistics
         Promise.all([
-          supabase.from('member_attendance').select('id').eq('check_in_time::date', today),
+          supabase.from('checkin_history').select('id').eq('check_in_time::date', today),
           supabase.from('class_bookings').select('id').eq('booked_at::date', today),
           supabase.from('profiles').select('id').eq('created_at::date', today),
         ]),

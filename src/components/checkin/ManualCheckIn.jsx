@@ -44,15 +44,47 @@ const ManualCheckIn = ({
   const handleMemberSelect = async (member) => {
     setSelectedMember(member);
     setValidationResult(null);
-    
+
     // Pre-validate the member
     if (member) {
       const validation = await CheckInService.validateMemberForCheckIn(
-        member.id, 
-        locationId, 
+        member.id,
+        locationId,
         { staffOverride }
       );
       setValidationResult(validation);
+    }
+  };
+
+  const handleAutoCheckIn = async (member) => {
+    setIsCheckingIn(true);
+    try {
+      const result = await CheckInService.manualCheckIn(
+        member.id,
+        staffMemberId,
+        {
+          locationId,
+          deviceInfo: {
+            ...deviceInfo,
+            interface_type: 'manual_staff_auto',
+            auto_checkin: true
+          },
+          staffOverride: false, // Auto check-in doesn't use staff override
+          notes: `Auto check-in via search selection for ${member.first_name} ${member.last_name}`
+        }
+      );
+
+      if (result.success) {
+        handleCheckInSuccess(result);
+        // Don't set selected member since this was an auto check-in
+      } else {
+        handleCheckInFailure(result);
+      }
+    } catch (error) {
+      console.error('Auto check-in error:', error);
+      throw error; // Re-throw so ProfileSearch can handle the error display
+    } finally {
+      setIsCheckingIn(false);
     }
   };
 
@@ -107,6 +139,19 @@ const ManualCheckIn = ({
       variant: "default"
     });
 
+    // Dispatch event for real-time UI updates (backup in case service didn't)
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('checkin-success', {
+        detail: {
+          checkinRecord: result.checkinRecord,
+          member: result.member,
+          membership: result.membership,
+          timestamp: new Date().toISOString(),
+          source: 'manual-checkin'
+        }
+      }));
+    }
+
     onCheckInSuccess?.(result);
   };
 
@@ -143,25 +188,99 @@ const ManualCheckIn = ({
 
   const getValidationMessage = () => {
     if (!validationResult) return null;
-    
+
     if (validationResult.valid) {
-      return "Member is eligible for check-in";
+      return validationResult.statusWarning
+        ? `Check-in allowed with ${validationResult.statusWarning.displayStatus} status`
+        : "Member is eligible for check-in";
     } else {
       return validationResult.message || "Member is not eligible for check-in";
     }
   };
 
+  const getValidationStatusClasses = () => {
+    if (!validationResult) return 'bg-gray-50 border-gray-200';
+
+    if (validationResult.valid) {
+      if (validationResult.statusWarning) {
+        const color = validationResult.statusWarning.highlightColor;
+        switch (color) {
+          case 'yellow':
+            return 'bg-yellow-50 border-yellow-200';
+          case 'red':
+            return 'bg-red-50 border-red-200';
+          default:
+            return 'bg-green-50 border-green-200';
+        }
+      }
+      return 'bg-green-50 border-green-200';
+    } else {
+      if (validationResult.statusInfo) {
+        const color = validationResult.statusInfo.highlightColor;
+        switch (color) {
+          case 'yellow':
+            return 'bg-yellow-50 border-yellow-200';
+          case 'gray':
+            return 'bg-gray-50 border-gray-300';
+          default:
+            return 'bg-red-50 border-red-200';
+        }
+      }
+      return 'bg-red-50 border-red-200';
+    }
+  };
+
   const getMemberStatusBadge = (status) => {
-    const variants = {
-      active: 'default',
-      inactive: 'secondary',
-      suspended: 'destructive',
-      cancelled: 'destructive'
+    const statusConfig = {
+      active: {
+        variant: 'default',
+        className: 'bg-green-100 text-green-800 border-green-200',
+        label: 'Active'
+      },
+      suspended: {
+        variant: 'destructive',
+        className: 'bg-red-100 text-red-800 border-red-200',
+        label: 'SUSPENDED'
+      },
+      cancelled: {
+        variant: 'destructive',
+        className: 'bg-red-100 text-red-800 border-red-200',
+        label: 'CANCELLED'
+      },
+      expired: {
+        variant: 'destructive',
+        className: 'bg-red-100 text-red-800 border-red-200',
+        label: 'EXPIRED'
+      },
+      frozen: {
+        variant: 'secondary',
+        className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+        label: 'FROZEN'
+      },
+      guest: {
+        variant: 'secondary',
+        className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+        label: 'GUEST'
+      },
+      archived: {
+        variant: 'outline',
+        className: 'bg-gray-100 text-gray-600 border-gray-300',
+        label: 'ARCHIVED'
+      }
     };
-    
+
+    const config = statusConfig[status?.toLowerCase()] || {
+      variant: 'outline',
+      className: 'bg-gray-100 text-gray-600 border-gray-300',
+      label: status?.toUpperCase() || 'UNKNOWN'
+    };
+
     return (
-      <Badge variant={variants[status] || 'outline'} className="text-xs">
-        {status?.charAt(0).toUpperCase() + status?.slice(1) || 'Unknown'}
+      <Badge
+        variant={config.variant}
+        className={`text-xs font-medium ${config.className}`}
+      >
+        {config.label}
       </Badge>
     );
   };
@@ -190,8 +309,10 @@ const ManualCheckIn = ({
         <CardContent>
           <ProfileSearch
             onProfileSelect={handleMemberSelect}
-            placeholder="Search by name, email, or member ID..."
-            showCreateButton={false}
+            onAutoCheckIn={handleAutoCheckIn}
+            autoCheckIn={true}
+            placeholder="Search by name, email, or member ID (click name to check in)..."
+            showCreateButton={true}
             userRole="member"
             maxResults={8}
           />
@@ -243,21 +364,22 @@ const ManualCheckIn = ({
             </div>
 
             {/* Validation Status */}
-            <div className={`p-3 rounded-lg border ${
-              validationResult?.valid 
-                ? 'bg-green-50 border-green-200' 
-                : 'bg-red-50 border-red-200'
-            }`}>
+            <div className={`p-3 rounded-lg border ${getValidationStatusClasses()}`}>
               <div className="flex items-center gap-2">
                 {getValidationIcon()}
                 <span className="text-sm font-medium">
                   {getValidationMessage()}
                 </span>
               </div>
+              {validationResult?.statusWarning && (
+                <div className="mt-2 text-xs text-gray-600">
+                  Status: {validationResult.statusWarning.displayStatus}
+                </div>
+              )}
             </div>
 
             {/* Staff Override Option */}
-            {!validationResult?.valid && (
+            {!validationResult?.valid && validationResult?.requiresOverride && (
               <div className="flex items-center space-x-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <Checkbox
                   id="staff-override"
@@ -267,9 +389,21 @@ const ManualCheckIn = ({
                 <label htmlFor="staff-override" className="text-sm font-medium cursor-pointer">
                   <div className="flex items-center gap-2">
                     <Shield className="h-4 w-4 text-yellow-600" />
-                    Staff Override - Allow check-in despite validation issues
+                    Staff Override - Allow check-in for {validationResult.statusInfo?.displayStatus || 'restricted'} member
                   </div>
                 </label>
+              </div>
+            )}
+
+            {/* Archived members cannot be overridden */}
+            {!validationResult?.valid && !validationResult?.requiresOverride && (
+              <div className="p-3 bg-gray-50 border border-gray-300 rounded-lg">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span className="text-sm font-medium">
+                    Check-in not permitted - {validationResult?.statusInfo?.displayStatus || 'Access denied'}
+                  </span>
+                </div>
               </div>
             )}
 

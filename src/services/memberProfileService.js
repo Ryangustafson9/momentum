@@ -22,9 +22,8 @@ export class MemberProfileService {
           phone: profileData.phone || null,
           role: 'member',
           status: 'active', // Use valid status instead of 'draft'
-          system_member_id: systemMemberId,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          system_member_id: systemMemberId
+          // Removed created_at, updated_at as they are auto-generated
         })
         .select('*')
         .single();

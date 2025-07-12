@@ -27,7 +27,6 @@ const QRBarcodeScanner = ({
   const streamRef = useRef(null);
   
   const [isScanning, setIsScanning] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [lastScanResult, setLastScanResult] = useState(null);
   const [scanHistory, setScanHistory] = useState([]);
   const [cameraError, setCameraError] = useState(null);
@@ -97,15 +96,17 @@ const QRBarcodeScanner = ({
         canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
+        // TODO: Integrate QR/barcode scanning library here
         // Get image data for processing
         const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        
-        // Here you would integrate with a QR/barcode scanning library
-        // For now, we'll simulate scanning with a manual input fallback
-        // In a real implementation, you'd use libraries like:
+
+        // Future implementation will use libraries like:
         // - @zxing/library for QR codes
         // - quagga2 for barcodes
         // - jsQR for QR codes
+        //
+        // When a QR code is detected, call:
+        // handleQRCodeDetected(qrCodeData);
       }
 
       // Continue scanning
@@ -117,73 +118,7 @@ const QRBarcodeScanner = ({
     requestAnimationFrame(scanFrame);
   };
 
-  const handleManualInput = async (code) => {
-    if (!code || isProcessing) return;
 
-    setIsProcessing(true);
-    
-    try {
-      // Try to check in using the scanned/entered code
-      const result = await CheckInService.checkInByAccessCard(code, {
-        locationId,
-        staffMemberId,
-        method: 'qr_scan',
-        deviceInfo: {
-          ...deviceInfo,
-          scanner_type: 'web_camera',
-          timestamp: new Date().toISOString()
-        }
-      });
-
-      const scanRecord = {
-        id: Date.now(),
-        code,
-        timestamp: new Date().toISOString(),
-        success: result.success,
-        message: result.message || (result.success ? 'Check-in successful' : 'Check-in failed')
-      };
-
-      setLastScanResult(scanRecord);
-      setScanHistory(prev => [scanRecord, ...prev.slice(0, 4)]); // Keep last 5 scans
-
-      if (result.success) {
-        toast({
-          title: "Check-In Successful",
-          description: `Welcome ${result.member?.first_name || 'Member'}!`,
-          variant: "default"
-        });
-        onCheckInSuccess?.(result);
-      } else {
-        toast({
-          title: "Check-In Failed",
-          description: result.message || "Invalid access card or member not found",
-          variant: "destructive"
-        });
-        onCheckInFailed?.(result);
-      }
-
-    } catch (error) {
-      console.error('Error processing scan:', error);
-      const errorRecord = {
-        id: Date.now(),
-        code,
-        timestamp: new Date().toISOString(),
-        success: false,
-        message: 'Error processing scan'
-      };
-      
-      setLastScanResult(errorRecord);
-      setScanHistory(prev => [errorRecord, ...prev.slice(0, 4)]);
-      
-      toast({
-        title: "Scan Error",
-        description: "Error processing scan. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   const formatTime = (timestamp) => {
     return new Date(timestamp).toLocaleTimeString('en-US', {
@@ -260,33 +195,7 @@ const QRBarcodeScanner = ({
             </div>
           )}
 
-          {/* Manual Input Fallback */}
-          <div className="border-t pt-4">
-            <p className="text-sm text-gray-600 mb-2">Manual Entry:</p>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Enter access card number or QR code"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    handleManualInput(e.target.value);
-                    e.target.value = '';
-                  }
-                }}
-              />
-              <Button
-                size="sm"
-                onClick={(e) => {
-                  const input = e.target.parentElement.querySelector('input');
-                  handleManualInput(input.value);
-                  input.value = '';
-                }}
-              >
-                Check In
-              </Button>
-            </div>
-          </div>
+
         </CardContent>
       </Card>
 

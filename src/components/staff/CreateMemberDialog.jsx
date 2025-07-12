@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useToast } from '@/hooks/use-toast.js';
 import { supabase } from '@/lib/supabaseClient';
 
-const CreateMemberDialog = ({ isOpen, onClose, onSuccess }) => {
+const CreateMemberDialog = ({ isOpen, onClose, onSuccess, initialData = {} }) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
@@ -66,6 +66,19 @@ const CreateMemberDialog = ({ isOpen, onClose, onSuccess }) => {
       setIsSubmitting(false);
     }
   }, [isOpen]);
+
+  // Set initial data when dialog opens
+  useEffect(() => {
+    if (isOpen && initialData && Object.keys(initialData).length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        first_name: initialData.first_name || prev.first_name,
+        last_name: initialData.last_name || prev.last_name,
+        email: initialData.email || prev.email,
+        phone: initialData.phone || prev.phone
+      }));
+    }
+  }, [isOpen, initialData]);
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -131,10 +144,8 @@ const CreateMemberDialog = ({ isOpen, onClose, onSuccess }) => {
         emergency_contact_email: formData.emergency_contact_email.trim() || null,
         emergency_contact_relationship: formData.emergency_contact_relationship || null,
         status: formData.status,
-        role: 'member',
-        display_name: `${formData.first_name.trim()} ${formData.last_name.trim()}`,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        role: 'member'
+        // Removed display_name, created_at, updated_at as they are auto-generated
       };
 
       const { data, error } = await supabase
@@ -150,7 +161,7 @@ const CreateMemberDialog = ({ isOpen, onClose, onSuccess }) => {
 
       toast({
         title: "Member Created",
-        description: `${memberData.display_name} has been successfully added to the system.`,
+        description: `${memberData.first_name} ${memberData.last_name} has been successfully added to the system.`,
         variant: "default"
       });
 

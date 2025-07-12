@@ -8,6 +8,8 @@ export const navLinks = [
   { to: "/staff-portal/timeclock", label: "Timeclock", icon: "Clock" },
   { to: "/staff-portal/members", label: "Members", icon: "Users" },
   { to: "/staff-portal/memberships", label: "Plan Management", icon: "Briefcase" },
+  { to: "/staff-portal/services", label: "Services", icon: "ShoppingCart" },
+  { to: "/staff-portal/service-packages", label: "Service Packages", icon: "Package" },
   { to: "/staff-portal/classes", label: "Classes", icon: "Calendar" },
   { to: "/staff-portal/schedule", label: "Schedule", icon: "Zap" },
   { to: "/staff-portal/communications", label: "Communications", icon: "Mail" },
@@ -16,6 +18,7 @@ export const navLinks = [
   { to: "/staff-portal/equipment", label: "Equipment", icon: "Wrench" },
   { to: "/staff-portal/reports", label: "Reports", icon: "BarChart2" },
   { to: "/staff-portal/trainers", label: "Trainers", icon: "UserCog" },  { to: "/staff-portal/corporate-management", label: "Corporate Partners", icon: "Building" },
+  { to: "/staff-portal/staff-rates", label: "Staff Rates", icon: "DollarSign" },
   { to: "/staff-portal/process-automation", label: "Process Automation", icon: "GitBranch" },
 ];
 

@@ -5,6 +5,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import App from '@/App.jsx';
 import '@/components/ui/globals.css';
+import '@/styles/responsive.css';
 import { Toaster } from '@/components/ui/toaster.jsx';
 import { ThemeProvider } from '@/hooks/useTheme.jsx';
 import { FeatureErrorBoundary } from '@/shared/components/ErrorBoundary.jsx';

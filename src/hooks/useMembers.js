@@ -165,11 +165,21 @@ export const useMemberMembership = (memberId) => {
   });
 };
 
-// Get member's add-ons
+// Get member's add-ons (from unified memberships table)
 export const useMemberAddons = (memberId) => {
   return useQuery({
     queryKey: queryKeys.memberAddons(memberId),
     queryFn: () => memberService.getMemberAddons(memberId),
+    enabled: !!memberId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+// Get all memberships for a member (primary + add-ons + staff + guest)
+export const useAllMemberMemberships = (memberId) => {
+  return useQuery({
+    queryKey: ['member-all-memberships', memberId],
+    queryFn: () => memberService.getAllMemberMemberships(memberId),
     enabled: !!memberId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

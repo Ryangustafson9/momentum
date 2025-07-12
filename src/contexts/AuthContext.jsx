@@ -231,6 +231,28 @@ export const AuthProvider = ({ children }) => {
 
         logger.info('Session check completed:', session ? 'Session found' : 'No session');
 
+        // Check for SSO session if no regular session exists
+        if (!session?.user && isMounted) {
+          const ssoSession = localStorage.getItem('momentum_sso_session');
+          if (ssoSession) {
+            try {
+              const parsedSession = JSON.parse(ssoSession);
+              if (parsedSession.expires_at > Date.now()) {
+                logger.info('✅ Valid SSO session found, setting user...');
+                setUser(parsedSession.user);
+                setAuthReady(true);
+                return;
+              } else {
+                logger.info('SSO session expired, removing...');
+                localStorage.removeItem('momentum_sso_session');
+              }
+            } catch (error) {
+              logger.error('Invalid SSO session data:', error);
+              localStorage.removeItem('momentum_sso_session');
+            }
+          }
+        }
+
         if (session?.user && isMounted) {
           logger.info('✅ User session found, fetching profile...');
 
@@ -287,6 +309,13 @@ export const AuthProvider = ({ children }) => {
 
     // ⭐ FAST: Initialize immediately
     initializeAuth();
+
+    // Add SSO login success listener
+    const handleSSOLoginSuccess = () => {
+      logger.info('SSO login success event received, reinitializing auth...');
+      initializeAuth();
+    };
+    window.addEventListener('sso-login-success', handleSSOLoginSuccess);
 
     // ⭐ FIXED: Auth state change listener with better session handling
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -351,6 +380,7 @@ export const AuthProvider = ({ children }) => {
       window.removeEventListener('focus', handleFocus);
       window.removeEventListener('blur', handleBlur);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('sso-login-success', handleSSOLoginSuccess);
       subscription?.unsubscribe();
     };
   }, []);  const login = async (email, password) => {
@@ -515,9 +545,9 @@ export const AuthProvider = ({ children }) => {
             role: 'nonmember', // All app signups are nonmembers - admins created at DB level
             first_name: userData.firstName || '',
             last_name: userData.lastName || '',
-            display_name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
             email: email,
             phone: userData.phone || null
+            // Removed display_name as it's auto-generated
           };
 
           // ⚠️ FOREIGN KEY FIX: Validate auth user exists before creating profile

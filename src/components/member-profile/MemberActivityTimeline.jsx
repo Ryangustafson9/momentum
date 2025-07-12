@@ -46,10 +46,10 @@ const MemberActivityTimeline = ({ memberId, memberData }) => {
   const loadCheckInActivities = async () => {
     try {
       const { data, error } = await supabase
-        .from('check_ins')
+        .from('checkin_history')
         .select('*')
         .eq('profile_id', memberId)
-        .order('created_at', { ascending: false })
+        .order('check_in_time', { ascending: false })
         .limit(10);
 
       if (error) throw error;
@@ -59,7 +59,7 @@ const MemberActivityTimeline = ({ memberId, memberData }) => {
         type: 'check_in',
         title: 'Checked In',
         description: checkIn.location_id ? `At location ${checkIn.location_id}` : 'Gym check-in',
-        timestamp: checkIn.created_at,
+        timestamp: checkIn.check_in_time,
         icon: UserCheck,
         color: 'text-green-600',
         bgColor: 'bg-green-100'
@@ -78,7 +78,7 @@ const MemberActivityTimeline = ({ memberId, memberData }) => {
           *,
           membership_type:membership_types(name)
         `)
-        .eq('profile_id', memberId)
+        .eq('member_id', memberId)
         .order('created_at', { ascending: false })
         .limit(5);
 

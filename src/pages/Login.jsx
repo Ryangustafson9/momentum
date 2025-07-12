@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Settings, EyeOff } from 'lucide-react';
+
 import { getDefaultRoute, normalizeRole } from '@/utils/roleUtils';
 import { showToast } from '@/utils/toastUtils';
 import { useLoading } from '@/hooks/useLoading';
@@ -20,74 +20,17 @@ const Login = () => {
   const [formErrors, setFormErrors] = useState({});
   const [loginError, setLoginError] = useState('');
   const [showPasswordReset, setShowPasswordReset] = useState(false);
-  const [showDevLogins, setShowDevLogins] = useState(false);
-  const [devKeySequence, setDevKeySequence] = useState('');
 
   const { login } = useAuth();
   const navigate = useNavigate();
   const { withLoading, isLoading } = useLoading();
-  const { branding, clubName, logoUrl } = useBranding();
+  const { branding, clubName, loading: brandingLoading } = useBranding();
 
 
 
-  // Keyboard shortcut to toggle dev logins (Ctrl+Shift+D)
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Check for Ctrl+Shift+D
-      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
-        e.preventDefault();
-        setShowDevLogins(prev => !prev);
-        return;
-      }
 
-      // Check for secret key sequence "devmode"
-      const newSequence = devKeySequence + e.key.toLowerCase();
-      if (newSequence.includes('devmode')) {
-        setShowDevLogins(true);
-        setDevKeySequence('');
-      } else if ('devmode'.startsWith(newSequence)) {
-        setDevKeySequence(newSequence);
-      } else {
-        setDevKeySequence('');
-      }
-    };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [devKeySequence]);
 
-  // Dev login function for quick testing
-  const handleDevLogin = async (userType) => {
-    const credentials = {
-      admin: { email: 'admin@momentumtest.com', password: 'password405' },
-      staff: { email: 'staff@momentumtest.com', password: 'password405' },
-      member: { email: 'alex.johnson@testgym.com', password: 'password405' }
-    };
-
-    const { email: devEmail, password: devPassword } = credentials[userType];
-
-    await withLoading(async () => {
-      try {
-        
-        const { user } = await login(devEmail, devPassword);
-
-        if (!user) {
-          setLoginError(`Dev ${userType} account not found.`);
-          return;
-        }
-
-        const normalizedRole = normalizeRole(user.role || 'member');
-        const defaultRoute = getDefaultRoute(normalizedRole);
-
-        showToast.success(`Dev Login Success!`, `Logged in as ${userType}`);
-        navigate(defaultRoute);
-
-      } catch (error) {
-        
-        setLoginError(`Dev ${userType} login failed: ${error.message}`);
-      }
-    });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -170,34 +113,30 @@ const Login = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
 
           {/* Settings Button - Top Right */}
-          <div className="absolute top-4 right-4 z-20">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowDevLogins(prev => !prev)}
-              className="h-8 w-8 p-0 rounded-full hover:bg-gray-100/80 transition-colors"
-              title={showDevLogins ? "Hide Dev Logins (Ctrl+Shift+D)" : "Show Dev Logins (Ctrl+Shift+D)"}
-            >
-              {showDevLogins ? (
-                <EyeOff className="h-4 w-4 text-gray-500" />
-              ) : (
-                <Settings className="h-4 w-4 text-gray-500" />
-              )}
-            </Button>
-          </div>
+
 
           <div className="relative z-10">
             {/* Club Logo at Top */}
             <div className="text-center mb-5">
-              {!clubLogoError ? (
+              {/* Show loading spinner while branding is loading */}
+              {brandingLoading && (
+                <div className="h-16 w-16 mx-auto mb-4 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+              )}
+
+              {/* Show logo only if branding is loaded and we have a logoUrl */}
+              {!brandingLoading && branding.logoUrl && !clubLogoError && (
                 <img
-                  src={branding.logoUrl || "/assets/momentum-logo.svg"}
+                  src={branding.logoUrl}
                   alt="Club Logo"
                   className="h-16 mx-auto mb-4 object-contain drop-shadow-lg"
                   onError={() => setClubLogoError(true)}
                 />
-              ) : (
+              )}
+
+              {/* Show fallback only if branding is loaded and logo failed or no logoUrl */}
+              {!brandingLoading && (clubLogoError || !branding.logoUrl) && (
                 <div className="h-16 w-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
                   <span className="text-white font-bold text-2xl">{clubName.charAt(0)}</span>
                 </div>
@@ -310,65 +249,7 @@ const Login = () => {
 
 
 
-            {/* Dev Login Buttons - Show when enabled */}
-            {showDevLogins && (process.env.NODE_ENV === 'development' ||
-              window.location.hostname.includes('momentumapp') ||
-              window.location.hostname.includes('pages.dev') ||
-              new URLSearchParams(window.location.search).has('dev')) && (
-              <div className="mt-8 pt-6 border-t border-gray-200/50">
-                <div className="text-center mb-4">
-                  <div className="flex items-center justify-center gap-2 mb-4">
-                    <p className="text-sm font-medium text-gray-600">🔧 Development Quick Login</p>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowDevLogins(false)}
-                      className="h-6 w-6 p-0 rounded-full hover:bg-gray-100 transition-colors"
-                      title="Hide Dev Logins"
-                    >
-                      <EyeOff className="h-3 w-3 text-gray-400" />
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => handleDevLogin('admin')}
-                      disabled={isLoading()}
-                      className="h-10 bg-red-50/80 border-red-200 text-red-700 hover:bg-red-100 hover:border-red-300 rounded-xl transition-all duration-200 font-medium"
-                    >
-                      {isLoading() ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
-                      ) : (
-                        <>
-                          🛡️ Admin
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => handleDevLogin('member')}
-                      disabled={isLoading()}
-                      className="h-10 bg-blue-50/80 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300 rounded-xl transition-all duration-200 font-medium"
-                    >
-                      {isLoading() ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                      ) : (
-                        <>
-                          👤 Member
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-3">
-                    Quick login for testing purposes<br/>
-                    <span className="text-gray-400">Shortcuts: Ctrl+Shift+D or type "devmode"</span>
-                  </p>
-                </div>
-              </div>
-            )}
+
 
             {/* Powered by Momentum Footer */}
             <div className="mt-8 pt-6 border-t border-gray-200/50">

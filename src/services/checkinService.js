@@ -8,27 +8,130 @@ import { sanitizeError } from '@/utils/requestUtils';
 export class CheckInService {
   
   /**
+   * Get status-based check-in rules
+   */
+  static getStatusCheckInRules(memberStatus, membershipStatus = null) {
+    // Handle member status rules
+    switch (memberStatus) {
+      case 'active':
+        return {
+          allowed: true,
+          requiresAttention: false,
+          highlightColor: 'green',
+          reason: 'active',
+          message: 'Active member - check-in approved'
+        };
+
+      case 'suspended':
+        return {
+          allowed: false,
+          allowOverride: true,
+          requiresAttention: true,
+          highlightColor: 'red',
+          reason: 'suspended',
+          message: 'Member is suspended. Staff override required.',
+          displayStatus: 'SUSPENDED'
+        };
+
+      case 'cancelled':
+        return {
+          allowed: false,
+          allowOverride: true,
+          requiresAttention: true,
+          highlightColor: 'red',
+          reason: 'cancelled',
+          message: 'Member is cancelled. Staff override required.',
+          displayStatus: 'CANCELLED'
+        };
+
+      case 'expired':
+        return {
+          allowed: false,
+          allowOverride: true,
+          requiresAttention: true,
+          highlightColor: 'red',
+          reason: 'expired',
+          message: 'Member is expired. Staff override required.',
+          displayStatus: 'EXPIRED'
+        };
+
+      case 'frozen':
+        return {
+          allowed: false,
+          allowOverride: true,
+          requiresAttention: true,
+          highlightColor: 'yellow',
+          reason: 'frozen',
+          message: 'Member is frozen. Staff override required.',
+          displayStatus: 'FROZEN'
+        };
+
+      case 'guest':
+        return {
+          allowed: false,
+          allowOverride: true,
+          requiresAttention: true,
+          highlightColor: 'yellow',
+          reason: 'guest',
+          message: 'Guest access. Staff override required.',
+          displayStatus: 'GUEST'
+        };
+
+      case 'archived':
+        return {
+          allowed: false,
+          allowOverride: false,
+          requiresAttention: false,
+          highlightColor: 'gray',
+          reason: 'archived',
+          message: 'Member is archived. Check-in denied.',
+          displayStatus: 'ARCHIVED'
+        };
+
+      default:
+        return {
+          allowed: false,
+          allowOverride: true,
+          requiresAttention: true,
+          highlightColor: 'gray',
+          reason: 'unknown_status',
+          message: 'Unknown member status. Staff override required.',
+          displayStatus: 'UNKNOWN'
+        };
+    }
+  }
+
+  /**
    * Validate member for check-in
    */
   static async validateMemberForCheckIn(profileId, locationId = null, options = {}) {
     try {
       const { skipDailyLimit = false, staffOverride = false } = options;
 
+      // Get authenticated client (handles SSO sessions)
+      const supabaseClient = this.getAuthenticatedClient();
+
       // Get member profile with membership information
-      const { data: profile, error: profileError } = await supabase
+      console.log('Fetching member profile for validation:', profileId);
+      const { data: profile, error: profileError } = await supabaseClient
         .from('profiles')
         .select(`
           *,
-          memberships(
+          memberships!memberships_user_id_fkey(
             id,
             status,
-            current_membership_type_id,
-            join_date,
+            membership_type_id,
+            start_date,
+            expiration_date,
+            monthly_fee,
+            plan_type,
             membership_types(name, category, active)
           )
         `)
         .eq('id', profileId)
         .single();
+
+      console.log('Profile fetch result:', { profile, profileError });
 
       if (profileError || !profile) {
         return {
@@ -47,22 +150,32 @@ export class CheckInService {
         };
       }
 
-      // Check member status
-      if (profile.status !== 'active' && !staffOverride) {
+      // Check member status with comprehensive business rules
+      const memberStatus = profile.status?.toLowerCase();
+      const activeMembership = profile.memberships?.find(m => m.status === 'active');
+      const membershipStatus = activeMembership?.status?.toLowerCase();
+
+      // Get status-based check-in rules
+      const statusRules = this.getStatusCheckInRules(memberStatus, membershipStatus);
+
+      if (!statusRules.allowed && !staffOverride) {
         return {
           valid: false,
-          reason: profile.status === 'suspended' ? 'suspended' : 'inactive_member',
-          message: `Member status is ${profile.status}. Access denied.`
+          reason: statusRules.reason,
+          message: statusRules.message,
+          statusInfo: statusRules,
+          requiresOverride: statusRules.allowOverride
         };
       }
 
-      // Check membership status
-      const activeMembership = profile.memberships?.find(m => m.status === 'active');
-      if (!activeMembership && !staffOverride) {
+      // If status requires special handling but is allowed
+      if (statusRules.requiresAttention) {
         return {
-          valid: false,
-          reason: 'no_active_membership',
-          message: 'No active membership found. Please contact staff.'
+          valid: true,
+          profile,
+          membership: activeMembership,
+          statusWarning: statusRules,
+          requiresStaffAttention: true
         };
       }
 
@@ -110,17 +223,187 @@ export class CheckInService {
   }
 
   /**
+   * Get member's last visit from check-in history
+   */
+  static async getLastVisit(profileId) {
+    try {
+      const { data, error } = await supabase
+        .from('checkin_history')
+        .select('check_in_time')
+        .eq('profile_id', profileId)
+        .eq('validation_status', 'valid')
+        .order('check_in_time', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching last visit:', error);
+        return null;
+      }
+
+      return data?.check_in_time || null;
+    } catch (error) {
+      console.error('Error in getLastVisit:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get member's total visit count from check-in history
+   */
+  static async getVisitCount(profileId) {
+    try {
+      const { count, error } = await supabase
+        .from('checkin_history')
+        .select('*', { count: 'exact', head: true })
+        .eq('profile_id', profileId)
+        .eq('validation_status', 'valid');
+
+      if (error) {
+        console.error('Error fetching visit count:', error);
+        return 0;
+      }
+
+      return count || 0;
+    } catch (error) {
+      console.error('Error in getVisitCount:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Get member profile with visit information from check-in history
+   */
+  static async getMemberWithVisitInfo(profileId) {
+    try {
+      // Get profile data
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', profileId)
+        .single();
+
+      if (profileError || !profile) {
+        return null;
+      }
+
+      // Get visit information from check-in history
+      const [lastVisit, visitCount] = await Promise.all([
+        this.getLastVisit(profileId),
+        this.getVisitCount(profileId)
+      ]);
+
+      return {
+        ...profile,
+        last_visit: lastVisit,
+        visit_count: visitCount
+      };
+    } catch (error) {
+      console.error('Error in getMemberWithVisitInfo:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get authenticated Supabase client (handles SSO sessions)
+   */
+  static getAuthenticatedClient() {
+    // For now, since RLS is disabled, we can use the regular client
+    // In the future, this could create a properly authenticated client for SSO
+    return supabase;
+  }
+
+  /**
+   * Check if current user has permission to perform check-ins
+   */
+  static async checkCheckInPermission() {
+    try {
+      console.log('Checking check-in permissions...');
+
+      // First check for SSO session
+      const ssoSession = localStorage.getItem('momentum_sso_session');
+      console.log('SSO session found:', !!ssoSession);
+
+      if (ssoSession) {
+        try {
+          const session = JSON.parse(ssoSession);
+          console.log('SSO session data:', {
+            email: session.user?.email,
+            role: session.user?.role,
+            is_global_admin: session.user?.is_global_admin,
+            expires_at: new Date(session.expires_at).toISOString(),
+            is_valid: session.expires_at > Date.now()
+          });
+
+          // Check if SSO session is still valid
+          if (session.expires_at > Date.now()) {
+            console.log('Using SSO session for permission check:', session.user.email);
+
+            // SSO users are always global admins with full permissions
+            const hasPermission = session.user.role === 'admin' || session.user.is_global_admin === true;
+            console.log('SSO permission result:', hasPermission);
+            return hasPermission;
+          } else {
+            console.log('SSO session expired, removing...');
+            localStorage.removeItem('momentum_sso_session');
+          }
+        } catch (ssoError) {
+          console.error('Invalid SSO session data:', ssoError);
+          localStorage.removeItem('momentum_sso_session');
+        }
+      }
+
+      // Fallback to regular Supabase auth
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        console.error('Authentication error:', authError);
+        return false;
+      }
+
+      // Get user profile to check role and permissions
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role, is_global_admin')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError || !profile) {
+        console.error('Profile fetch error:', profileError);
+        return false;
+      }
+
+      // Allow staff, admin, or global admin to perform check-ins
+      return profile.role === 'staff' ||
+             profile.role === 'admin' ||
+             profile.is_global_admin === true;
+
+    } catch (error) {
+      console.error('Permission check error:', error);
+      return false;
+    }
+  }
+
+  /**
    * Apply configurable validation rules
    */
   static async applyValidationRules(profile, locationId, staffOverride = false) {
     try {
       // Get validation rules for location (or global rules)
-      const { data: rules, error } = await supabase
+      let query = supabase
         .from('checkin_validation_rules')
         .select('*')
-        .or(`location_id.is.null,location_id.eq.${locationId || 'null'}`)
         .eq('is_active', true)
         .order('priority', { ascending: true });
+
+      // Add location filter - get global rules (location_id is null) or location-specific rules
+      if (locationId) {
+        query = query.or(`location_id.is.null,location_id.eq.${locationId}`);
+      } else {
+        query = query.is('location_id', null);
+      }
+
+      const { data: rules, error } = await query;
 
       if (error) {
         console.error('Error fetching validation rules:', error);
@@ -185,6 +468,28 @@ export class CheckInService {
           };
         }
         break;
+
+      case 'daily_limit':
+        // Allow multiple check-ins per day by default
+        if (!staffOverride && !config.allow_multiple) {
+          const today = new Date().toISOString().split('T')[0];
+          const { count } = await supabase
+            .from('checkin_history')
+            .select('*', { count: 'exact', head: true })
+            .eq('profile_id', profile.id)
+            .gte('check_in_time', today)
+            .lt('check_in_time', today + 'T23:59:59');
+
+          const maxCheckins = config.max_checkins_per_day || 1;
+          if (count >= maxCheckins) {
+            return {
+              valid: false,
+              reason: 'daily_limit_exceeded',
+              message: `Daily check-in limit of ${maxCheckins} exceeded. Contact staff for override.`
+            };
+          }
+        }
+        break;
     }
 
     return { valid: true };
@@ -195,6 +500,8 @@ export class CheckInService {
    */
   static async performCheckIn(profileId, options = {}) {
     try {
+      console.log('Starting performCheckIn for profile:', profileId);
+
       const {
         method = 'manual',
         accessCardNumber = null,
@@ -205,6 +512,48 @@ export class CheckInService {
         notes = null,
         staffOverride = false
       } = options;
+
+      console.log('Check-in options:', options);
+
+      // Check if current user has permission to create check-ins
+      console.log('Checking permissions...');
+      const hasPermission = await this.checkCheckInPermission();
+      console.log('Permission check result:', hasPermission);
+
+      if (!hasPermission) {
+        return {
+          success: false,
+          reason: 'permission_denied',
+          message: 'You do not have permission to perform check-ins.'
+        };
+      }
+
+      // Get current user ID for staff_member_id (handle SSO sessions)
+      let currentUserId = staffMemberId;
+      if (!currentUserId) {
+        // Try to get from SSO session first
+        const ssoSession = localStorage.getItem('momentum_sso_session');
+        if (ssoSession) {
+          try {
+            const session = JSON.parse(ssoSession);
+            if (session.expires_at > Date.now()) {
+              currentUserId = session.user.id;
+            }
+          } catch (error) {
+            console.warn('Failed to parse SSO session:', error);
+          }
+        }
+
+        // Fallback to regular auth
+        if (!currentUserId) {
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            currentUserId = user?.id;
+          } catch (error) {
+            console.warn('Failed to get current user ID:', error);
+          }
+        }
+      }
 
       // Validate member first
       const validation = await this.validateMemberForCheckIn(profileId, locationId, { staffOverride });
@@ -224,7 +573,7 @@ export class CheckInService {
         };
       }
 
-      // Create check-in record
+      // Create check-in record with status information
       const checkinData = {
         profile_id: profileId,
         member_id: validation.membership?.id || null,
@@ -233,17 +582,23 @@ export class CheckInService {
         check_in_method: method,
         access_card_number: accessCardNumber,
         qr_code_data: qrCodeData,
-        staff_member_id: staffMemberId,
+        staff_member_id: currentUserId,
         location_id: locationId,
-        device_info: deviceInfo,
-        validation_status: 'valid',
+        device_info: deviceInfo || {},
+        validation_status: validation.statusWarning ? 'warning' : 'valid',
         status: 'checked_in',
         notes: notes,
         metadata: {
           staff_override: staffOverride,
-          validation_timestamp: new Date().toISOString()
+          validation_timestamp: new Date().toISOString(),
+          member_status: validation.profile.status,
+          membership_status: validation.membership?.status,
+          status_warning: validation.statusWarning,
+          requires_staff_attention: validation.requiresStaffAttention
         }
       };
+
+      console.log('Creating check-in record:', checkinData);
 
       const { data: checkinRecord, error: checkinError } = await supabase
         .from('checkin_history')
@@ -253,21 +608,28 @@ export class CheckInService {
 
       if (checkinError) {
         console.error('Error creating check-in record:', checkinError);
+        console.error('Check-in data that failed:', checkinData);
+
+        // Provide more specific error messages
+        let errorMessage = 'Failed to record check-in. Please try again.';
+        if (checkinError.code === '42501') {
+          errorMessage = 'Permission denied. Please ensure you have the proper role to perform check-ins.';
+        } else if (checkinError.code === '23505') {
+          errorMessage = 'Duplicate check-in detected. Member may already be checked in.';
+        } else if (checkinError.message) {
+          errorMessage = `Check-in failed: ${checkinError.message}`;
+        }
+
         return {
           success: false,
           reason: 'checkin_failed',
-          message: 'Failed to record check-in. Please try again.'
+          message: errorMessage,
+          error: checkinError
         };
       }
 
-      // Update member's last visit
-      await supabase
-        .from('profiles')
-        .update({ 
-          last_visit: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', profileId);
+      // Note: Last visit is now tracked via check-in history table
+      // No need to update profiles table
 
       // Create active session record
       await supabase
@@ -279,6 +641,18 @@ export class CheckInService {
           check_in_time: checkinRecord.check_in_time,
           status: 'active'
         }]);
+
+      // Dispatch real-time event for UI updates
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('checkin-success', {
+          detail: {
+            checkinRecord,
+            member: validation.profile,
+            membership: validation.membership,
+            timestamp: new Date().toISOString()
+          }
+        }));
+      }
 
       return {
         success: true,
@@ -302,6 +676,12 @@ export class CheckInService {
    */
   static async recordCheckInAttempt(profileId, options) {
     try {
+      // Check permission before recording attempt
+      const hasPermission = await this.checkCheckInPermission();
+      if (!hasPermission) {
+        console.warn('Permission denied for recording check-in attempt');
+        return;
+      }
       const attemptData = {
         profile_id: profileId,
         check_in_time: new Date().toISOString(),
@@ -498,7 +878,7 @@ export class CheckInService {
         staff_member_id: staffMemberId,
         validation_status: 'valid',
         device_info: deviceInfo,
-        access_card_used: accessCode
+        access_card_number: accessCode // Fixed: use correct column name
       };
 
       const { data: checkIn, error: checkInError } = await supabase

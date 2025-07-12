@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ClubLogo } from '@/components/ui/logo-loader';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,16 +38,17 @@ import { useBranding } from '@/hooks/useBranding';
 import LocationSwitcher from './LocationSwitcher';
 
 const ClubHeader = () => {
-  const { branding } = useBranding();
+  const { branding, loading } = useBranding();
   // LocationSwitcher will handle its own location context
 
   return (
     <div className="flex items-center gap-4">
       <div className="flex items-center gap-3">
-        <img
-          src={branding.logoUrl || "/assets/momentum-logo.svg"}
-          alt="Club Logo"
-          className="h-12 w-auto object-contain"
+        <ClubLogo
+          branding={branding}
+          loading={loading}
+          size="default"
+          className="h-12 max-w-32"
         />
         <LocationSwitcher variant="dropdown" className="ml-2" />
       </div>

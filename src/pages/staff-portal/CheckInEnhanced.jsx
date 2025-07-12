@@ -329,7 +329,7 @@ const CheckInEnhanced = () => {
                 <ProfileSearch
                   onProfileSelect={handleMemberSelect}
                   placeholder="Search members by name, email, or member ID..."
-                  showCreateButton={false}
+                  showCreateButton={true}
                   userRole="member"
                   maxResults={8}
                   className="w-full"

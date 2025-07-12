@@ -57,16 +57,16 @@ const MemberQuickStats = ({ memberId, memberData }) => {
   const loadCheckInStats = async () => {
     try {
       const { data, error } = await supabase
-        .from('check_ins')
-        .select('created_at')
+        .from('checkin_history')
+        .select('check_in_time')
         .eq('profile_id', memberId)
-        .order('created_at', { ascending: false });
+        .order('check_in_time', { ascending: false });
 
       if (error) throw error;
 
       return {
         total: data?.length || 0,
-        lastCheckIn: data?.[0]?.created_at || null
+        lastCheckIn: data?.[0]?.check_in_time || null
       };
     } catch (error) {
       console.warn('Could not load check-in stats:', error);
@@ -79,12 +79,12 @@ const MemberQuickStats = ({ memberId, memberData }) => {
       const { data, error } = await supabase
         .from('transactions')
         .select('total_amount')
-        .eq('profile_id', memberId)
+        .eq('customer_id', memberId)
         .eq('status', 'completed');
 
       if (error) throw error;
 
-      const totalSpent = data?.reduce((sum, transaction) => 
+      const totalSpent = data?.reduce((sum, transaction) =>
         sum + parseFloat(transaction.total_amount || 0), 0) || 0;
 
       return { totalSpent };

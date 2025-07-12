@@ -41,19 +41,29 @@ const MemberNotesLog = ({ memberId }) => {
       setIsLoading(true);
       const { data, error } = await supabase
         .from('member_notes')
-        .select(`
-          *,
-          created_by_profile:profiles!member_notes_created_by_fkey(
-            first_name,
-            last_name,
-            display_name
-          )
-        `)
+        .select('*')
         .eq('member_id', memberId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setNotes(data || []);
+
+      // Manually fetch staff info for each note
+      const notesWithStaff = await Promise.all(
+        (data || []).map(async (note) => {
+          if (note.created_by) {
+            const { data: staffData } = await supabase
+              .from('profiles')
+              .select('first_name, last_name, display_name')
+              .eq('id', note.created_by)
+              .single();
+
+            return { ...note, created_by_profile: staffData };
+          }
+          return note;
+        })
+      );
+
+      setNotes(notesWithStaff);
     } catch (error) {
       console.error('Error loading member notes:', error);
       // Create table if it doesn't exist
@@ -95,17 +105,21 @@ const MemberNotesLog = ({ memberId }) => {
           priority: newNote.priority,
           created_by: user?.id
         })
-        .select(`
-          *,
-          created_by_profile:profiles!member_notes_created_by_fkey(
-            first_name,
-            last_name,
-            display_name
-          )
-        `)
+        .select('*')
         .single();
 
       if (error) throw error;
+
+      // Fetch staff info for the new note
+      if (data.created_by) {
+        const { data: staffData } = await supabase
+          .from('profiles')
+          .select('first_name, last_name, display_name')
+          .eq('id', data.created_by)
+          .single();
+
+        data.created_by_profile = staffData;
+      }
 
       setNotes(prev => [data, ...prev]);
       setNewNote({ content: '', type: 'general', priority: 'normal' });

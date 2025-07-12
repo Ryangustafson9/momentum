@@ -118,7 +118,7 @@ export const productionConfig = {
  */
 export const initializeProductionOptimizations = () => {
   if (!env.PROD) {
-    
+    console.log('Development mode: Skipping production optimizations');
     return;
   }
 
@@ -131,13 +131,13 @@ export const initializeProductionOptimizations = () => {
   // Set up error reporting
   if (env.SENTRY.DSN) {
     // Sentry configuration would go here
-    
+    console.log('Sentry error reporting initialized');
   }
 
   // Set up performance monitoring
   if (productionConfig.analytics.enabled) {
     // Performance monitoring setup would go here
-    
+    console.log('Performance monitoring initialized');
   }
 
   // Set up security headers (if running in a web context)

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -10,8 +10,8 @@ import {
 import { ManualCheckIn, CheckInService } from '@/components/checkin';
 import QRBarcodeScanner from '@/components/checkin/QRBarcodeScanner';
 import RecentActivityFeed from '@/components/checkin/RecentActivityFeed';
-import StaffPageContainer from '@/components/staff/StaffPageContainer';
 import { useAuth } from '@/contexts/AuthContext';
+import { ResponsiveContainer } from '@/components/layout/ResponsiveContainer';
 
 /**
  * Enhanced Check-In Page with QR Code Scanning and Manual Check-In
@@ -115,7 +115,7 @@ const CheckInPage = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <StaffPageContainer className="space-y-6 p-4 md:p-6">
+      <ResponsiveContainer className="space-y-6">
         {/* Page Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -135,12 +135,12 @@ const CheckInPage = () => {
           </div>
         </div>
 
-        {/* Two-Column Layout - Responsive */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Mobile: Show monitoring dashboard first on small screens */}
-          <div className="lg:hidden lg:col-span-3 space-y-6 order-1">
-            {/* Mobile Quick Stats */}
-            <div className="grid grid-cols-2 gap-4">
+        {/* Two-Column Layout: Check-in Interface (Left) + Activity Feed (Right) */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-[calc(100vh-12rem)]">
+          {/* Left Column - Check-in Interface (25% width on desktop) */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Mobile Quick Stats - Only show on mobile */}
+            <div className="lg:hidden grid grid-cols-2 gap-4">
               <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
                 <CardContent className="p-3">
                   <div className="text-center">
@@ -159,16 +159,17 @@ const CheckInPage = () => {
               </Card>
             </div>
 
-            {/* Mobile Activity Feed */}
-            <RecentActivityFeed
-              maxItems={8}
-              refreshInterval={15000}
-              showStats={false}
-              className="h-64"
-            />
-          </div>
-          {/* Left Column - Check-in Interface (25% width) */}
-          <div className="lg:col-span-1 space-y-6 order-2 lg:order-1">
+            {/* Mobile Activity Feed - Compact version for mobile */}
+            <div className="lg:hidden">
+              <RecentActivityFeed
+                maxItems={8}
+                refreshInterval={15000}
+                showStats={false}
+                showHeader={true}
+                className="max-h-80"
+              />
+            </div>
+
             {/* Member Search/Scanner */}
             <Card className="border-2 border-indigo-100 bg-gradient-to-r from-indigo-50 to-purple-50">
               <CardHeader className="border-b-2 border-indigo-100 bg-gradient-to-r from-indigo-100 to-purple-100">
@@ -252,7 +253,7 @@ const CheckInPage = () => {
           </div>
 
           {/* Right Column - Monitoring Dashboard (75% width) - Desktop Only */}
-          <div className="hidden lg:block lg:col-span-3 space-y-6 order-1 lg:order-2">
+          <div className="hidden lg:flex lg:flex-col lg:col-span-3 space-y-6 order-1 lg:order-2">
             {/* Quick Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
@@ -304,16 +305,17 @@ const CheckInPage = () => {
               </Card>
             </div>
 
-            {/* Real-time Activity Feed */}
+            {/* Real-time Activity Feed - Desktop */}
             <RecentActivityFeed
-              maxItems={15}
+              maxItems={25}
               refreshInterval={15000}
               showStats={false}
-              className="h-full"
+              showHeader={true}
+              className="flex-1 min-h-96"
             />
           </div>
         </div>
-      </StaffPageContainer>
+      </ResponsiveContainer>
     </motion.div>
   );
 };

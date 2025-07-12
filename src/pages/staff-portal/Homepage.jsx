@@ -198,12 +198,12 @@ const StaffHomepage = () => {
     totalMembers: memberCount || 0,
     activeClasses: dashboardStats?.classes?.total || 8,
     checkInsToday: todayCheckIns.length || 0,
-    monthlyRevenue: '$12,500', // TODO: Add billing stats
-    expiringMembershipsCount: 3, // TODO: Add membership expiry tracking
+    monthlyRevenue: '$12,500', // Placeholder - billing integration pending
+    expiringMembershipsCount: 3, // Placeholder - membership tracking pending
     newSignupsToday: memberStats?.new_this_month || 0,
-    pendingPaymentsCount: 5, // TODO: Add billing pending count
-    lowCapacityClassesCount: 2, // TODO: Add class capacity tracking
-    pendingSupportTicketsCount: 1, // TODO: Add support ticket tracking
+    pendingPaymentsCount: 5, // Placeholder - billing integration pending
+    lowCapacityClassesCount: 2, // Placeholder - class analytics pending
+    pendingSupportTicketsCount: 1, // Placeholder - support system pending
     unreadSystemNotificationsCount: 0,
     totalMembersTrend: `+${memberStats?.new_this_month || 0} this month`,
     upcomingClassesTrend: "2 new this week",

@@ -11,6 +11,8 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from "@/hooks/use-toast.js";
 import MemberSidebar from '@/components/member/MemberSidebar';
+import { ResponsiveLayout } from '@/components/layout/ResponsiveLayout';
+import '@/styles/responsive.css';
 
 const FloatingNotificationButton = () => {
   const navigate = useNavigate();
@@ -119,22 +121,22 @@ const MemberDashboardLayout = ({ onLogout, children }) => {
   }
 
   return (
-    <div className="flex h-screen bg-muted/40 dark:bg-slate-950 overflow-hidden">
-      <MemberSidebar
-        onLogout={onLogout}
-        user={user}
-        isExpanded={isSidebarExpanded}
-        toggleSidebar={toggleSidebar}
-      />
-      <div className={cn(
-        "flex flex-col flex-1 transition-all duration-300 ease-in-out",
-        isSidebarExpanded ? "md:ml-64" : "md:ml-20"
-      )}>        {/* Top Navigation Bar */}
-        <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+    <ResponsiveLayout
+      sidebar={
+        <MemberSidebar
+          onLogout={onLogout}
+          user={user}
+          isExpanded={isSidebarExpanded}
+          toggleSidebar={toggleSidebar}
+        />
+      }
+      header={
+        <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-semibold text-gray-900">Member Portal</h1>
             <p className="text-sm text-gray-500">Welcome back, {user?.first_name || 'Member'}!</p>
-          </div>          <div className="flex items-center gap-3">            {/* View My Bill Button */}
+          </div>
+          <div className="flex items-center gap-3">
             <Button
               onClick={() => navigate('/member-portal/billing')}
               className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
@@ -144,12 +146,13 @@ const MemberDashboardLayout = ({ onLogout, children }) => {
               View My Bill
             </Button>
           </div>
-        </header>{/* Main Content */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8 bg-background dark:bg-slate-900">
-          <div className="w-full max-w-7xl mx-auto">
-            <Outlet />
-          </div>
-        </main>
+        </div>
+      }
+      className="bg-muted/40 dark:bg-slate-950"
+      enableSidebarToggle={true}
+    >
+      <div className="w-full max-w-7xl mx-auto bg-background dark:bg-slate-900 min-h-full">
+        <Outlet />
       </div>
       <motion.div
         initial={{ y: 100, opacity: 0 }}
@@ -167,7 +170,7 @@ const MemberDashboardLayout = ({ onLogout, children }) => {
           <MessageSquare className="h-6 w-6 text-white" />
         </Button>
       </motion.div>
-    </div>
+    </ResponsiveLayout>
   );
 };
 

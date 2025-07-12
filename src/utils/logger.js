@@ -1,14 +1,8 @@
-// Centralized logger utility for MomentumApp
-// Only logs info/warn in development, always logs errors
+// DEPRECATED: Use @/lib/logger instead
+// This file is kept for backward compatibility only
 
-export const logger = {
-  info: (...args) => {
-    if (import.meta.env.DEV) console.log(...args);
-  },
-  warn: (...args) => {
-    if (import.meta.env.DEV) console.warn(...args);
-  },
-  error: (...args) => {
-    console.error(...args); // keep errors visible in prod
-  }
-};
+import { logger as newLogger } from '@/lib/logger';
+
+console.warn('⚠️ DEPRECATED: src/utils/logger.js is deprecated. Use @/lib/logger instead.');
+
+export const logger = newLogger;

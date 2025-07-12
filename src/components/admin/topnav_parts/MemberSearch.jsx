@@ -158,7 +158,7 @@ const MemberSearch = ({ allMembers, navigate }) => {
   const handleCreateSuccess = (newMember) => {
     toast({
       title: "Member Created",
-      description: `${newMember.display_name} has been successfully created.`,
+      description: `${newMember.first_name} ${newMember.last_name} has been successfully created.`,
     });
 
     // Navigate to the new member's profile

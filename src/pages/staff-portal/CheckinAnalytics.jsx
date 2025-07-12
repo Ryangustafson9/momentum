@@ -57,14 +57,14 @@ const CheckinAnalyticsPage = () => {
 
   const getMembershipAnalytics = async () => {
     const today = new Date().toISOString().split('T')[0];
-    
+
     const { data, error } = await supabase
-      .from('member_attendance')
+      .from('checkin_history')
       .select(`
         profile_id,
         profiles!profile_id(
           memberships:memberships!user_id(
-            membership_type:membership_types!current_membership_type_id(
+            membership_type:membership_types!membership_type_id(
               name,
               category,
               price
@@ -135,9 +135,9 @@ const CheckinAnalyticsPage = () => {
   const getHourlyPattern = async () => {
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
-    
+
     const { data, error } = await supabase
-      .from('member_attendance')
+      .from('checkin_history')
       .select('check_in_time')
       .gte('check_in_time', weekAgo.toISOString());
 

@@ -52,53 +52,88 @@ const billingService = {
 
   // Get all member billing overview for staff
   async getAllMembersBilling() {
-    
-    
+
+
+    // Get all memberships with their associated profiles and membership types
     const { data, error } = await supabase
       .from('memberships')
       .select(`
         *,
-        membership_type:membership_types!current_membership_type_id(*),
-        profile:profiles!user_id(first_name, last_name, email),
-        addon_memberships:addon_memberships!user_id(
-          *,
-          addon_type:membership_types!addon_type_id(*)
-        )
+        membership_type:membership_types!membership_plan_id(*),
+        profile:profiles!member_id(first_name, last_name, email)
       `)
-      .order('created_at', { ascending: false });
+      .order('member_id', { ascending: true })
+      .order('plan_type', { ascending: true }); // Group by member, then by plan type
 
     if (error) {
-      
+
       throw new Error(`Failed to fetch billing overview: ${error.message}`);
     }
 
-    // Process billing data
-    const processedData = (data || []).map(membership => {
-      const addons = membership.addon_memberships || [];
-      const membershipCost = membership.membership_type?.price || 0;
-      const addonsCost = addons.reduce((sum, addon) => sum + (addon.addon_type?.price || 0), 0);
-      const totalMonthlyCost = membershipCost + addonsCost;
+    // Group memberships by member and calculate totals
+    const memberBillingMap = new Map();
 
-      // Calculate next payment date (simplified)
-      const nextPaymentDate = membership.next_payment_date 
-        ? new Date(membership.next_payment_date)
+    (data || []).forEach(membership => {
+      const memberId = membership.member_id;
+
+      if (!memberBillingMap.has(memberId)) {
+        memberBillingMap.set(memberId, {
+          member_id: memberId,
+          profile: membership.profile,
+          primary_membership: null,
+          addons: [],
+          staff_memberships: [],
+          guest_memberships: [],
+          totalMonthlyCost: 0,
+          nextPaymentDate: null,
+          status: 'active'
+        });
+      }
+
+      const memberBilling = memberBillingMap.get(memberId);
+      const membershipCost = membership.membership_type?.price || membership.monthly_rate || 0;
+
+      // Categorize membership by plan_type
+      switch (membership.plan_type) {
+        case 'Membership':
+          memberBilling.primary_membership = membership;
+          memberBilling.status = membership.status;
+          memberBilling.nextPaymentDate = membership.next_billing_date;
+          break;
+        case 'Add-On':
+          memberBilling.addons.push(membership);
+          break;
+        case 'Staff':
+          memberBilling.staff_memberships.push(membership);
+          break;
+        case 'Guest':
+          memberBilling.guest_memberships.push(membership);
+          break;
+      }
+
+      memberBilling.totalMonthlyCost += membershipCost;
+    });
+
+    // Convert map to array and process payment status
+    const processedData = Array.from(memberBillingMap.values()).map(memberBilling => {
+      const nextPaymentDate = memberBilling.nextPaymentDate
+        ? new Date(memberBilling.nextPaymentDate)
         : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
       // Determine payment status
       const today = new Date();
-      const isOverdue = nextPaymentDate < today && membership.status === 'Active';
+      const isOverdue = nextPaymentDate < today && memberBilling.status === 'active';
       const isPending = nextPaymentDate <= new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
 
       return {
-        ...membership,
-        totalMonthlyCost,
+        ...memberBilling,
         nextPaymentDate,
         paymentStatus: isOverdue ? 'overdue' : isPending ? 'pending' : 'current',
         daysUntilPayment: Math.ceil((nextPaymentDate - today) / (24 * 60 * 60 * 1000))
       };
     });
 
-    
+
     return processedData;
   },
 

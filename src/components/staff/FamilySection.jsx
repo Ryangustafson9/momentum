@@ -49,18 +49,21 @@ const FamilySection = ({ memberData, isEditing, onEdit, onSave, onCancel }) => {
           *,
           family_member:profiles!family_member_id(*)
         `)
-        .eq('primary_member_id', memberData.id)
-        .eq('status', 'active');
+        .eq('primary_member_id', memberData.id);
 
-      if (error) throw error;
+      if (error) {
+        // If table doesn't exist or column doesn't exist, just set empty array
+        if (error.code === '42P01' || error.code === '42703') {
+          console.warn('Family members table or column not found:', error.message);
+          setFamilyMembers([]);
+          return;
+        }
+        throw error;
+      }
       setFamilyMembers(data || []);
     } catch (error) {
       console.error('Error fetching family members:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load family members.",
-        variant: "destructive",
-      });
+      setFamilyMembers([]); // Set empty array instead of showing error
     } finally {
       setLoading(false);
     }

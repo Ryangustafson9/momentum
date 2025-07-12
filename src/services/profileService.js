@@ -95,10 +95,8 @@ export class ProfileService {
         updated_at: new Date().toISOString()
       };
 
-      // Generate display name if not provided
-      if (!profileToCreate.display_name && profileToCreate.first_name && profileToCreate.last_name) {
-        profileToCreate.display_name = `${profileToCreate.first_name} ${profileToCreate.last_name}`;
-      }
+      // Remove display_name if present since it's auto-generated
+      delete profileToCreate.display_name;
 
       const { data, error } = await supabase
         .from('profiles')
